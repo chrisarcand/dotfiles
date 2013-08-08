@@ -17,6 +17,7 @@ ulimit -n 1024
 
 # Some common aliases
 alias g='git' \
+      gs='git status' \
       psg='ps aux | grep' \
       be='bundle exec' \
       t='bundle exec rake test'
