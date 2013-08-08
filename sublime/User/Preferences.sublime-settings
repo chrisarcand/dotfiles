@@ -13,7 +13,7 @@
 		"Vintage"
 	],
 	"margin": -2,
-	"spell_check": true,
+	"spell_check": false,
 	"tab_size": 2,
 	"theme": "Default.sublime-theme",
 	"translate_tabs_to_spaces": true
