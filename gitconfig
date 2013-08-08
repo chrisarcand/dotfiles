@@ -3,3 +3,7 @@
 	email = chris@chrisarcand.com
 [color]
 	ui = auto
+[push]
+	default = simple
+[format]
+	pretty = %Cred%h%Creset %aN -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset
