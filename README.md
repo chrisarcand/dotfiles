@@ -20,10 +20,10 @@ directory and create a symlink to /sublime/User
 
 ####Bash profile
 <code>cd ~</code>  
-<code>rm .bash_profile</code>
+<code>rm .bash_profile</code>  
 <code>ln -s .dotfiles/bash_profile .bash_profile</code>
 
 ####Global Git configuration
 <code>cd ~</code>  
-<code>rm .gitignore</code>
+<code>rm .gitignore</code>  
 <code>ln -s .dotfiles/gitignore .gitignore</code>
