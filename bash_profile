@@ -1,4 +1,5 @@
 # Add current git branch function to prompt
+# needs bash-completion (see below)
 source $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
 
 #Change OSX command prompt
@@ -24,6 +25,7 @@ alias g='git' \
       gs='git status' \
       psg='ps aux | grep' \
       be='bundle exec' \
+      bi='bundle install' \
       t='bundle exec rake test'
 
 # Bash completion. 'brew install bash-completion'
