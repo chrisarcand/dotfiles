@@ -18,3 +18,4 @@
   lol = log --graph --decorate --pretty=oneline --abbrev-commit
   lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
   ls = ls-files
+  col = "!select choice in $(git branch | grep -v '*'); do echo checking out $choice; git checkout $choice; break; done"
