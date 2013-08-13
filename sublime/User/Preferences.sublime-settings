@@ -16,5 +16,6 @@
 	"spell_check": false,
 	"tab_size": 2,
 	"theme": "Default.sublime-theme",
-	"translate_tabs_to_spaces": true
+	"translate_tabs_to_spaces": true,
+	"show_full_path": true
 }
