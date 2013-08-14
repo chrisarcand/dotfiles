@@ -10,6 +10,7 @@
 [alias]
   st = status
   ci = commit
+  cm = "!f() { git commit -m \"$*\"; }; f"
   br = branch
   co = checkout
   df = diff

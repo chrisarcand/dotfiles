@@ -26,7 +26,10 @@ alias g='git' \
       psg='ps aux | grep' \
       be='bundle exec' \
       bi='bundle install' \
-      t='bundle exec rake test'
+      t='bundle exec rake test' \
+      bp='subl ~/.dotfiles/bash_profile' \
+      gc='subl ~/.dotfiles/gitconfig' \
+      dotfiles='cd ~/.dotfiles && ls'
 
 # Bash completion. 'brew install bash-completion'
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
