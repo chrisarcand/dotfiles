@@ -2,7 +2,7 @@
 	"auto_indent": true,
 	"bold_folder_labels": true,
 	"caret_style": "phase",
-	"color_scheme": "Packages/Color Scheme - Default/Monokai.tmTheme",
+	"color_scheme": "Packages/Monokai Extended/Monokai Extended.tmTheme",
 	"dictionary": "Packages/Language - English/en_US.dic",
 	"ensure_newline_at_eof_on_save": true,
 	"font_size": 12.0,
@@ -13,9 +13,9 @@
 		"Vintage"
 	],
 	"margin": -2,
+	"show_full_path": true,
 	"spell_check": false,
 	"tab_size": 2,
 	"theme": "Default.sublime-theme",
-	"translate_tabs_to_spaces": true,
-	"show_full_path": true
+	"translate_tabs_to_spaces": true
 }

@@ -2,7 +2,12 @@
 	"installed_packages":
 	[
 		"Handlebars",
+		"Monokai Extended",
 		"Package Control",
-		"SideBarGit"
+		"RailsCasts Colour Scheme",
+		"Ruby Blue Color Scheme",
+		"SideBarGit",
+		"Theme - Phoenix",
+		"Theme - Soda"
 	]
 }
