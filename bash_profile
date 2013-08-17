@@ -11,7 +11,7 @@ export PS1="\w\$(__git_ps1 \" (%s)\")$ "
 # /usr/local/bin Homebrew links go here
 # /usr/local/share/python Python packages installed with pip
 # /usr/local/share/npm/bin This is for npm
-# /usr/local/opt/ruby/bin This is for Ruby gem's installed binaries 
+# /usr/local/opt/ruby/bin This is for Ruby gem's installed binaries
 # /usr/local/heroku/bin Used by Heroku Toolbelt
 
 export PATH=/usr/local/bin:/usr/local/mysql/bin:$PATH
@@ -38,5 +38,21 @@ fi
 
 # Add completion for g alias for git, too
 complete -o default -o nospace -F _git g
+
+# Quick 'mark' filesystem navigation, taken from @jeroenjanssens
+# TODO: Add tab completion to this!
+export MARKPATH=$HOME/.marks
+function j {
+    cd -P $MARKPATH/$1 2>/dev/null || echo "No such mark: $1"
+}
+function mark {
+    mkdir -p $MARKPATH; ln -s $(pwd) $MARKPATH/$1
+}
+function unmark {
+    rm -i $MARKPATH/$1
+}
+function marks {
+    ls -l $MARKPATH | sed 's/  / /g' | cut -d' ' -f9- | sed 's/ -/\t-/g' && echo
+}
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
