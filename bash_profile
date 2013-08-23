@@ -22,14 +22,16 @@ ulimit -n 1024
 
 # Some common aliases
 alias g='git' \
-      gs='git status' \
       psg='ps aux | grep' \
       be='bundle exec' \
       bi='bundle install' \
       t='bundle exec rake test' \
       bp='subl ~/.dotfiles/bash_profile' \
       gc='subl ~/.dotfiles/gitconfig' \
-      dotfiles='cd ~/.dotfiles && ls'
+      dotfiles='cd ~/.dotfiles && ls' \
+      nrw='npm run-script watch' \
+      gd='grunt dev' \
+      gw='grunt watch'
 
 # Bash completion. 'brew install bash-completion'
 if [ -f $(brew --prefix)/etc/bash_completion ]; then

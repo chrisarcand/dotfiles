@@ -8,7 +8,7 @@
 [format]
 	pretty = %Cred%h%Creset %aN -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset
 [alias]
-  st = status
+  s = status
   ci = commit
   cm = "!f() { git commit -m \"$*\"; }; f"
   br = branch
