@@ -31,6 +31,7 @@ alias g='git' \
       dotfiles='cd ~/.dotfiles && ls' \
       nrw='npm run-script watch' \
       gd='grunt dev' \
+      gdf='grunt dev --force' \
       gw='grunt watch'
 
 # Bash completion. 'brew install bash-completion'
