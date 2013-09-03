@@ -32,7 +32,8 @@ alias g='git' \
       nrw='npm run-script watch' \
       gd='grunt dev' \
       gdf='grunt dev --force' \
-      gw='grunt watch'
+      gw='grunt watch' \
+      notes='subl ~/notes'
 
 # Bash completion. 'brew install bash-completion'
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
