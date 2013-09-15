@@ -6,5 +6,6 @@
     ]
   },
 
-  { "keys": ["ctrl+s"], "command": "toggle_side_bar" }
+  { "keys": ["ctrl+s"], "command": "toggle_side_bar" },
+  { "keys": ["ctrl+a"], "command": "focus_side_bar" }
 ]
