@@ -1,0 +1,12 @@
+[user]
+        name = AUTHORNAME
+        email = AUTHOREMAIL
+[color]
+        diff = auto
+        status = auto
+        branch = auto
+        ui = true
+[core]
+        excludesfile = ~/.gitignore
+[help]
+        autocorrect = 1
