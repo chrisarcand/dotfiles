@@ -18,6 +18,7 @@
 	"phoenix_dirty_bottom_bar_red": true,
 	"phoenix_tabs_auto_width": true,
 	"show_full_path": true,
+	"show_line_endings": true,
 	"spell_check": false,
 	"tab_size": 2,
 	"theme": "Phoenix Dark.sublime-theme",

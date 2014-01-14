@@ -27,7 +27,7 @@ ZSH_THEME="af-magic"
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment following line if you want to disable command autocorrection
-# DISABLE_CORRECTION="true"
+DISABLE_CORRECTION="true"
 
 # Uncomment following line if you want red dots to be displayed while waiting for completion
 # COMPLETION_WAITING_DOTS="true"
@@ -61,7 +61,8 @@ alias g='git' \
       notes='subl ~/notes' \
       sup='bundle exec stage-up' \
       bed='bundle exec deploy' \
-      iatt='npm install && pac install && npm rebuild && bundle'
+      iatt='npm install && pac install && npm rebuild && bundle' \
+      sl='sl'
 
 # Quick 'mark' filesystem navigation, taken from @jeroenjanssens
 # TODO: Add tab completion to this!
@@ -86,6 +87,7 @@ function marks {
 
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export PATH=/usr/local/bin:/usr/local/mysql/bin:$PATH
+export EDITOR='subl'
 
 # Increase limit on number of files to watch because OS X's default is way too low
 ulimit -n 2048
@@ -95,4 +97,4 @@ ulimit -n 2048
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
 ### Added by the Heroku Toolbelt
-export PATH="/usr/local/heroku/bin:$PATH"
+export PATH="$PATH:/usr/local/heroku/bin:"
