@@ -4,7 +4,7 @@
   <content><![CDATA[
 var latt = JSON.stringify(${1:OBJECT}, null, 2)
 console.log("\n\n\nLOGGING OBJECT ${1:snippet}...")
-console.log(${1:snippet} + "\n\n\n")
+console.log(latt + "\n\n\n")
 ]]></content>
   <!-- Set a tabTrigger to define how to trigger the snippet -->
   <tabTrigger>latt</tabTrigger>
