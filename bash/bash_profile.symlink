@@ -1,3 +1,5 @@
+# DEPRECATED - I use zsh now
+
 # Add current git branch function to prompt
 # needs bash-completion (see below)
 source $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
