@@ -9,14 +9,9 @@ inoremap jj <ESC>
 "set hlsearch
 "nmap <leader>hl :let @/ = ""<CR>
 
-" gui settings
-if (&t_Co == 256 || has('gui_running'))
-  if ($TERM_PROGRAM == 'iTerm.app')
-    colorscheme solarized
-  else
-    colorscheme desert
-  endif
-endif
+set background=dark
+let base16colorspace=256  " Access colors present in 256 colorspace
+colorscheme base16-default
 
 " Disambiguate ,a & ,t from the Align plugin, making them fast again.
 "

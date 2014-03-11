@@ -10,7 +10,8 @@ I would bet against myself that these instructions are complete. Just sayin'.
 * Clone repo to .dotfiles in your home directory: `git clone git@github.com:ChrisArcand/dotfiles.git ~/.dotfiles`\*
 * Install maximum-awesome: `cd ~/.dotfiles/maximum-awesome && rake`
 * Run 'bootstrap.sh' to set up .gitconfig and symlink all the custom dotfiles: `bash ~/.dotfiles/script/bootstrap.sh`\**
-
+* In iTerm2, under 'colors' in your Profile, import the base16-default.dark.256.itermscolors file and use it
+* I prefer the colors with a bit more contrast (darker darks, more vibrant color) but I'm too lazy to change the actual colors, so tweak as desired in iTerm
 
 \* Alternatively, you can put them where ever you like, but keep in mind that you'll have to go fix a few things 
 (example: the path to oh-my-zsh: `ZSH=$HOME/.dotfiles/oh-my-zsh`)
