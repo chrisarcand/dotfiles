@@ -2,4 +2,5 @@
 Package Control.last-run
 Package Control.cache
 Package Control.system-ca-bundle
-gitconfig.symlink
+gitconfig
+vim/.netrwhist
