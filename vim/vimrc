@@ -13,7 +13,6 @@ call vundle#rc()
 " install Vundle bundles
 if filereadable(expand("~/.vimrc.bundles"))
   source ~/.vimrc.bundles
-  source ~/.vimrc.bundles.local
 endif
 
 " ensure ftdetect et al work by including this after the Vundle stuff

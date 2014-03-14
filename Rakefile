@@ -202,7 +202,7 @@ end
 # )
 
 LINKED_FILES = filemap(
-  'vim/vim'           => '~/.vim',
+  'vim'           => '~/.vim',
   'tmux/tmux.conf'    => '~/.tmux.conf',
   'vim/vimrc'         => '~/.vimrc',
   'vim/vimrc.bundles' => '~/.vimrc.bundles',
@@ -255,6 +255,8 @@ task :install do
   # puts
   # puts "  Enjoy!"
   # puts
+
+  puts "  Installation complete!"
 end
 
 desc 'Uninstall these config files.'
