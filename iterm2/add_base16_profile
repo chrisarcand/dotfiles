@@ -1,0 +1,133 @@
+#!/bin/bash
+
+BASE16='{
+    "Ansi 0 Color" =         {
+        "Blue Component" = 0.08235294117647059;
+        "Green Component" = 0.08235294117647059;
+        "Red Component" = 0.08235294117647059;
+    };
+    "Ansi 1 Color" =         {
+        "Blue Component" = 0.25882352941176473;
+        "Green Component" = 0.2549019607843137;
+        "Red Component" = 0.6745098039215687;
+    };
+    "Ansi 10 Color" =         {
+        "Blue Component" = 0.12549019607843137;
+        "Green Component" = 0.12549019607843137;
+        "Red Component" = 0.12549019607843137;
+    };
+    "Ansi 11 Color" =         {
+        "Blue Component" = 0.18823529411764706;
+        "Green Component" = 0.18823529411764706;
+        "Red Component" = 0.18823529411764706;
+    };
+    "Ansi 12 Color" =         {
+        "Blue Component" = 0.6901960784313725;
+        "Green Component" = 0.6901960784313725;
+        "Red Component" = 0.6901960784313725;
+    };
+    "Ansi 13 Color" =         {
+        "Blue Component" = 0.8784313725490196;
+        "Green Component" = 0.8784313725490196;
+        "Red Component" = 0.8784313725490196;
+    };
+    "Ansi 14 Color" =         {
+        "Blue Component" = 0.21176470588235294;
+        "Green Component" = 0.3333333333333333;
+        "Red Component" = 0.5607843137254902;
+    };
+    "Ansi 15 Color" =         {
+        "Blue Component" = 0.9607843137254902;
+        "Green Component" = 0.9607843137254902;
+        "Red Component" = 0.9607843137254902;
+    };
+    "Ansi 2 Color" =         {
+        "Blue Component" = 0.34901960784313724;
+        "Green Component" = 0.6627450980392157;
+        "Red Component" = 0.5647058823529412;
+    };
+    "Ansi 3 Color" =         {
+        "Blue Component" = 0.4588235294117647;
+        "Green Component" = 0.7490196078431373;
+        "Red Component" = 0.9568627450980393;
+    };
+    "Ansi 4 Color" =         {
+        "Blue Component" = 0.7098039215686275;
+        "Green Component" = 0.6235294117647059;
+        "Red Component" = 0.41568627450980394;
+    };
+    "Ansi 5 Color" =         {
+        "Blue Component" = 0.6235294117647059;
+        "Green Component" = 0.4588235294117647;
+        "Red Component" = 0.6666666666666666;
+    };
+    "Ansi 6 Color" =         {
+        "Blue Component" = 0.6666666666666666;
+        "Green Component" = 0.7098039215686275;
+        "Red Component" = 0.4588235294117647;
+    };
+    "Ansi 7 Color" =         {
+        "Blue Component" = 0.8156862745098039;
+        "Green Component" = 0.8156862745098039;
+        "Red Component" = 0.8156862745098039;
+    };
+    "Ansi 8 Color" =         {
+        "Blue Component" = 0.3137254901960784;
+        "Green Component" = 0.3137254901960784;
+        "Red Component" = 0.3137254901960784;
+    };
+    "Ansi 9 Color" =         {
+        "Blue Component" = 0.27058823529411763;
+        "Green Component" = 0.5176470588235295;
+        "Red Component" = 0.8235294117647058;
+    };
+    "Anti Alias" = 1;
+    "Background Color" =         {
+        "Blue Component" = 0.08235294117647059;
+        "Green Component" = 0.08235294117647059;
+        "Red Component" = 0.08235294117647059;
+    };
+    Blur = 1;
+    "Bold Color" =         {
+        "Blue Component" = 0.8156862745098039;
+        "Green Component" = 0.8156862745098039;
+        "Red Component" = 0.8156862745098039;
+    };
+    Columns = 120;
+    "Cursor Color" =         {
+        "Blue Component" = 0.8156862745098039;
+        "Green Component" = 0.8156862745098039;
+        "Red Component" = 0.8156862745098039;
+    };
+    "Cursor Text Color" =         {
+        "Blue Component" = 0.08235294117647059;
+        "Green Component" = 0.08235294117647059;
+        "Red Component" = 0.08235294117647059;
+    };
+    "Disable Bold" = 0;
+    Font = "Monaco 14";
+    "Foreground Color" =         {
+        "Blue Component" = 0.8156862745098039;
+        "Green Component" = 0.8156862745098039;
+        "Red Component" = 0.8156862745098039;
+    };
+    "Horizontal Character Spacing" = 1;
+    NAFont = "Monaco 14";
+    Rows = 24;
+    "Selected Text Color" =         {
+        "Blue Component" = 0.8156862745098039;
+        "Green Component" = 0.8156862745098039;
+        "Red Component" = 0.8156862745098039;
+    };
+    "Selection Color" =         {
+        "Blue Component" = 0.18823529411764706;
+        "Green Component" = 0.18823529411764706;
+        "Red Component" = 0.18823529411764706;
+    };
+    Transparency = 0.1;
+    "Vertical Character Spacing" = 1;
+}'
+
+# Add display profile
+defaults write net.sourceforge.iTerm Displays -dict-add Base16 "$BASE16"
+echo "Base16 display profile added"
