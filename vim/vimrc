@@ -125,9 +125,12 @@ inoremap jj <ESC>
 " gui settings
 if (&t_Co == 256 || has('gui_running'))
   if ($TERM_PROGRAM == 'iTerm.app')
-    colorscheme solarized
+    let base16colorspace=256 " Access colors present in 256 colorspace
+    set t_Co=256 " 256 color mode
+    set background=dark
+    colorscheme base17
   else
-    colorscheme desert
+    colorscheme default
   endif
 endif
 
