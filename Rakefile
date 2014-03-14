@@ -158,6 +158,7 @@ namespace :install do
       brew_cask_install 'macvim'
     end
 
+    # Needed? Unsure
     bin_dir = File.expand_path('~/bin')
     bin_vim = File.join(bin_dir, 'vim')
     unless ENV['PATH'].split(':').include?(bin_dir)
@@ -194,16 +195,19 @@ def filemap(map)
   end.freeze
 end
 
-COPIED_FILES = filemap(
-  'vimrc.local'         => '~/.vimrc.local',
-  'vimrc.bundles.local' => '~/.vimrc.bundles.local'
-)
+# remove later
+# COPIED_FILES = filemap(
+#   'vim/vimrc.local'         => '~/.vimrc.local',
+#   'vim/vimrc.bundles.local' => '~/.vimrc.bundles.local'
+# )
 
 LINKED_FILES = filemap(
-  'vim'           => '~/.vim',
-  'tmux.conf'     => '~/.tmux.conf',
-  'vimrc'         => '~/.vimrc',
-  'vimrc.bundles' => '~/.vimrc.bundles'
+  'vim/vim'           => '~/.vim',
+  'tmux/tmux.conf'    => '~/.tmux.conf',
+  'vim/vimrc'         => '~/.vimrc',
+  'vim/vimrc.bundles' => '~/.vimrc.bundles',
+  'zsh/zshrc'         => '~/.zshrc',
+  'git/gitignore'     => '~/.gitignore'
 )
 
 desc 'Install these config files.'
@@ -226,31 +230,31 @@ task :install do
     link_file orig, link
   end
 
-  COPIED_FILES.each do |orig, copy|
-    cp orig, copy, :verbose => true unless File.exist?(copy)
-  end
+  # COPIED_FILES.each do |orig, copy|
+  #   cp orig, copy, :verbose => true unless File.exist?(copy)
+  # end
 
   # Install Vundle and bundles
   Rake::Task['install:vundle'].invoke
 
-  step 'iterm2 colorschemes'
-  colorschemes = `defaults read com.googlecode.iterm2 'Custom Color Presets'`
-  dark  = colorschemes !~ /Solarized Dark/
-  light = colorschemes !~ /Solarized Light/
-  sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Dark.itermcolors')) if dark
-  sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Light.itermcolors')) if light
+  # step 'iterm2 colorschemes'
+  # colorschemes = `defaults read com.googlecode.iterm2 'Custom Color Presets'`
+  # dark  = colorschemes !~ /Solarized Dark/
+  # light = colorschemes !~ /Solarized Light/
+  # sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Dark.itermcolors')) if dark
+  # sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Light.itermcolors')) if light
 
-  step 'iterm2 profiles'
-  puts
-  puts "  Your turn!"
-  puts
-  puts "  Go and manually set up Solarized Light and Dark profiles in iTerm2."
-  puts "  (You can do this in 'Preferences' -> 'Profiles' by adding a new profile,"
-  puts "  then clicking the 'Colors' tab, 'Load Presets...' and choosing a Solarized option.)"
-  puts "  Also be sure to set Terminal Type to 'xterm-256color' in the 'Terminal' tab."
-  puts
-  puts "  Enjoy!"
-  puts
+  # step 'iterm2 profiles'
+  # puts
+  # puts "  Your turn!"
+  # puts
+  # puts "  Go and manually set up Solarized Light and Dark profiles in iTerm2."
+  # puts "  (You can do this in 'Preferences' -> 'Profiles' by adding a new profile,"
+  # puts "  then clicking the 'Colors' tab, 'Load Presets...' and choosing a Solarized option.)"
+  # puts "  Also be sure to set Terminal Type to 'xterm-256color' in the 'Terminal' tab."
+  # puts
+  # puts "  Enjoy!"
+  # puts
 end
 
 desc 'Uninstall these config files.'
@@ -263,9 +267,9 @@ task :uninstall do
   end
 
   # delete unchanged copied files
-  COPIED_FILES.each do |orig, copy|
-    rm_f copy, :verbose => true if File.read(orig) == File.read(copy)
-  end
+  # COPIED_FILES.each do |orig, copy|
+  #   rm_f copy, :verbose => true if File.read(orig) == File.read(copy)
+  # end
 
   step 'homebrew'
   puts
