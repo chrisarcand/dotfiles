@@ -1,19 +1,15 @@
 {
 	"installed_packages":
 	[
+		"AngularJS",
 		"Base16 Color Schemes",
 		"Better CoffeeScript",
-		"Floobits",
+		"BracketHighlighter",
 		"Git",
-		"Handlebars",
-		"Jade",
-		"Monokai Extended",
-		"Package Control",
-		"RailsCasts Colour Scheme",
-		"Ruby Blue Color Scheme",
-		"SCSS",
+		"Google Spell Check",
 		"SideBarEnhancements",
+		"SublimeCodeIntel",
 		"Theme - Phoenix",
-		"Theme - Soda"
+		"VimL"
 	]
 }
