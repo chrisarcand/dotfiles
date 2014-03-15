@@ -54,10 +54,7 @@ alias g='git' \
       psg='ps aux | grep' \
       be='bundle exec' \
       bi='bundle install' \
-      t='bundle exec rake test' \
-      bp='subl ~/.dotfiles/bash_profile' \
-      gc='subl ~/.dotfiles/gitconfig' \
-      dotfiles='ls ~/.dotfiles && subl ~/.dotfiles' \
+      dotfiles='subl ~/.dotfiles' \
       nrw='npm run-script watch' \
       gd='grunt dev' \
       gdf='grunt dev --force' \
@@ -70,7 +67,8 @@ alias g='git' \
       wow='git status' \
       such='git' \
       very='git' \
-      reload='source ~/.zshrc'
+      reload='source ~/.zshrc' \
+      cdir='echo -n $(pwd) | pbcopy'
 
 # Quick 'mark' filesystem navigation, taken from @jeroenjanssens
 # TODO: Add tab completion to this!
