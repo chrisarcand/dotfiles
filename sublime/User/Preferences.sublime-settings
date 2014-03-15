@@ -10,6 +10,7 @@
 	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
+		"Vintage"
 	],
 	"margin": -2,
 	"phoenix_color_expanded_folder": true,
