@@ -257,6 +257,12 @@ task :install do
   # puts
 
   puts "  Installation complete!"
+  puts
+  puts "  Sublime Text configuration files were NOT added."
+  puts "  You should add these yourself if you like. Just add a symlink"
+  puts "  to replace your Sublime User directory to .dotfiles/sublime/User"
+  puts "  More info at http://chrisarcand.com/blog/sublime-text-settings-and-dotfiles"
+  puts
 end
 
 desc 'Uninstall these config files.'
