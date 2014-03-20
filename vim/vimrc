@@ -2,7 +2,7 @@
 set nocompatible
 
 " enable syntax highlighting
-"syntax enable
+syntax enable
 
 " configure Vundle
 filetype on " without this vim emits a zero exit status, later, because of :ft off
@@ -134,7 +134,8 @@ inoremap jj <ESC>
 "  endif
 "endif
 
-colorscheme default
+Bundle 'nanotech/jellybeans.vim'
+colorscheme jellybeans
 
 " Disambiguate ,a & ,t from the Align plugin, making them fast again.
 "

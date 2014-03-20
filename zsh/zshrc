@@ -95,6 +95,9 @@ export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export PATH=/usr/local/bin:/usr/local/mysql/bin:$PATH
 export EDITOR='vim'
 
+# For npm bins
+export PATH=$PATH:/usr/local/share/npm/bin
+
 # Increase limit on number of files to watch because OS X's default is way too low
 ulimit -n 2048
 
@@ -103,5 +106,8 @@ ulimit -n 2048
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
 ### Added by the Heroku Toolbelt
-export PATH="$PATH:/usr/local/heroku/bin:"
+export PATH="$PATH:/usr/local/heroku/bin"
+
+### Configuration files for Postgres (-D option)
+export PGDATA="/usr/local/var/postgres"
 
