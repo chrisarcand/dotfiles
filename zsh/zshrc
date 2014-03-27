@@ -7,7 +7,7 @@ ZSH=$HOME/.dotfiles/oh-my-zsh
 # time that oh-my-zsh is loaded.
 # ZSH_THEME="robbyrussell"
 ZSH_THEME="af-magic"
-#ZSH_THEME="agnoster"
+# ZSH_THEME="agnoster"
 
 # Example aliases
 # alias zshconfig="subl ~/.dotfiles/zsh/zshrc"
@@ -46,8 +46,6 @@ plugins=(git virtualenv)
 source $ZSH/oh-my-zsh.sh
 
 # Customize to your needs...
-
-
 
 alias g='git' \
       'g cm'='git commit' \
@@ -110,4 +108,9 @@ export PATH="$PATH:/usr/local/heroku/bin"
 
 ### Configuration files for Postgres (-D option)
 export PGDATA="/usr/local/var/postgres"
+
+# Base16 Shell
+BASE16_SCHEME="default"
+BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
+[[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
 
