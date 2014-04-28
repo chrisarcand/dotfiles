@@ -1,0 +1,25 @@
+# <----- CUSTOM COMMANDS ----->
+
+Pry::Commands.create_command "tables" do
+  description "Show available database tables via ActiveRecord"
+
+  def process
+    begin
+      output.puts ActiveRecord::Base.connection.tables
+    rescue NameError => e
+      puts e
+      puts "You aren't in a Rails console, I bet."
+    end
+  end
+end
+
+
+# <----- COMMAND ALIASES ----->
+
+aliases = {
+  "@" => "whereami"
+}
+
+aliases.each do |key, value|
+  Pry.config.commands.alias_command key, value
+end

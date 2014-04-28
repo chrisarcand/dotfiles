@@ -26,6 +26,7 @@ set clipboard=unnamed                                        " yank and paste wi
 set directory-=.                                             " don't store swapfiles in the current directory
 set encoding=utf-8
 set expandtab                                                " expand tabs to spaces
+set hlsearch                                                 " highlight search tems
 set ignorecase                                               " case-insensitive search
 set incsearch                                                " search as you type
 set laststatus=2                                             " always show statusline
@@ -68,6 +69,10 @@ nmap <leader>g :GitGutterToggle<CR>
 nmap <leader>c <Plug>Kwbd
 map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
 nmap <C-t> :tabnew<CR>
+
+" Map <C-L> (redraw screen) to also turn off search highlighting until the
+" " next search
+nnoremap <C-L> :nohl<CR><C-L>
 
 " in case you forgot to sudo
 cmap w!! %!sudo tee > /dev/null %

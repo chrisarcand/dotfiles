@@ -5,13 +5,12 @@
 	"color_scheme": "Packages/Base16 Color Schemes/base16-default.dark.tmTheme",
 	"dictionary": "Packages/Language - English/en_US.dic",
 	"ensure_newline_at_eof_on_save": true,
-	"font_size": 10.0,
-	"highlight_line": true,
+	"font_size": 9.0,
 	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
-		"Vintage",
-		"AngularJS"
+		"AngularJS",
+		"Vintage"
 	],
 	"margin": -2,
 	"phoenix_color_expanded_folder": true,
@@ -28,5 +27,6 @@
 	"tab_size": 2,
 	"theme": "Phoenix Dark.sublime-theme",
 	"translate_tabs_to_spaces": true,
-	"trim_trailing_white_space_on_save": true
+	"trim_trailing_white_space_on_save": true,
+	"vintage_start_in_command_mode": true
 }
