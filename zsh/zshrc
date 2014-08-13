@@ -48,18 +48,17 @@ source $ZSH/oh-my-zsh.sh
 # Customize to your needs...
 
 alias g='git' \
-      'g cm'='git commit' \
+      ga='git add --patch' \
+      gcm='git commit' \
+      gp='git push' \
+      gs='git status' \
+      gdf='git diff' \
       psg='ps aux | grep' \
       be='bundle exec' \
       bi='bundle install' \
       dotfiles='subl ~/.dotfiles' \
       nrw='npm run-script watch' \
-      gd='grunt dev' \
-      gdf='grunt dev --force' \
-      gw='grunt watch' \
       notes='subl ~/notes' \
-      sup='bundle exec stage-up' \
-      bed='bundle exec deploy' \
       iatt='npm install && pac install && npm rebuild && bundle' \
       sl='sl' \
       wow='git status' \
@@ -90,7 +89,7 @@ function marks {
 # }
 
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
-export PATH=/usr/local/bin:/usr/local/mysql/bin:$PATH
+export PATH=/usr/local/bin:~/bin:/usr/local/mysql/bin:$PATH
 export EDITOR='vim'
 
 # For npm bins
@@ -109,8 +108,10 @@ export PATH="$PATH:/usr/local/heroku/bin"
 ### Configuration files for Postgres (-D option)
 export PGDATA="/usr/local/var/postgres"
 
+### OSX STUPIDITY
+export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
+
 # Base16 Shell
 BASE16_SCHEME="default"
 BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
-

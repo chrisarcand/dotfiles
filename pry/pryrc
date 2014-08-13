@@ -14,6 +14,21 @@ Pry::Commands.create_command "tables" do
 end
 
 
+# No worky yet
+# Pry::Commands.create_command "columns" do
+#   description "Show columns on a table via ActiveRecord"
+
+#   def process
+#     begin
+#       ActiveRecord::Base.connection.columns(args[0]).map{|c| [c.name, c.type] }
+#     rescue NameError => e
+#       puts e
+#       puts "You aren't in a Rails console, I bet."
+#     end
+#   end
+# end
+
+
 # <----- COMMAND ALIASES ----->
 
 aliases = {
