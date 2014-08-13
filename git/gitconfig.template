@@ -20,8 +20,6 @@
   df = diff
   dc = diff --cached
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-  lol = log --graph --decorate --pretty=oneline --abbrev-commit
-  lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
   ls = ls-files
   col = "!select choice in $(git branch | grep -v '*'); do echo checking out $choice; git checkout $choice; break; done"
   u = add -u
@@ -31,3 +29,9 @@
   stashls = "!git stash list | cat"
   stashdrop = "!f() { git stash drop stash@{/$*} -p; }; f"
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
+
+  # Old Honorable Mentions
+  # Unused, but may be useful for others
+  # ----------------------------------------
+  # lol = log --graph --decorate --pretty=oneline --abbrev-commit
+  # lola = log --graph --decorate --pretty=oneline --abbrev-commit --all

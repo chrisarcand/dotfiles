@@ -47,25 +47,7 @@ source $ZSH/oh-my-zsh.sh
 
 # Customize to your needs...
 
-alias g='git' \
-      ga='git add --patch' \
-      gcm='git commit' \
-      gp='git push' \
-      gs='git status' \
-      gdf='git diff' \
-      psg='ps aux | grep' \
-      be='bundle exec' \
-      bi='bundle install' \
-      dotfiles='subl ~/.dotfiles' \
-      nrw='npm run-script watch' \
-      notes='subl ~/notes' \
-      iatt='npm install && pac install && npm rebuild && bundle' \
-      sl='sl' \
-      wow='git status' \
-      such='git' \
-      very='git' \
-      reload='source ~/.zshrc' \
-      cdir='echo -n $(pwd) | pbcopy'
+source $HOME/.dotfiles/zsh/aliases
 
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export PATH=/usr/local/bin:~/bin:/usr/local/mysql/bin:$PATH
