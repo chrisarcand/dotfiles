@@ -98,10 +98,6 @@ export PATH=$PATH:/usr/local/share/npm/bin
 # Increase limit on number of files to watch because OS X's default is way too low
 ulimit -n 2048
 
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
-
 ### Added by the Heroku Toolbelt
 export PATH="$PATH:/usr/local/heroku/bin"
 
@@ -115,3 +111,7 @@ export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
 BASE16_SCHEME="default"
 BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
+
+export PATH="$HOME/.rvm/bin:$PATH" # Add RVM to PATH for scripting
+
+source ~/.private-zshrc
