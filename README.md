@@ -10,6 +10,10 @@ and modified vim/tmux configurations from [Maximum Awesome](https://github.com/s
 
     rake
 
+I make absolutely no guarantee that everything will get symlinked and set up properly. It should - but
+always, always make backups of your own dotfiles beforehand. You will also have to set up iterm2 customizations
+manually.
+
 ### vim (Maximum Awesome bindings)
 
 * `,d` brings up [NERDTree](https://github.com/scrooloose/nerdtree), a sidebar buffer for navigating and manipulating files
