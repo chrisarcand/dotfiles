@@ -67,27 +67,6 @@ alias g='git' \
       reload='source ~/.zshrc' \
       cdir='echo -n $(pwd) | pbcopy'
 
-# Quick 'mark' filesystem navigation, taken from @jeroenjanssens
-# TODO: Add tab completion to this!
-export MARKPATH=$HOME/.marks
-function j {
-    cd -P $MARKPATH/$1 2>/dev/null || echo "No such mark: $1"
-}
-function mark {
-    mkdir -p $MARKPATH; ln -s $(pwd) $MARKPATH/$1
-}
-function unmark {
-    rm -i $MARKPATH/$1
-}
-function marks {
-    ls -l $MARKPATH | sed 's/  / /g' | cut -d' ' -f9- | sed 's/ -/\ -/g' && echo
-}
-
-# Doesn't work
-# function title {
-#     echo -ne "\033]0;"$*"\007"
-# }
-
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export PATH=/usr/local/bin:~/bin:/usr/local/mysql/bin:$PATH
 export EDITOR='vim'

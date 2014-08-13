@@ -28,3 +28,6 @@
   ua = add --all
   cnf = "!git ls-files -u | cut -f 2 | sort -u"
   a = add --patch
+  stashls = "!git stash list | cat"
+  stashdrop = "!f() { git stash drop stash@{/$*} -p; }; f"
+  clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
