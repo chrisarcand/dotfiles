@@ -45,34 +45,33 @@ plugins=(git virtualenv)
 
 source $ZSH/oh-my-zsh.sh
 
+# ================================================================================================
 # Customize to your needs...
+# ================================================================================================
 
+# PATH
+export PATH=$PATH:/usr/local/mysql/bin #MySQL
+export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
+export PATH=$PATH:/usr/local/share/npm/bin # npm bins
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # rvm
+
+# ALIASES
 source $HOME/.dotfiles/zsh/aliases
 
+# MISC
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
-export PATH=/usr/local/bin:~/bin:/usr/local/mysql/bin:$PATH
 export EDITOR='vim'
-
-# For npm bins
-export PATH=$PATH:/usr/local/share/npm/bin
-
-# Increase limit on number of files to watch because OS X's default is way too low
-ulimit -n 2048
-
-### Added by the Heroku Toolbelt
-export PATH="$PATH:/usr/local/heroku/bin"
-
-### Configuration files for Postgres (-D option)
-export PGDATA="/usr/local/var/postgres"
-
-### OSX STUPIDITY
-export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
+export PGDATA="/usr/local/var/postgres" # Configuration files for Postgres (-D option)
+export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future # OSX STUPIDITY
 
 # Base16 Shell
-BASE16_SCHEME="default"
-BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
+export BASE16_SCHEME="default"
+export BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
 
-export PATH="$HOME/.rvm/bin:$PATH" # Add RVM to PATH for scripting
+# Node
+source $(brew --prefix nvm)/nvm.sh
+export NVM_DIR=~/.nvm
+ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
 
-source ~/.private-zshrc
+source $HOME/.private-zshrc
