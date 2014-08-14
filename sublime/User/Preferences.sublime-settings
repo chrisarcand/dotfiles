@@ -5,12 +5,12 @@
 	"color_scheme": "Packages/Base16 Color Schemes/base16-default.dark.tmTheme",
 	"dictionary": "Packages/Language - English/en_US.dic",
 	"ensure_newline_at_eof_on_save": true,
-	"font_size": 9.0,
+	"font_size": 9,
 	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
-		"Vintage",
-		"AngularJS"
+		"AngularJS",
+		"Vintage"
 	],
 	"margin": -2,
 	"phoenix_color_expanded_folder": true,
