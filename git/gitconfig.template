@@ -8,10 +8,11 @@
   ui = true
 [core]
   excludesfile = ~/.gitignore
+  editor = vim
 [help]
   autocorrect = 1
 [push]
-  default = tracking
+  default = upstream
 [alias]
   s = status
   cm = commit
@@ -20,18 +21,30 @@
   df = diff
   dc = diff --cached
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  details = log -n1 -p --format=fuller
   ls = ls-files
   col = "!select choice in $(git branch | grep -v '*'); do echo checking out $choice; git checkout $choice; break; done"
-  u = add -u
-  ua = add --all
+  u = "!git add -u && git status"
+  ua = "!git add --all && git status"
   cnf = "!git ls-files -u | cut -f 2 | sort -u"
-  a = add --patch
-  stashls = "!git stash list | cat"
-  stashdrop = "!f() { git stash drop stash@{/$*} -p; }; f"
+  a = "!git add --patch && git status"
+  sls = "!git stash list | cat"
+  ssave = stash save
+  sshow = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to show: \"; read choice; git stash show -p stash@{$choice}; else git stash show -p stash@{$1}; fi; }; f"
+  spop = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to pop: \"; read choice; git stash pop stash@{$choice}; else git stash pop stash@{$1}; fi; }; f"
+  sapply = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to apply: \"; read choice; git stash apply stash@{$choice}; else git stash apply stash@{$1}; fi; }; f"
+  sdrop = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to drop: \"; read choice; git stash drop stash@{$choice}; else git stash drop stash@{$1}; fi; }; f"
+  sclear = "stash clear"
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
+  aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
 
   # Old Honorable Mentions
   # Unused, but may be useful for others
   # ----------------------------------------
   # lol = log --graph --decorate --pretty=oneline --abbrev-commit
   # lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+  # sapplyr = "!f() { git stash apply stash^{/$*}; }; f"
+  # sshowr = "!f() { git stash show stash^{/$*} -p; }; f"
+
+  [advice]
+    detachedHead = false

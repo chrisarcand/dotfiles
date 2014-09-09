@@ -22,4 +22,5 @@ alias wow='git status'                                                  \
 # "Circumstance Specific" Aliases
 alias notes='subl ~/notes'                                              \
       iatt='npm install && pac install && npm rebuild && bundle'        \
-      wipedb='powder down && rake db:drop && rake setup && powder up'
+      wipedb='powder down && rake db:drop && rake setup && powder up'   \
+      tdbm='RAILS_ENV=test rake db:migrate'
