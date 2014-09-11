@@ -15,7 +15,6 @@
   default = upstream
 [alias]
   s = status
-  d = diff
   cm = commit
   br = branch
   co = checkout
