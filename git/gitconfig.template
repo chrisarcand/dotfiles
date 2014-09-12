@@ -9,10 +9,13 @@
 [core]
   excludesfile = ~/.gitignore
   editor = vim
+  autocrlf = input
 [help]
   autocorrect = 1
 [push]
   default = upstream
+[advice]
+  detachedHead = false
 [alias]
   s = status
   cm = commit
@@ -38,13 +41,23 @@
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
 
-  # Old Honorable Mentions
+  # Uncommons, but incredibly useful
+  # ----------------------------------------
+  # addprx courtesy @mitsuhiko
+  arminlog = log --pretty=format:"%C(auto,yellow)%h%C(auto)%d\\ %C(auto,reset)%s\\ \\ [%C(auto,blue)%cn%C(auto,reset),\\ %C(auto,cyan)%ar%C(auto,reset)]"
+  addprx = "!f() { b=`git symbolic-ref -q --short HEAD` && \
+    git fetch origin pull/$1/head:pr/$1 && \
+    git fetch -f origin pull/$1/merge:PR_MERGE_HEAD && \
+    git rebase --onto $b PR_MERGE_HEAD^ pr/$1 && \
+    git branch -D PR_MERGE_HEAD && \
+    git checkout $b && echo && \
+    git diff --stat $b..pr/$1 && echo && \
+    git arminlog $b..pr/$1; }; f"
+
+  # Honorable Mentions
   # Unused, but may be useful for others
   # ----------------------------------------
   # lol = log --graph --decorate --pretty=oneline --abbrev-commit
   # lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
   # sapplyr = "!f() { git stash apply stash^{/$*}; }; f"
   # sshowr = "!f() { git stash show stash^{/$*} -p; }; f"
-
-  [advice]
-    detachedHead = false
