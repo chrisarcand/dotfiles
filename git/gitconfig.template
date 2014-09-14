@@ -16,6 +16,8 @@
   default = upstream
 [advice]
   detachedHead = false
+[rerere]
+  enabled = true
 [alias]
   s = status
   cm = commit
