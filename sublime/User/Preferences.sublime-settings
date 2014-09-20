@@ -5,22 +5,17 @@
 	"color_scheme": "Packages/Base16 Color Schemes/base16-default.dark.tmTheme",
 	"dictionary": "Packages/Language - English/en_US.dic",
 	"ensure_newline_at_eof_on_save": true,
-	"font_size": 9,
+	"font_size": 10,
 	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
 		"AngularJS",
 		"Vintage"
 	],
-	"margin": -2,
 	"phoenix_color_expanded_folder": true,
 	"phoenix_dirty_bottom_bar": true,
 	"phoenix_dirty_bottom_bar_red": true,
 	"phoenix_tabs_auto_width": true,
-	"rulers":
-	[
-		100
-	],
 	"show_full_path": true,
 	"show_line_endings": true,
 	"spell_check": false,
