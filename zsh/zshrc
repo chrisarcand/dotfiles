@@ -65,7 +65,7 @@ source $HOME/.dotfiles/zsh/aliases
 
 # MISC
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
-export EDITOR='vim'
+export EDITOR='subl'
 export PGDATA="/usr/local/var/postgres" # Configuration files for Postgres (-D option)
 export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future # OSX STUPIDITY
 
