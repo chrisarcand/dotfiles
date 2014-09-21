@@ -18,11 +18,19 @@ root: ~/
 # Change the command to call tmux.  This can be used by derivatives/wrappers like byobu.
 # tmux_command: byobu
 
+default: &DEFAULT
+  layout: efd5,318x75,0,0{106x75,0,0,1,211x75,107,0[211x36,107,0,4,211x38,107,37,5]}
+
 windows:
-  - editor:
-      layout: main-vertical
+  - DEVELOPMENT:
+      <<: *DEFAULT
       panes:
-        - vim
-        - guard
-  - server: bundle exec rails s
-  - logs: tail -f log/development.log
+        - echo "Some command to tail development log (powder applog)"
+        - echo "My rails console window (RAILS_ENV=development rails c)"
+        - echo "My git window (git fetch && git status)"
+  - STAGING:
+      <<: *DEFAULT
+      panes:
+        - echo "A command to tail the staging server log"
+        - echo "A command to pull up the staging server rails console"
+        - echo "A command to ssh to staging server"
