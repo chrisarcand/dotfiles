@@ -151,6 +151,8 @@ namespace :install do
     brew_install 'tmux'
   end
 
+  # TODO: I'm missing install steps for Brew Gem and subsequently Tmuxinator via Brew Gem
+
   desc 'Install MacVim'
   task :macvim do
     step 'MacVim'
