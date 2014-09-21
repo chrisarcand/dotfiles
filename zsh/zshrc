@@ -63,6 +63,9 @@ export PATH=$PATH:/usr/local/share/npm/bin # npm bins
 # ALIASES
 source $HOME/.dotfiles/zsh/aliases
 
+# Tmux / Tmuxinator
+source $HOME/.dotfiles/zsh/tmuxinator
+
 # MISC
 export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export EDITOR='subl'
