@@ -83,3 +83,5 @@ export NVM_DIR=~/.nvm
 ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
 
 source $HOME/.private-zshrc
+
+export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting

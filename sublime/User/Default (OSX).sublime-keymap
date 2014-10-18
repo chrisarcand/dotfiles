@@ -9,6 +9,6 @@
   { "keys": ["ctrl+s"], "command": "toggle_side_bar" },
   { "keys": ["ctrl+a"], "command": "focus_side_bar" },
   { "keys": ["super+alt+shift+left"], "command": "focus_neighboring_group", "args": {"forward": false} },
-  { "keys": ["super+alt+shift+right"], "command": "focus_neighboring_group" }
-
+  { "keys": ["super+alt+shift+right"], "command": "focus_neighboring_group" },
+  { "keys": ["ctrl+shift+r"], "command": "reveal_in_side_bar"}
 ]
