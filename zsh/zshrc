@@ -58,6 +58,7 @@ export PATH=$PATH:$HOME/bin
 export PATH=$PATH:/usr/local/mysql/bin #MySQL
 export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
 export PATH=$PATH:/usr/local/share/npm/bin # npm bins
+export PATH=$PATH:/usr/local/opt/go/libexec/bin # golang bins
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # rvm
 
 # ALIASES
