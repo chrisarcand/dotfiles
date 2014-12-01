@@ -1,26 +1,11 @@
-# <----- CUSTOM COMMANDS ----->
+# # <----- CUSTOM COMMANDS ----->
 
-Pry::Commands.create_command "tables" do
-  description "Show available database tables via ActiveRecord"
-
-  def process
-    begin
-      output.puts ActiveRecord::Base.connection.tables
-    rescue NameError => e
-      puts e
-      puts "You aren't in a Rails console, I bet."
-    end
-  end
-end
-
-
-# No worky yet
-# Pry::Commands.create_command "columns" do
-#   description "Show columns on a table via ActiveRecord"
+# Pry::Commands.create_command "tables" do
+#   description "Show available database tables via ActiveRecord"
 
 #   def process
 #     begin
-#       ActiveRecord::Base.connection.columns(args[0]).map{|c| [c.name, c.type] }
+#       output.puts ActiveRecord::Base.connection.tables
 #     rescue NameError => e
 #       puts e
 #       puts "You aren't in a Rails console, I bet."
@@ -29,12 +14,27 @@ end
 # end
 
 
-# <----- COMMAND ALIASES ----->
+# # No worky yet
+# # Pry::Commands.create_command "columns" do
+# #   description "Show columns on a table via ActiveRecord"
 
-aliases = {
-  "@" => "whereami"
-}
+# #   def process
+# #     begin
+# #       ActiveRecord::Base.connection.columns(args[0]).map{|c| [c.name, c.type] }
+# #     rescue NameError => e
+# #       puts e
+# #       puts "You aren't in a Rails console, I bet."
+# #     end
+# #   end
+# # end
 
-aliases.each do |key, value|
-  Pry.config.commands.alias_command key, value
-end
+
+# # <----- COMMAND ALIASES ----->
+
+# aliases = {
+#   "@" => "whereami"
+# }
+
+# aliases.each do |key, value|
+#   Pry.config.commands.alias_command key, value
+# end

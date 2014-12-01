@@ -52,7 +52,7 @@ source $ZSH/oh-my-zsh.sh
 # PATH
 # I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
 # Also allows you to `reload` without constantly appending to your path
-export PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/usr/texbin
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
 
 export PATH=$PATH:$HOME/bin
 export PATH=$PATH:/usr/local/mysql/bin #MySQL

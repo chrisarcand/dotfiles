@@ -58,6 +58,8 @@ map <C-k> <C-w>k
 map <C-l> <C-w>l
 map <leader>l :Align
 nmap <leader>a :Ack<space>
+nmap <leader>s :sp<CR>
+nmap <leader>v :vsp<CR>
 nmap <leader>b :CtrlPBuffer<CR>
 nmap <leader>d :NERDTreeToggle<CR>
 nmap <leader>f :NERDTreeFind<CR>
