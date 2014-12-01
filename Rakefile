@@ -199,15 +199,13 @@ end
 
 # remove later
 # COPIED_FILES = filemap(
-#   'vim/vimrc.local'         => '~/.vimrc.local',
-#   'vim/vimrc.bundles.local' => '~/.vimrc.bundles.local'
+#   'vim/vimrc.local'         => '~/.vimrc.local'
 # )
 
 LINKED_FILES = filemap(
   'vim'               => '~/.vim',
   'tmux/tmux.conf'    => '~/.tmux.conf',
   'vim/vimrc'         => '~/.vimrc',
-  'vim/vimrc.bundles' => '~/.vimrc.bundles',
   'zsh/zshrc'         => '~/.zshrc',
   'git/gitignore'     => '~/.gitignore'
   'tmuxinator'        => '~/.tmuxinator'
