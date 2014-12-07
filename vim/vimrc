@@ -29,7 +29,6 @@ Plugin 'garbas/vim-snipmate'
 Plugin 'nathanaelkane/vim-indent-guides'
 Plugin 'nono/vim-handlebars'
 Plugin 'pangloss/vim-javascript'
-Plugin 'wookiehangover/jshint.vim'
 Plugin 'scrooloose/nerdtree'
 Plugin 'scrooloose/syntastic'
 Plugin 'slim-template/vim-slim'
@@ -106,6 +105,7 @@ nmap <leader>b :CtrlPBuffer<CR>
 nmap <leader>d :NERDTreeToggle<CR>
 nmap <leader>f :NERDTreeFind<CR>
 nmap <leader>t :CtrlP<CR>
+nmap <leader>m :CtrlPBufTag<CR>
 nmap <leader>T :CtrlPClearCache<CR>:CtrlP<CR>
 nmap <leader>] :TagbarToggle<CR>
 nmap <leader><space> :call whitespace#strip_trailing()<CR>
@@ -115,12 +115,14 @@ map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimr
 nmap <C-t> :tabnew<CR>
 
 nmap <leader><space> :nohlsearch<CR>
+nmap <Space> i_<Esc>r
 
 " in case you forgot to sudo
 cmap w!! %!sudo tee > /dev/null %
 
 " plugin settings
-let g:ctrlp_match_window = 'order:ttb,max:20'
+" let g:ctrlp_match_window = 'order:ttb,max:20'
+let g:ctrlp_switch_buffer = 1
 let g:NERDSpaceDelims=1
 let g:gitgutter_enabled = 0
 
