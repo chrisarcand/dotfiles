@@ -35,6 +35,7 @@ Plugin 'scrooloose/nerdtree'
 Plugin 'scrooloose/syntastic'
 Plugin 'slim-template/vim-slim'
 Plugin 'terryma/vim-multiple-cursors'
+Plugin 'thoughtbot/vim-rspec'
 Plugin 'tomtom/tlib_vim'
 Plugin 'tpope/vim-bundler'
 Plugin 'tpope/vim-commentary'
@@ -118,6 +119,12 @@ nmap <C-t> :tabnew<CR>
 
 nmap <leader><space> :nohlsearch<CR>
 nmap <Space> i_<Esc>r
+
+" RSpec.vim mappings
+map <Leader>rt :call RunCurrentSpecFile()<CR>
+map <Leader>rs :call RunNearestSpec()<CR>
+map <Leader>rl :call RunLastSpec()<CR>
+map <Leader>ra :call RunAllSpecs()<CR>
 
 " in case you forgot to sudo
 cmap w!! %!sudo tee > /dev/null %
