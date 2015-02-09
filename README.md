@@ -2,9 +2,8 @@
 
 Your dotfiles are how you personalize your system. These are mine.
 
-These dotfiles contain my own configurations for git, Sublime Text, and zsh as well as
-[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh)
-and modified vim/tmux configurations from [Maximum Awesome](https://github.com/square/maximum-awesome).
+These dotfiles contain my own configurations for git, vim, tmux, zsh using
+[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more.
 
 ## Install
 
@@ -14,9 +13,14 @@ I make absolutely no guarantee that everything will get symlinked and set up pro
 always, always make backups of your own dotfiles beforehand. You will also have to set up iterm2 customizations
 manually.
 
-### vim (Maximum Awesome bindings)
+The bash and Sublime configurations are deprecated.
+
+### vim
+
+Many of the basic bindings are from [Maximum Awesome](https://github.com/square/maximum-awesome), the set of dotfiles I originally started using with vim.
 
 * `,d` brings up [NERDTree](https://github.com/scrooloose/nerdtree), a sidebar buffer for navigating and manipulating files
+* `,f` finds current file in NERDTree sidebar
 * `,t` brings up [ctrlp.vim](https://github.com/kien/ctrlp.vim), a project file filter for easily opening specific files
 * `,b` restricts ctrlp.vim to open buffers
 * `,a` starts project search with [ack.vim](https://github.com/mileszs/ack.vim) using [ag](https://github.com/ggreer/the_silver_searcher) (like ack)
@@ -24,12 +28,15 @@ manually.
 * `\\\` toggles current line comment
 * `\\` toggles visual selection comment lines
 * `vii`/`vai` visually select *in* or *around* the cursor's indent
-* `,[space]` strips trailing whitespace
+* `,[space]` cancels highlight (:nohl)
 * `<C-]>` jump to definition using ctags
 * `,l` begins aligning lines on a string, usually used as `,l=` to align assignments
 * `<C-hjkl>` move between windows, shorthand for `<C-w> hjkl`
+* `,rs` runs current RSpec example, `,rt` runs full RSpec file, `,rl` runs last RSpec example...all within [vim-dispatch](https://github.com/tpope/vim-dispatch)
+* `K` greps project for current word under cursor
+* And loads more...
 
-### tmux (Maximum Awesome bindings)
+## tmux
 
 * `<C-a>` is the prefix
 * mouse scroll initiates tmux scroll
