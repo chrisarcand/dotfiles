@@ -138,6 +138,7 @@ cmap w!! %!sudo tee > /dev/null %
 " let g:ctrlp_match_window = 'order:ttb,max:20'
 let g:ctrlp_switch_buffer = 1
 let g:NERDSpaceDelims=1
+let g:NERDTreeShowHidden=1
 let g:gitgutter_enabled = 0
 
 " Use The Silver Searcher https://github.com/ggreer/the_silver_searcher
