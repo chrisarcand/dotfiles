@@ -151,6 +151,12 @@ namespace :install do
     brew_install 'tmux'
   end
 
+  desc 'Install hub'
+  task :hub do
+    step 'hub'
+    brew_install 'hub'
+  end
+
   desc 'Install MacVim'
   task :macvim do
     step 'MacVim'

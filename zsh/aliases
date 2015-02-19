@@ -1,5 +1,6 @@
 # Ye Olde Standards
-alias g='git'                                                       \
+alias g='hub'                                                       \
+  git='hub'                                                         \
   psg='ps aux | grep'                                               \
   be='bundle exec'                                                  \
   bi='bundle install'                                               \
