@@ -201,7 +201,6 @@ LINKED_FILES = filemap(
   'vim/vimrc'         => '~/.vimrc',
   'zsh/zshrc'         => '~/.zshrc',
   'git/gitignore'     => '~/.gitignore',
-  'tmuxinator'        => '~/.tmuxinator',
   'pry/pryrc'         => '~/.pryrc'
 )
 
