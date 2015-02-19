@@ -122,7 +122,7 @@ nmap <leader><space> :nohlsearch<CR>
 nmap <Space> i_<Esc>r
 
 " RSpec.vim mappings
-let g:rspec_command = "Dispatch rspec {spec}"
+" let g:rspec_command = "Dispatch rspec {spec}"
 map <Leader>rt :call RunCurrentSpecFile()<CR>
 map <Leader>rs :call RunNearestSpec()<CR>
 map <Leader>rl :call RunLastSpec()<CR>
