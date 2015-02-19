@@ -151,8 +151,6 @@ namespace :install do
     brew_install 'tmux'
   end
 
-  # TODO: I'm missing install steps for Brew Gem and subsequently Tmuxinator via Brew Gem
-
   desc 'Install MacVim'
   task :macvim do
     step 'MacVim'
@@ -197,18 +195,14 @@ def filemap(map)
   end.freeze
 end
 
-# remove later
-# COPIED_FILES = filemap(
-#   'vim/vimrc.local'         => '~/.vimrc.local'
-# )
-
 LINKED_FILES = filemap(
   'vim'               => '~/.vim',
   'tmux/tmux.conf'    => '~/.tmux.conf',
   'vim/vimrc'         => '~/.vimrc',
   'zsh/zshrc'         => '~/.zshrc',
-  'git/gitignore'     => '~/.gitignore'
-  'tmuxinator'        => '~/.tmuxinator'
+  'git/gitignore'     => '~/.gitignore',
+  'tmuxinator'        => '~/.tmuxinator',
+  'pry/pryrc'         => '~/.pryrc'
 )
 
 desc 'Install these config files.'
@@ -231,38 +225,12 @@ task :install do
     link_file orig, link
   end
 
-  # COPIED_FILES.each do |orig, copy|
-  #   cp orig, copy, :verbose => true unless File.exist?(copy)
-  # end
-
   # Install Vundle and bundles
   Rake::Task['install:vundle'].invoke
 
-  # step 'iterm2 colorschemes'
-  # colorschemes = `defaults read com.googlecode.iterm2 'Custom Color Presets'`
-  # dark  = colorschemes !~ /Solarized Dark/
-  # light = colorschemes !~ /Solarized Light/
-  # sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Dark.itermcolors')) if dark
-  # sh('open', '-a', '/Applications/iTerm.app', File.expand_path('iterm2-colors-solarized/Solarized Light.itermcolors')) if light
-
-  # step 'iterm2 profiles'
-  # puts
-  # puts "  Your turn!"
-  # puts
-  # puts "  Go and manually set up Solarized Light and Dark profiles in iTerm2."
-  # puts "  (You can do this in 'Preferences' -> 'Profiles' by adding a new profile,"
-  # puts "  then clicking the 'Colors' tab, 'Load Presets...' and choosing a Solarized option.)"
-  # puts "  Also be sure to set Terminal Type to 'xterm-256color' in the 'Terminal' tab."
-  # puts
-  # puts "  Enjoy!"
-  # puts
-
   puts "  Installation complete!"
   puts
-  puts "  Sublime Text configuration files were NOT added."
-  puts "  You should add these yourself if you like. Just add a symlink"
-  puts "  to replace your Sublime User directory to .dotfiles/sublime/User"
-  puts "  More info at http://chrisarcand.com/blog/sublime-text-settings-and-dotfiles"
+  puts "  You likely need to configure some colorscheme stuff in iTerm preferences"
   puts
 end
 
@@ -274,11 +242,6 @@ task :uninstall do
   LINKED_FILES.each do |orig, link|
     unlink_file orig, link
   end
-
-  # delete unchanged copied files
-  # COPIED_FILES.each do |orig, copy|
-  #   rm_f copy, :verbose => true if File.read(orig) == File.read(copy)
-  # end
 
   step 'homebrew'
   puts
