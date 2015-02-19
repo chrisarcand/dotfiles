@@ -13,8 +13,6 @@ I make absolutely no guarantee that everything will get symlinked and set up pro
 always, always make backups of your own dotfiles beforehand. You will also have to set up iterm2 customizations
 manually.
 
-The bash and Sublime configurations are deprecated.
-
 ### vim
 
 Many of the basic bindings are from [Maximum Awesome](https://github.com/square/maximum-awesome), the set of dotfiles I originally started using with vim.
