@@ -1,5 +1,5 @@
-require "awesome_print"
-AwesomePrint.pry!
+# require "awesome_print"
+# AwesomePrint.pry!
 
 # # <----- CUSTOM COMMANDS ----->
 
