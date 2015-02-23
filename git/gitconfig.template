@@ -42,6 +42,10 @@
   sclear = "stash clear"
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
+  author-line-count = "!git ls-tree -r -z --name-only HEAD -- **/(*.rb|*.erb) | xargs -0 -n1 git blame --line-porcelain HEAD |grep  "^author "|sort|uniq -c|sort -nr"
+
+  # This one doesn't work yet because my bash sucks and I can't figure out how to parameterize the author. Works as intended though.
+  # files-with-author = git log --no-merges --stat --author="ChrisArcand" --name-only --pretty=format:"" | sort -u
 
   # Uncommons, but incredibly useful
   # ----------------------------------------
