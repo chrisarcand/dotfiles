@@ -192,6 +192,13 @@ exec /Applications/MacVim.app/Contents/MacOS/Vim "$@"
     install_github_bundle 'gmarik','vundle'
     sh '~/bin/vim -c "BundleInstall" -c "q" -c "q"'
   end
+
+  desc 'Install pick'
+  task :pick do
+    step 'pick'
+    sh 'brew tap thoughtbot/formulae' #TODO: Remove this hack and generalize into a 'tap' method
+    sh 'brew install pick'
+  end
 end
 
 def filemap(map)
