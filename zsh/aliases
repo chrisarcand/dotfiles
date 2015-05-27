@@ -1,27 +1,25 @@
 # Ye Olde Standards
 alias g='hub'                                                       \
-  git='hub'                                                         \
-  psg='ps aux | grep'                                               \
-  be='bundle exec'                                                  \
-  bi='bundle install'                                               \
-  nrw='npm run-script watch'                                        \
-  reload='source ~/.zshrc'                                          \
-  cdir='echo -n $(pwd) | pbcopy'                                    \
-  path="echo $PATH | tr -s ':' '\n'"
+      git='hub'                                                     \
+      psg='ps aux | grep'                                           \
+      be='bundle exec'                                              \
+      bi='bundle install'                                           \
+      nrw='npm run-script watch'                                    \
+      reload='source ~/.zshrc'                                      \
+      cdir='echo -n $(pwd) | pbcopy'                                \
+      path="echo $PATH | tr -s ':' '\n'"                            \
+      tdbm='RAILS_ENV=test rake db:migrate'
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
-  gcm='g cm'                                                        \
-  gs='g s'                                                          \
-  gdf='g df'
+      gcm='g cm'                                                    \
+      gs='g s'                                                      \
+      gdf='g df'
 
 # Novelties
 alias wow='git status'                                              \
-  such='git'                                                        \
-  very='git'
+      such='git'                                                    \
+      very='git'
 
 # "Circumstance Specific" Aliases
-alias notes='subl ~/notes'                                          \
-  iatt='npm install && pac install && npm rebuild && bundle'        \
-  wipedb='powder down && rake db:drop && rake setup && powder up'   \
-  tdbm='RAILS_ENV=test rake db:migrate'
+alias notes='subl ~/notes'
