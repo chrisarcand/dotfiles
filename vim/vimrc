@@ -123,6 +123,7 @@ nmap <leader>g :GitGutterToggle<CR>
 nmap <leader>c <Plug>Kwbd
 map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
 nmap <C-t> :tabnew<CR>
+nmap <C-w> :tabclose<CR>
 
 nmap <leader><space> :nohlsearch<CR>
 nmap <Space> i_<Esc>r
