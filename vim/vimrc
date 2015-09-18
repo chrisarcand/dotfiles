@@ -129,7 +129,7 @@ nmap <leader><space> :nohlsearch<CR>
 nmap <Space> i_<Esc>r
 
 " vim-rspec settings
-let g:rspec_command = 'call Send_to_Tmux("clear && rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
+let g:rspec_command = 'call Send_to_Tmux("clear && bundle exec rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
 map <Leader>rt :call RunCurrentSpecFile()<CR>
 map <Leader>rs :call RunNearestSpec()<CR>
 map <Leader>rl :call RunLastSpec()<CR>
