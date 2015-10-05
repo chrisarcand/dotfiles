@@ -10,6 +10,8 @@
   excludesfile = ~/.gitignore
   editor = vim
   autocrlf = input
+[init]
+  templatedir = ~/.git_template
 [help]
   autocorrect = 1
 [push]
