@@ -44,6 +44,7 @@
   sclear = "stash clear"
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
+  ctags = "!.git/hooks/ctags"
 
   # This one doesn't work yet because my bash sucks and I can't figure out how to parameterize the author. Works as intended though.
   # files-with-author = git log --no-merges --stat --author="ChrisArcand" --name-only --pretty=format:"" | sort -u

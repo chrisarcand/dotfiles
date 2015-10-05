@@ -214,6 +214,7 @@ LINKED_FILES = filemap(
   'vim/vimrc'         => '~/.vimrc',
   'zsh/zshrc'         => '~/.zshrc',
   'git/gitignore'     => '~/.gitignore',
+  'git/git_template'  => '~/.git_template',
   'pry/pryrc'         => '~/.pryrc',
   'ctags/ctags'       => '~/.ctags'
 )
