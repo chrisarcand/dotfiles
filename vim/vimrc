@@ -103,44 +103,18 @@ endif
 " BEGIN KEYBINDINGS ===========================================================
 
 let mapleader = ','
+
+inoremap jj <ESC>
+map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
+
+" Meta key bindings -----------------------------------------------------------
 map <C-h> <C-w>h
 map <C-j> <C-w>j
 map <C-k> <C-w>k
 map <C-l> <C-w>l
-inoremap jj <ESC>
-map <leader>l :Align
-nmap <leader>a :Ack<space>
-nmap <leader>s :sp<CR>
-nmap <leader>v :vsp<CR>
-nmap <leader>b :CtrlPBuffer<CR>
-nmap <leader>d :NERDTreeToggle<CR>
-nmap <leader>f :NERDTreeFind<CR>
-nmap <leader>t :CtrlP<CR>
-nmap <leader>m :CtrlPBufTag<CR>
-nmap <leader>T :CtrlPClearCache<CR>:CtrlP<CR>
-nmap <leader>] :TagbarToggle<CR>
-nmap <leader><space> :call whitespace#strip_trailing()<CR>
-nmap <leader>g :GitGutterToggle<CR>
-nmap <leader>c <Plug>Kwbd
-map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
+
 nmap <C-t> :tabnew<CR>
 nmap <C-w> :tabclose<CR>
-
-nmap <leader><space> :nohlsearch<CR>
-nmap <Space> i_<Esc>r
-
-" vim-rspec settings
-let g:rspec_command = 'call Send_to_Tmux("clear && bundle exec rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
-map <Leader>rt :call RunCurrentSpecFile()<CR>
-map <Leader>rs :call RunNearestSpec()<CR>
-map <Leader>rl :call RunLastSpec()<CR>
-map <Leader>ra :call RunAllSpecs()<CR>
-
-" grep word under cursor
-nmap K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
-
-" in case you forgot to sudo
-cmap w!! %!sudo tee > /dev/null %
 
 " Firefox style tab navigation (cmd + #)
 "
@@ -164,23 +138,49 @@ cmap w!! %!sudo tee > /dev/null %
 " CMD+9 ---> '0x39 0x67 0x74' (9gt)
 " CMD+0 ---> '0x3A 0x74 0x61 0x62 0x6C 0x61 0x73 0x74 0x0D' (:tablast<CR>)
 
-map <D-S-]> gt
-map <D-S-[> gT
-map <D-1> 1gt
-map <D-2> 2gt
-map <D-3> 3gt
-map <D-4> 4gt
-map <D-5> 5gt
-map <D-6> 6gt
-map <D-7> 7gt
-map <D-8> 8gt
-map <D-9> 9gt
-map <D-0> :tablast<CR>
+nmap <D-S-]> gt
+nmap <D-S-[> gT
+nmap <D-1> 1gt
+nmap <D-2> 2gt
+nmap <D-3> 3gt
+nmap <D-4> 4gt
+nmap <D-5> 5gt
+nmap <D-6> 6gt
+nmap <D-7> 7gt
+nmap <D-8> 8gt
+nmap <D-9> 9gt
+nmap <D-0> :tablast<CR>
+
+" Leader bindings -------------------------------------------------------------
+vmap <leader>l :Align
+
+nmap <leader>a :Ack<space>
+nmap <leader>s :sp<CR>
+nmap <leader>v :vsp<CR>
+nmap <leader>] :TagbarToggle<CR>
+nmap <leader>c <Plug>Kwbd
+nmap <leader><space> :nohlsearch<CR>
+
+" CtrlP
+nmap <leader>b :CtrlPBuffer<CR>
+nmap <leader>t :CtrlP<CR>
+nmap <leader>m :CtrlPBufTag<CR>
+nmap <leader>T :CtrlPClearCache<CR>:CtrlP<CR>
+
+" NERDTree
+nmap <leader>d :NERDTreeToggle<CR>
+nmap <leader>f :NERDTreeFind<CR>
+
+" vim-rspec
+nmap <leader>rt :call RunCurrentSpecFile()<CR>
+nmap <leader>rs :call RunNearestSpec()<CR>
+nmap <leader>rl :call RunLastSpec()<CR>
+nmap <leader>ra :call RunAllSpecs()<CR>
 
 " END KEYBINDINGS =============================================================
 
 " plugin settings
-" let g:ctrlp_match_window = 'order:ttb,max:20'
+let g:rspec_command = 'call Send_to_Tmux("clear && bundle exec rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
 let g:ctrlp_switch_buffer = 1
 let g:NERDSpaceDelims = 1
 let g:NERDTreeShowHidden = 1
