@@ -100,7 +100,8 @@ if exists('$TMUX')  " Support resizing in tmux
   set ttymouse=xterm2
 endif
 
-" keyboard shortcuts
+" BEGIN KEYBINDINGS ===========================================================
+
 let mapleader = ','
 map <C-h> <C-w>h
 map <C-j> <C-w>j
@@ -140,6 +141,43 @@ nmap K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
 
 " in case you forgot to sudo
 cmap w!! %!sudo tee > /dev/null %
+
+" Firefox style tab navigation (cmd + #)
+"
+" For mac users (using the Cmd 'Apple' key)
+" To use Ctrl for linux/windows, s/D-/C-/g
+"
+" WHEN USING ITERM, you must have shortcuts set up to override the default iTerm tab switching and send the commands to
+" the terminal (vim) instead. In keyboard shortcuts, add a shortcut for each of these with 'Send Hex Code' and the
+" proper sequence.
+"
+" CMD+] ---> '0x67 0x74' (gt)
+" CMD+[ ---> '0x67 0x54' (gT)
+" CMD+1 ---> '0x31 0x67 0x74' (1gt)
+" CMD+2 ---> '0x32 0x67 0x74' (2gt)
+" CMD+3 ---> '0x33 0x67 0x74' (3gt)
+" CMD+4 ---> '0x34 0x67 0x74' (4gt)
+" CMD+5 ---> '0x35 0x67 0x74' (5gt)
+" CMD+6 ---> '0x36 0x67 0x74' (6gt)
+" CMD+7 ---> '0x37 0x67 0x74' (7gt)
+" CMD+8 ---> '0x38 0x67 0x74' (8gt)
+" CMD+9 ---> '0x39 0x67 0x74' (9gt)
+" CMD+0 ---> '0x3A 0x74 0x61 0x62 0x6C 0x61 0x73 0x74 0x0D' (:tablast<CR>)
+
+map <D-S-]> gt
+map <D-S-[> gT
+map <D-1> 1gt
+map <D-2> 2gt
+map <D-3> 3gt
+map <D-4> 4gt
+map <D-5> 5gt
+map <D-6> 6gt
+map <D-7> 7gt
+map <D-8> 8gt
+map <D-9> 9gt
+map <D-0> :tablast<CR>
+
+" END KEYBINDINGS =============================================================
 
 " plugin settings
 " let g:ctrlp_match_window = 'order:ttb,max:20'
