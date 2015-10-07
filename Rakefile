@@ -133,10 +133,10 @@ namespace :install do
     end
   end
 
-  desc 'Install ctags'
+  desc 'Install universal-ctags'
   task :ctags do
-    step 'ctags'
-    brew_install 'ctags'
+    sh 'brew tap universal-ctags/universal-ctags' #TODO: Remove this hack and generalize into a 'tap' method
+    sh 'brew install --HEAD universal-ctags'
   end
 
   desc 'Install reattach-to-user-namespace'
@@ -229,9 +229,6 @@ task :install do
   Rake::Task['install:reattach_to_user_namespace'].invoke
   Rake::Task['install:tmux'].invoke
   Rake::Task['install:macvim'].invoke
-
-  # TODO install gem ctags?
-  # TODO run gem ctags?
 
   step 'symlink'
 
