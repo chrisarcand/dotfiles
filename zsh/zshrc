@@ -59,7 +59,6 @@ export PATH=$PATH:/usr/local/mysql/bin #MySQL
 export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
 export PATH=$PATH:/usr/local/share/npm/bin # npm bins
 export PATH=$PATH:/usr/local/opt/go/libexec/bin # golang bins
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # rvm
 
 # ALIASES
 source $HOME/.dotfiles/zsh/aliases
@@ -75,11 +74,14 @@ export BASE16_SCHEME="default"
 export BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
 
-# Node
+# rbenv
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init - zsh)"
+
+ #Node
 source $(brew --prefix nvm)/nvm.sh
 export NVM_DIR=~/.nvm
 ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
 
 source $HOME/.private-zshrc
 
-export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting

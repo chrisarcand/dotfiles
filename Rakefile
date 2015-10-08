@@ -199,6 +199,18 @@ exec /Applications/MacVim.app/Contents/MacOS/Vim "$@"
     sh 'brew tap thoughtbot/formulae' #TODO: Remove this hack and generalize into a 'tap' method
     sh 'brew install pick'
   end
+
+  desc 'Install rbenv'
+  task :rbenv do
+    step 'rbenv'
+    sh 'brew install rbenv'
+  end
+
+  desc 'Install ruby-build'
+  task :rubybuild do
+    step 'ruby-build'
+    sh 'brew install ruby-build'
+  end
 end
 
 def filemap(map)
