@@ -8,7 +8,9 @@ alias g='hub'                                                       \
       reload='source ~/.zshrc'                                      \
       cdir='echo -n $(pwd) | pbcopy'                                \
       path="echo $PATH | tr -s ':' '\n'"                            \
-      tdbm='RAILS_ENV=test rake db:migrate'
+      tdbm='RAILS_ENV=test rake db:migrate'                         \
+      rwr='rbenv which ruby'                                        \
+      rr='rbenv rehash'
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
@@ -20,6 +22,3 @@ alias ga='g a'                                                      \
 alias wow='git status'                                              \
       such='git'                                                    \
       very='git'
-
-# "Circumstance Specific" Aliases
-alias notes='subl ~/notes'
