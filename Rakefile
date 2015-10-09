@@ -157,33 +157,13 @@ namespace :install do
     brew_install 'hub'
   end
 
-  desc 'Install MacVim'
-  task :macvim do
-    step 'MacVim'
-    unless app? 'MacVim'
-      brew_cask_install 'macvim'
-    end
-
-    # Needed? Unsure
-    bin_dir = File.expand_path('~/bin')
-    bin_vim = File.join(bin_dir, 'vim')
-    unless ENV['PATH'].split(':').include?(bin_dir)
-      puts 'Please add ~/bin to your PATH, e.g. run this command:'
-      puts
-      puts %{  echo 'export PATH="~/bin:$PATH"' >> ~/.bashrc}
-      puts
-      puts 'The exact command and file will vary by your shell and configuration.'
-    end
-
-    FileUtils.mkdir_p(bin_dir)
-    unless File.executable?(bin_vim)
-      File.open(bin_vim, 'w', 0744) do |io|
-        io << <<-SHELL
-#!/bin/bash
-exec /Applications/MacVim.app/Contents/MacOS/Vim "$@"
-        SHELL
-      end
-    end
+  # Use Homebrew's vim because OSX's is old and shitty and doesn't work with Fugitive nicely.
+  # I don't think Macvim needs to be installed, but if you run into trouble, start with that.
+  # See Git logs for the previous setup with Macvim
+  desc 'Install vim'
+  task :vim do
+    step 'vim'
+    brew_install 'vim'
   end
 
   desc 'Install Vundle'
