@@ -41,7 +41,7 @@ DISABLE_CORRECTION="true"
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git virtualenv)
+plugins=(git wd virtualenv)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -82,6 +82,11 @@ eval "$(rbenv init - zsh)"
 source $(brew --prefix nvm)/nvm.sh
 export NVM_DIR=~/.nvm
 ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
+
+# TODO load a function directory instead of defining this here...
+function add_warp_points {
+  for dir in $1/*; do (cd "$dir" && wd add "${PWD##*/}"); done
+}
 
 source $HOME/.private-zshrc
 
