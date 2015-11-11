@@ -157,7 +157,12 @@ nmap <leader>ra :call RunAllSpecs()<CR>
 
 " plugin settings
 let g:rspec_command = 'call Send_to_Tmux("clear && bundle exec rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
-let g:ctrlp_switch_buffer = 1
+let g:ctrlp_switch_buffer = 1 " Switch to an open buffer on the file if one is already open
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\v[\/](\.(git|hg|svn)|\_site)$',
+  \ 'file': '\v\.(exe|so|dll|class|png|jpg|jpeg)$',
+\}
+let g:ctrlp_working_path_mode = 'r' " Use the nearest .git directory as the cwd
 let g:NERDSpaceDelims = 1
 let g:NERDTreeShowHidden = 1
 
