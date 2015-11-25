@@ -50,24 +50,34 @@ source $ZSH/oh-my-zsh.sh
 # ================================================================================================
 
 # PATH
-# I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
-# Also allows you to `reload` without constantly appending to your path
-export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
+case $(uname) in
+  'Darwin')
+    # I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
+    # Also allows you to `reload` without constantly appending to your path
+    export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
 
-export PATH=$PATH:$HOME/bin
-export PATH=$PATH:/usr/local/mysql/bin #MySQL
-export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
-export PATH=$PATH:/usr/local/share/npm/bin # npm bins
-export PATH=$PATH:/usr/local/opt/go/libexec/bin # golang bins
+    export PATH=$PATH:$HOME/bin
+    export PATH=$PATH:/usr/local/mysql/bin #MySQL
+    export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
+    export PATH=$PATH:/usr/local/share/npm/bin # npm bins
+    export PATH=$PATH:/usr/local/opt/go/libexec/bin # golang bins
+    ;;
+  'Linux')
+    ;;
+esac
 
 # ALIASES
 source $HOME/.dotfiles/zsh/aliases
 
 # MISC
-export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
 export EDITOR='vim'
-export PGDATA="/usr/local/var/postgres" # Configuration files for Postgres (-D option)
-export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future # OSX STUPIDITY
+case $(uname) in
+  'Darwin')
+    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
+    export PGDATA="/usr/local/var/postgres" # Configuration files for Postgres (-D option)
+    export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future # OSX STUPIDITY
+    ;;
+esac
 
 # Base16 Shell
 export BASE16_SCHEME="default"
@@ -78,15 +88,17 @@ export BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init - zsh)"
 
- #Node
-source $(brew --prefix nvm)/nvm.sh
-export NVM_DIR=~/.nvm
-ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
+# Node
+# source $(brew --prefix nvm)/nvm.sh
+# export NVM_DIR=~/.nvm
+# ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
 
 # TODO load a function directory instead of defining this here...
 function add_warp_points {
   for dir in $1/*; do (cd "$dir" && wd add "${PWD##*/}"); done
 }
 
-source $HOME/.private-zshrc
+if [ -f $HOME/.private-zshrc ]; then
+  source $HOME/.private-zshrc
+fi
 
