@@ -151,10 +151,29 @@ namespace :install do
     brew_install 'tmux'
   end
 
+  desc 'Install git'
+  task :git do
+    step 'git'
+    brew_install 'git'
+  end
+
   desc 'Install hub'
   task :hub do
     step 'hub'
     brew_install 'hub'
+  end
+
+  desc 'Install openssl'
+  task :openssl do
+    step 'openssl'
+    brew_install 'openssl'
+  end
+
+  # Use gnu-sed, becase OSX's BSD sed is garbage.
+  desc 'Install gnu-sed'
+  task :sed do
+    step 'gnu-sed'
+    brew_install 'gnu-sed'
   end
 
   # Use Homebrew's vim because OSX's is old and shitty and doesn't work with Fugitive nicely.
