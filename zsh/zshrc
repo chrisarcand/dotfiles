@@ -80,8 +80,7 @@ case $(uname) in
 esac
 
 # Base16 Shell
-export BASE16_SCHEME="default"
-export BASE16_SHELL="$HOME/.dotfiles/base16-shell/base16-$BASE16_SCHEME.dark.sh"
+export BASE16_SHELL="$HOME/.dotfiles/fonts_and_colorschemes/base16-default.dark-shell.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
 
 # rbenv
