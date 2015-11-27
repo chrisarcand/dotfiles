@@ -1,5 +1,12 @@
 ENV['HOMEBREW_CASK_OPTS'] = "--appdir=/Applications"
 
+def filemap(map)
+  map.inject({}) do |result, (key, value)|
+    result[File.expand_path(key)] = File.expand_path(value)
+    result
+  end.freeze
+end
+
 LINKED_FILES = filemap(
   'vim'                     => '~/.vim',
   'tmux/tmux.conf'          => '~/.tmux.conf',
@@ -12,13 +19,6 @@ LINKED_FILES = filemap(
   'pry/pryrc'               => '~/.pryrc',
   'ctags/ctags'             => '~/.ctags'
 )
-
-def filemap(map)
-  map.inject({}) do |result, (key, value)|
-    result[File.expand_path(key)] = File.expand_path(value)
-    result
-  end.freeze
-end
 
 def brew_install(package, *options)
   `brew list #{package}`
