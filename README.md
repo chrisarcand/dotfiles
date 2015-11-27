@@ -5,24 +5,12 @@ Your dotfiles are how you personalize your system. These are mine.
 This contains my own configurations for git, vim, tmux, zsh using
 [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more. You'll
 find this most useful if you're an OSX user but Linux is also supported with a
-slightly pared-down set of configurations, used with
+slightly pared-down set of configurations, usually used with
 [Fedora](https://getfedora.org).
 
 ## Install
 
-```plaintext
-# OSX:
-$ git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
-$ cd ~/.dotfiles && rake install
-
-# Linux:
-# Manual install required. I don't change Linux boxes enough to merit
-# maintaining a separate install script.
-```
-
-I make absolutely no guarantee that everything will get symlinked and installed properly.
-Always, always make backups of your own dotfiles beforehand. You will also have to set up
-some terminal emulator customizations manually (font, schemes, all that).
+TODO. I'm completely revamping my install script at the moment.
 
 ### vim
 
@@ -63,7 +51,7 @@ You can adjust the size of the smaller panes in `tmux.conf` by lowering or incre
 
 ## Uninstall
 
-    rake uninstall
+TODO
 
 Note that this won't remove everything, but your vim configuration should be reset to whatever it was before installing. Some uninstallation steps will be manual.
 

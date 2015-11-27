@@ -27,7 +27,7 @@ SOFTWARE.
 
 ===============================================================================
 
-vim and tmux configurations are modified versions of Square, Inc's
+vim and tmux configurations are heavily modified versions of Square, Inc's
 Maximum-Awesome configuration files, available at
 https://github.com/square/maximum-awesome. They are licnesed under Apache v2:
 
