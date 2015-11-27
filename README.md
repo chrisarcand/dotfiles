@@ -2,21 +2,34 @@
 
 Your dotfiles are how you personalize your system. These are mine.
 
-These dotfiles contain my own configurations for git, vim, tmux, zsh using
-[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more.
+This contains my own configurations for git, vim, tmux, zsh using
+[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more. You'll
+find this most useful if you're an OSX user but Linux is also supported with a
+slightly pared-down set of configurations, used with
+[Fedora](https://getfedora.org).
 
 ## Install
 
-    rake
+```plaintext
+# OSX:
+$ git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
+$ cd ~/.dotfiles && rake install
 
-I make absolutely no guarantee that everything will get symlinked and set up properly. It should - but
-always, always make backups of your own dotfiles beforehand. You will also have to set up iterm2 customizations
-manually.
+# Linux:
+# Manual install required. I don't change Linux boxes enough to merit
+# maintaining a separate install script.
+```
+
+I make absolutely no guarantee that everything will get symlinked and installed properly.
+Always, always make backups of your own dotfiles beforehand. You will also have to set up
+some terminal emulator customizations manually (font, schemes, all that).
 
 ### vim
 
 Many of the basic bindings are from [Maximum Awesome](https://github.com/square/maximum-awesome), the set of dotfiles I originally started using with vim.
+I change these pretty often, but here's a short sampling of the standard flow:
 
+* `,` is the Vim leader key
 * `,d` brings up [NERDTree](https://github.com/scrooloose/nerdtree), a sidebar buffer for navigating and manipulating files
 * `,f` finds current file in NERDTree sidebar
 * `,t` brings up [ctrlp.vim](https://github.com/kien/ctrlp.vim), a project file filter for easily opening specific files
@@ -25,9 +38,10 @@ Many of the basic bindings are from [Maximum Awesome](https://github.com/square/
 * `ds`/`cs` delete/change surrounding characters (e.g. `"Hey!"` + `ds"` = `Hey!`, `"Hey!"` + `cs"'` = `'Hey!'`) with [vim-surround](https://github.com/tpope/vim-surround)
 * `\\\` toggles current line comment
 * `\\` toggles visual selection comment lines
-* `vii`/`vai` visually select *in* or *around* the cursor's indent
+* `vii`/`vai` visually selects *in* or *around* the cursor's indent
 * `,[space]` cancels highlight (:nohl)
-* `<C-]>` jump to definition using ctags
+* `<C-]>` jumps to definition of method/class/variable/module using ctags
+* `<C-t>` goes back to where you jumped from (ctags)
 * `,l` begins aligning lines on a string, usually used as `,l=` to align assignments
 * `<C-hjkl>` move between windows, shorthand for `<C-w> hjkl`
 * `,rs` runs current RSpec example, `,rt` runs full RSpec file, `,rl` runs last RSpec example...all within [vim-dispatch](https://github.com/tpope/vim-dispatch)
