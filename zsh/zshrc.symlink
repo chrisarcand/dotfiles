@@ -1,5 +1,7 @@
+export DOTFILES_ROOT=$HOME/.dotfiles
+
 # Path to your oh-my-zsh configuration.
-ZSH=$HOME/.dotfiles/oh-my-zsh
+ZSH=$DOTFILES_ROOT/oh-my-zsh
 
 # Set name of the theme to load.
 # Look in oh-my-zsh/themes/
@@ -67,7 +69,7 @@ case $(uname) in
 esac
 
 # ALIASES
-source $HOME/.dotfiles/zsh/aliases
+source $DOTFILES_ROOT/zsh/aliases
 
 # MISC
 export EDITOR='vim'
@@ -80,7 +82,7 @@ case $(uname) in
 esac
 
 # Base16 Shell
-export BASE16_SHELL="$HOME/.dotfiles/fonts_and_colorschemes/base16-default.dark-shell.sh"
+export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-shell.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
 
 # rbenv
