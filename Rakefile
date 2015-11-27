@@ -1,5 +1,25 @@
 ENV['HOMEBREW_CASK_OPTS'] = "--appdir=/Applications"
 
+LINKED_FILES = filemap(
+  'vim'                     => '~/.vim',
+  'tmux/tmux.conf'          => '~/.tmux.conf',
+  'tmux/tmux-osx.conf'      => '~/.tmux-osx.conf',
+  'tmux/tmux-linux.conf'    => '~/.tmux-linux.conf',
+  'vim/vimrc'               => '~/.vimrc',
+  'zsh/zshrc'               => '~/.zshrc',
+  'git/gitignore'           => '~/.gitignore',
+  'git/git_template'        => '~/.git_template',
+  'pry/pryrc'               => '~/.pryrc',
+  'ctags/ctags'             => '~/.ctags'
+)
+
+def filemap(map)
+  map.inject({}) do |result, (key, value)|
+    result[File.expand_path(key)] = File.expand_path(value)
+    result
+  end.freeze
+end
+
 def brew_install(package, *options)
   `brew list #{package}`
   return if $?.success?
@@ -212,60 +232,59 @@ namespace :install do
   end
 end
 
-def filemap(map)
-  map.inject({}) do |result, (key, value)|
-    result[File.expand_path(key)] = File.expand_path(value)
-    result
-  end.freeze
-end
-
-LINKED_FILES = filemap(
-  'vim'                     => '~/.vim',
-  'tmux/tmux.conf'          => '~/.tmux.conf',
-  'tmux/tmux-osx.conf'      => '~/.tmux-osx.conf',
-  'tmux/tmux-linux.conf'    => '~/.tmux-linux.conf',
-  'vim/vimrc'               => '~/.vimrc',
-  'zsh/zshrc'               => '~/.zshrc',
-  'git/gitignore'           => '~/.gitignore',
-  'git/git_template'        => '~/.git_template',
-  'pry/pryrc'               => '~/.pryrc',
-  'ctags/ctags'             => '~/.ctags'
-)
-
-desc 'Install these config files.'
-task :install do
-  Rake::Task['install:brew'].invoke
-  Rake::Task['install:brew_cask'].invoke
-  Rake::Task['install:the_silver_searcher'].invoke
-  Rake::Task['install:iterm'].invoke
-  Rake::Task['install:ctags'].invoke
-  Rake::Task['install:reattach_to_user_namespace'].invoke
-  Rake::Task['install:tmux'].invoke
-  Rake::Task['install:macvim'].invoke
-
-  step 'symlink'
-
+desc 'Symlink dotfiles (and make backups)'
+task :symlink do
+  step 'Setting up symlinks (making backups of existing files)...'
   LINKED_FILES.each do |orig, link|
     link_file orig, link
   end
+  puts 'done!'
+end
 
-  # Install Vundle and bundles
-  Rake::Task['install:vundle'].invoke
+desc 'Unsymlink dotfiles (and restore backups)'
+task :unsymlink do
+  puts 'Unsymlinking and restoring backups...'
+  LINKED_FILES.each do |orig, link|
+    unlink_file orig, link
+  end
+  puts 'done!'
+end
+
+desc 'Install these config files.'
+task :install do
+  tools = %w(
+    brew
+    brew_cask
+    the_silver_searcher
+    iterm
+    ctags
+    reattach_to_user_namespace
+    tmux
+    git
+    hub
+    openssl
+    sed
+    vim
+    pick
+    rbenv
+    rubybuild
+  )
+
+  tools.each do |tool|
+    Rake::Task["install:#{tool}"].invoke
+  end
+  Rake::Task['symlink'].invoke
+  Rake::Task['install:vundle'].invoke # After symlinks completed
 
   puts "  Installation complete!"
   puts
-  puts "  You likely need to configure some colorscheme stuff in iTerm preferences"
+  puts "  You likely need to configure font/colorscheme stuff in iTerm preferences"
   puts
 end
 
 desc 'Uninstall these config files.'
 task :uninstall do
-  step 'un-symlink'
-
-  # un-symlink files that still point to the installed locations
-  LINKED_FILES.each do |orig, link|
-    unlink_file orig, link
-  end
+  Rake::Task['unsymlink'].invoke
 
   step 'homebrew'
   puts
@@ -276,12 +295,6 @@ task :uninstall do
   puts 'Run this to uninstall iTerm:'
   puts
   puts '  rm -rf /Applications/iTerm.app'
-
-  step 'macvim'
-  puts
-  puts 'Run this to uninstall MacVim:'
-  puts
-  puts '  rm -rf /Applications/MacVim.app'
 end
 
 task :default => :install
