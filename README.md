@@ -2,8 +2,7 @@
 
 Your dotfiles are how you personalize your system. These are mine.
 
-This contains my own configurations for git, vim, tmux, zsh using
-[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more.
+This contains my own configurations for git, vim, tmux, zsh using oh-my-zsh, ruby, pry, and more.
 The provided installer includes support for the following OS/distributions:
 
 * Mac OSX
@@ -14,7 +13,7 @@ The provided installer includes support for the following OS/distributions:
 ## Installation
 
 There is an install script to automatically symlink all the configuration files
-and install packages for OSX/Fedora/Red Hat Enterprise Linux/CentOS.
+to your home directory and install packages for supported operating systems.
 
 ```plaintext
 $ git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
@@ -25,6 +24,35 @@ Note: Although the install script is quite good and will back up your own
 existing dotfiles with nice prompts, I take no responsibility for your system.
 Please be sure to back up your files appropriately before installation if
 there's anything important that already exists.
+
+### Organization
+
+These files follow a topic-based organizational scheme originally popularized by Zach Holman.
+The organization is as follows:
+
+* **bin/**  
+Anything in bin/ will get added to your $PATH and be made available everywhere.
+
+* **\<topic\>/*.zsh**  
+Any files ending in .zsh get loaded into your environment.
+
+* **\<topic\>/path.zsh**  
+Any file named path.zsh is loaded first and is expected to
+setup $PATH or similar.
+
+* **\<topic\>/completion.zsh**  
+Any file named completion.zsh is loaded last and is
+expected to set up autocomplete.
+
+* **\<topic\>/*.symlink**  
+Any files ending in `.symlink` get symlinked into your $HOME when you use the
+provided install script. This is so you can keep all of those versioned in
+your dotfiles but still keep those autoloaded files in your home directory.
+
+* **_plugins/**  
+This directory houses git submodules to properly version important external dependencies.
+I don't do this for all plugins (Like, vim plugins are always freshly installed), but
+make an exception for some things like oh-my-zsh and tmux plugins.
 
 ### vim
 
