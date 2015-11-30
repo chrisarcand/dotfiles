@@ -138,8 +138,7 @@ setup_gitconfig
 symlink_dotfiles
 
 # find the installers and run them iteratively
-find $DOTFILES_ROOT -mindepth 2 -not -path "$DOTFILES_ROOT/_plugins/*" -name install.sh | \
-while read installer ; do sh -c "${installer}" ; done
+find $DOTFILES_ROOT -mindepth 2 -not -path "$DOTFILES_ROOT/_plugins/*" -name install.sh -exec "{}" \;
 
 echo ''
 echo 'Installation complete!'
