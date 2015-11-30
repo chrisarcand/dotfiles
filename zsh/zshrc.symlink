@@ -1,7 +1,11 @@
 export DOTFILES_ROOT=$HOME/.dotfiles
 
+# ================================================================================================
+# oh-my-zsh configuration
+# ================================================================================================
+
 # Path to your oh-my-zsh configuration.
-ZSH=$DOTFILES_ROOT/oh-my-zsh
+ZSH=$DOTFILES_ROOT/_plugins/oh-my-zsh
 
 # Set name of the theme to load.
 # Look in oh-my-zsh/themes/
@@ -48,7 +52,65 @@ plugins=(git wd virtualenv)
 source $ZSH/oh-my-zsh.sh
 
 # ================================================================================================
-# Customize to your needs...
+# Topical Components
+# ================================================================================================
+# My dotfiles use a topical organizational scheme made popular by Zach Holman.
+# All of the paths below are rooted wherever you installed these dotfiles
+# ($HOME/.dotfiles by default).
+
+# bin/
+# Anything in bin/ will get added to your $PATH and be made available
+# everywhere.
+#
+# <topic>/*.zsh
+# Any files ending in .zsh get loaded into your environment.
+#
+# <topic>/path.zsh
+# Any file named path.zsh is loaded first and is expected to
+# setup $PATH or similar.
+#
+# <topic>/completion.zsh
+# Any file named completion.zsh is loaded last and is
+# expected to set up autocomplete.
+#
+# <topic>/*.symlink
+# Any files ending in *.symlink get symlinked into your $HOME when you use the
+# provided install script. This is so you can keep all of those versioned in
+# your dotfiles but still keep those autoloaded files in your home directory.
+
+# all of our zsh files (excluding /_plugins)
+typeset -U config_files
+setopt extended_glob
+config_files=($DOTFILES_ROOT/(^_plugins/)#*.zsh)
+
+# load the path files
+for file in ${(M)config_files:#*/path.zsh}
+do
+  source $file
+done
+
+# load everything but the path and completion files
+for file in ${${config_files:#*/path.zsh}:#*/completion.zsh}
+do
+  source $file
+done
+
+# initialize autocomplete here, otherwise functions won't be loaded
+autoload -U compinit
+compinit
+
+# load every completion after autocomplete loads
+for file in ${(M)config_files:#*/completion.zsh}
+do
+  source $file
+done
+
+unset config_files
+
+# ================================================================================================
+# OLD CONFIG
+# Everything below this point is before I started using the scheme in the
+# "Components" section above. Should be cut up and moved into the new scheme.
 # ================================================================================================
 
 # PATH
