@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 DOTFILES_ROOT=~/.dotfiles
 
@@ -25,7 +25,7 @@ fail () {
 }
 
 setup_gitconfig () {
-  if ! [ -f git/gitconfig.symlink ]
+  if ! [ -f $DOTFILES_ROOT/git/gitconfig.symlink ]
   then
     info 'setup gitconfig'
 
