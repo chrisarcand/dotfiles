@@ -10,9 +10,6 @@ bind-key R source-file ~/.tmux.conf \; display-message "tmux.conf reloaded."
 # vi is good
 setw -g mode-keys vi
 
-# mouse behavior
-set -g mouse on
-
 set -g default-terminal "screen-256color"
 
 bind-key : command-prompt
@@ -65,6 +62,12 @@ bind-key -n C-S-Right swap-window -t +1
 bind-key [ copy-mode
 bind-key ] paste-buffer
 
+# use vim-like keys for yanking/pasting
+unbind p
+bind p paste-buffer
+bind-key -t vi-copy 'v' begin-selection
+bind-key -t vi-copy 'y' copy-selection
+
 set-option -g display-panes-time 3000
 
 # Status Bar
@@ -100,4 +103,7 @@ set -g pane-border-fg 'colour238'
 set-window-option -g pane-base-index 1
 
 # Platform specific settings
-if-shell "uname | grep -q Darwin" "source-file .tmux-macosx.conf" "source-file .tmux-linux.conf"
+if-shell "uname | grep -q Darwin" "source-file $DOTFILES_ROOT/tmux/tmux-macosx.conf" "source-file $DOTFILES_ROOT/tmux/tmux-linux.conf"
+
+# Plugins
+run-shell $DOTFILES_ROOT/_plugins/tmux-yank/yank.tmux
