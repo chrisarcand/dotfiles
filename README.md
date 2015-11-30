@@ -3,14 +3,28 @@
 Your dotfiles are how you personalize your system. These are mine.
 
 This contains my own configurations for git, vim, tmux, zsh using
-[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more. You'll
-find this most useful if you're an OSX user but Linux is also supported with a
-slightly pared-down set of configurations, usually used with
-[Fedora](https://getfedora.org).
+[oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh), pry, and more.
+The provided installer includes support for the following OS/distributions:
 
-## Install
+* Mac OSX
+* Fedora
+* Red Hat Enterprise Linux
+* CentOS
 
-TODO. I'm completely revamping my install script at the moment.
+## Installation
+
+There is an install script to automatically symlink all the configuration files
+and install packages for OSX/Fedora/Red Hat Enterprise Linux/CentOS.
+
+```plaintext
+$ git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
+$ ~/.dotfiles/install.sh
+```
+
+Note: Although the install script is quite good and will back up your own
+existing dotfiles with nice prompts, I take no responsibility for your system.
+Please be sure to back up your files appropriately before installation if
+there's anything important that already exists.
 
 ### vim
 
@@ -48,12 +62,6 @@ If you have three or more panes:
 * `prefix =` opens up the main-vertical-layout
 
 You can adjust the size of the smaller panes in `tmux.conf` by lowering or increasing the `other-pane-height` and `other-pane-width` options.
-
-## Uninstall
-
-TODO
-
-Note that this won't remove everything, but your vim configuration should be reset to whatever it was before installing. Some uninstallation steps will be manual.
 
 ## Contribute
 
