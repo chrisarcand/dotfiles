@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo ""
-echo "**** Installing vim ****"
+printf "\r  [ \033[00;34m..\033[0m ] starting vim installation\n"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # OSX
