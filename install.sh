@@ -137,6 +137,11 @@ symlink_dotfiles () {
 setup_gitconfig
 symlink_dotfiles
 
+# Install Homebrew if OSX
+if [[ ("$OSTYPE" == "darwin"*) && (! $(which brew)) ]]; then
+  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
 # find the installers and run them iteratively
 find $DOTFILES_ROOT -mindepth 2 -not -path "$DOTFILES_ROOT/_plugins/*" -name install.sh -exec "{}" \;
 
