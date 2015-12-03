@@ -105,7 +105,7 @@ set -g pane-border-fg 'colour238'
 set-window-option -g pane-base-index 1
 
 # Platform specific settings
-if-shell "uname | grep -q Darwin" "source-file $DOTFILES_ROOT/tmux/tmux-macosx.conf" "source-file $DOTFILES_ROOT/tmux/tmux-linux.conf"
+if-shell "uname | grep -q Darwin" "source-file $DOTFILES_ROOT/tmux/tmux-osx.conf" "source-file $DOTFILES_ROOT/tmux/tmux-linux.conf"
 
 # Plugins
 run-shell $DOTFILES_ROOT/_plugins/tmux-yank/yank.tmux
