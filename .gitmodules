@@ -4,3 +4,6 @@
 [submodule "_plugins/tmux-yank"]
 	path = _plugins/tmux-yank
 	url = git@github.com:tmux-plugins/tmux-yank.git
+[submodule "_plugins/tmux-scroll-copy-mode"]
+	path = _plugins/tmux-scroll-copy-mode
+	url = git@github.com:NHDaly/tmux-scroll-copy-mode.git
