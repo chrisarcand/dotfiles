@@ -11,6 +11,7 @@ bind-key R source-file ~/.tmux.conf \; display-message "tmux.conf reloaded."
 setw -g mode-keys vi
 
 set -g default-terminal "screen-256color"
+set-option -g default-shell /bin/zsh
 
 bind-key : command-prompt
 bind-key r refresh-client
