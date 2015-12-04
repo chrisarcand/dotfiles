@@ -20,4 +20,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # A maintained version of ctags
   brew tap universal-ctags/universal-ctags
   brew install --HEAD universal-ctags
+
+  brew install memcached
+  brew install postgresql
 fi
