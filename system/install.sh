@@ -21,6 +21,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew tap universal-ctags/universal-ctags
   brew install --HEAD universal-ctags
 
+  # Because launchctl sucks
+  brew install reattach-to-user-namespace --with-wrap-launchctl # Required to run services in tmux
+  brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
+
   brew install memcached
   brew install postgresql
   brew install openssl
