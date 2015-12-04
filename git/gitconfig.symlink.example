@@ -15,7 +15,7 @@
 [help]
   autocorrect = 1
 [push]
-  default = upstream
+  default = simple
 [advice]
   detachedHead = false
 [rerere]
