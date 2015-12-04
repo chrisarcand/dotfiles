@@ -23,4 +23,5 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
   brew install memcached
   brew install postgresql
+  brew install openssl
 fi
