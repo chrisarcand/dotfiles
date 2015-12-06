@@ -28,4 +28,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install memcached
   brew install postgresql
   brew install openssl
+elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") && (! $(which psql))  ]]; then
+  sudo dnf install --assumeyes postgresql-devel postgresql-server
+  sudo systemctl enable postgresql
+  sudo /usr/bin/postgresql-setup --initdb
+  sudo systemctl start postgresql
 fi
