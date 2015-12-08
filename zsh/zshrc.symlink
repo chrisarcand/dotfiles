@@ -151,10 +151,34 @@ export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-s
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init - zsh)"
 
-# Node
-# source $(brew --prefix nvm)/nvm.sh
-# export NVM_DIR=~/.nvm
-# ulimit -n 2048 # Increase limit on number of files to watch because OS X's default is way too low
+# ssh-agent for Linux
+# Inits ssh-agent and reconnects to the same one if possible.
+# Allows for single passphrase entry per session. This is
+# handled by Keychain on OSX
+case $(uname) in
+  'Linux')
+    SSH_ENV="$HOME/.ssh/environment"
+
+    function start_agent {
+      echo "Initializing new SSH agent..."
+      /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+      chmod 600 "${SSH_ENV}"
+      . "${SSH_ENV}" > /dev/null
+      ssh-add
+    }
+
+    # Source SSH settings, if applicable
+    if [ -f "${SSH_ENV}" ]; then
+      . "${SSH_ENV}" > /dev/null
+      ps -ef | grep ${SSH_AGENT_PID} |
+      grep ssh-agent$ > /dev/null || {
+        start_agent;
+      }
+    else
+      start_agent;
+    fi
+    ;;
+esac
 
 # TODO load a function directory instead of defining this here...
 function add_warp_points {
