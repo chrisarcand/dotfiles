@@ -28,9 +28,26 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install memcached
   brew install postgresql
   brew install openssl
-elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") && (! $(which psql))  ]]; then
-  sudo dnf install --assumeyes postgresql-devel postgresql-server
-  sudo systemctl enable postgresql
-  sudo /usr/bin/postgresql-setup --initdb
-  sudo systemctl start postgresql
+elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
+  sudo dnf install --assumeyes autoconf automake # build tools
+
+  # Universal ctags
+  if [[ ! $(which ctags) ]]; then
+    git clone git@github.com:universal-ctags/ctags.git ~/ctags_install
+    cd ~/ctags_install
+    ./autogen.sh
+    ./configure
+    make
+    sudo make install
+    cd ~
+    rm -rf ~/ctags_install
+  fi
+
+  # Postgres
+  if [[ ! $(which psql) ]]; then
+    sudo dnf install --assumeyes postgresql-devel postgresql-server
+    sudo systemctl enable postgresql
+    sudo /usr/bin/postgresql-setup --initdb
+    sudo systemctl start postgresql
+  fi
 fi
