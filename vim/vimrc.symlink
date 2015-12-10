@@ -157,18 +157,32 @@ nmap <leader>ra :call RunAllSpecs()<CR>
 " dash.vim documentation plugin
 nmap <leader>D <Plug>DashSearch
 
+" syntastic
+nmap <leader>x :SyntasticCheck<CR>
+nmap <leader>X :SyntasticToggleMode<CR>
+
 " END KEYBINDINGS =============================================================
 
 " plugin settings
 let g:rspec_command = 'call Send_to_Tmux("clear && bundle exec rspec {spec} --format documentation\n")' " Send to a tmux pane via tslime.vim
+
 let g:ctrlp_switch_buffer = 1 " Switch to an open buffer on the file if one is already open
 let g:ctrlp_custom_ignore = {
   \ 'dir':  '\v[\/](\.(git|hg|svn)|\_site)$',
   \ 'file': '\v\.(exe|so|dll|class|png|jpg|jpeg)$',
 \}
 let g:ctrlp_working_path_mode = 'r' " Use the nearest .git directory as the cwd
+
 let g:NERDSpaceDelims = 1
 let g:NERDTreeShowHidden = 1
+
+let g:syntastic_mode_map = { 'mode': 'passive' }
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 0
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_ruby_checkers = ['mri', 'rubocop']
+let g:syntastic_aggregate_errors = 1
 
 " Use The Silver Searcher https://github.com/ggreer/the_silver_searcher
 if executable('ag')
