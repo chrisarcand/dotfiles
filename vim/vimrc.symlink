@@ -33,6 +33,7 @@ Plugin 'mkitt/tabline.vim'
 Plugin 'nathanaelkane/vim-indent-guides'
 Plugin 'nono/vim-handlebars'
 Plugin 'pangloss/vim-javascript'
+Plugin 'rizzatti/dash.vim'
 Plugin 'rust-lang/rust.vim'
 Plugin 'scrooloose/nerdtree'
 Plugin 'scrooloose/syntastic'
@@ -152,6 +153,9 @@ nmap <leader>rt :call RunCurrentSpecFile()<CR>
 nmap <leader>rs :call RunNearestSpec()<CR>
 nmap <leader>rl :call RunLastSpec()<CR>
 nmap <leader>ra :call RunAllSpecs()<CR>
+
+" dash.vim documentation plugin
+nmap <leader>D <Plug>DashSearch
 
 " END KEYBINDINGS =============================================================
 
