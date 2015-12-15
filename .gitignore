@@ -3,4 +3,5 @@ Package Control.last-run
 Package Control.cache
 Package Control.system-ca-bundle
 git/gitconfig.symlink
+irssi/irssi.symlink/config
 vim/.netrwhist
