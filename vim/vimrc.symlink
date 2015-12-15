@@ -107,6 +107,7 @@ let mapleader = ','
 
 inoremap jj <ESC>
 map <silent> <leader>V :source ~/.vimrc<CR>:filetype detect<CR>:exe ":echo 'vimrc reloaded'"<CR>
+nnoremap <Space> i_<Esc>r
 
 " Meta key bindings -----------------------------------------------------------
 map <C-h> <C-w>h
