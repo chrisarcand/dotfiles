@@ -198,6 +198,8 @@ endif
 
 " Enable spellcheck automatically for markdown files
 autocmd BufRead,BufNewFile *.md setlocal spell
+" Toggle spellcheck with F5
+map <F5> :setlocal spell! spelllang=en_us<CR>
 
 " fdoc is yaml
 autocmd BufRead,BufNewFile *.fdoc set filetype=yaml
