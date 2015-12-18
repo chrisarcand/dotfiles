@@ -27,8 +27,8 @@
   cm = commit
   br = branch
   co = checkout
-  pum = pull upstream master
-  pump = "!git pull upstream master && git push origin"
+  ff = pull --ff --ff-only
+  ffu = pull --ff --ff-only upstream master
   df = diff
   dc = diff --cached
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
