@@ -47,6 +47,7 @@
   sdrop = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to drop: \"; read choice; git stash drop stash@{$choice}; else git stash drop stash@{$1}; fi; }; f"
   sclear = "stash clear"
   clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
+  clear-merged-branches = "!f() { git checkout --quiet master && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
   ctags = "!.git/hooks/ctags"
 
