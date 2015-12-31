@@ -140,6 +140,10 @@ nmap <leader>] :TagbarToggle<CR>
 nmap <leader>c <Plug>Kwbd
 nmap <leader><space> :nohlsearch<CR>
 
+" copyshort and copylong current file name
+nmap ,cs :let @*=expand("%")<CR>
+nmap ,cl :let @*=expand("%:p")<CR>
+
 " CtrlP
 nmap <leader>b :CtrlPBuffer<CR>
 nmap <leader>t :CtrlP<CR>
