@@ -1,6 +1,10 @@
 # require "awesome_print"
 # AwesomePrint.pry!
 
+# Set height to fit nicely in a vim quickfix window, as changing the quickfix
+# window height itself is much more annoying.
+Pry.config.default_window_size = 3
+
 # # <----- CUSTOM COMMANDS ----->
 
 # Some manual colored output for the terminal, because I don't want to bother including a gem
