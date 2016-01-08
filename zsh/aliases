@@ -4,6 +4,7 @@ alias g='hub'                                                       \
       psg='ps aux | grep'                                           \
       be='bundle exec'                                              \
       bi='bundle install'                                           \
+      bif='rm Gemfile.lock && bundle install'                       \
       nrw='npm run-script watch'                                    \
       reload='source ~/.zshrc'                                      \
       cdir='echo -n $(pwd) | pbcopy'                                \
