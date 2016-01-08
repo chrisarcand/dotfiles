@@ -37,7 +37,8 @@
   col = "!git checkout $(git branch | cut -c 3- | pick)"
   u = "!git add -u && git status"
   ua = "!git add --all && git status"
-  cnf = "!git ls-files -u | cut -f 2 | sort -u"
+  cnf = "!git diff --name-only | uniq"
+  fix = "!$EDITOR $(git cnf)"
   a = "!git add --patch && git status"
   sls = "!git stash list | cat"
   ssave = stash save
