@@ -21,7 +21,6 @@ Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'ervandew/supertab'
 Plugin 'eventualbuddha/vim-protobuf'
 Plugin 'garbas/vim-snipmate'
-" Plugin 'jgdavey/tslime.vim'
 Plugin 'juvenn/mustache.vim'
 Plugin 'kchmck/vim-coffee-script'
 Plugin 'kien/ctrlp.vim'
@@ -140,6 +139,12 @@ nmap <leader>v :vsp<CR>
 nmap <leader>] :TagbarToggle<CR>
 nmap <leader>c <Plug>Kwbd
 nmap <leader><space> :nohlsearch<CR>
+
+" fugitive.vim
+nmap <F9> :Gbrowse<CR>
+nmap <leader><F9> :Gbrowse!<CR>
+nmap <F10> :Gbrowse @upstream<CR>
+nmap <leader><F10> :Gbrowse! @upstream<CR>
 
 " copyshort and copylong current file name
 nmap ,cs :let @*=expand("%")<CR>
