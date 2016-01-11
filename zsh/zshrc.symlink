@@ -178,9 +178,13 @@ case $(uname) in
     ;;
 esac
 
-# TODO load a function directory instead of defining this here...
+# TODO load a function directory instead of defining these here...
 function add_warp_points {
   for dir in $1/*; do (cd "$dir" && wd add "${PWD##*/}"); done
+}
+
+function steep {
+  open http://steep.it/$1minutes
 }
 
 if [ -f $HOME/.private-zshrc ]; then
