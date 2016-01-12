@@ -46,6 +46,23 @@ setup_gitconfig () {
   fi
 }
 
+setup_irssi () {
+  if ! [ -f $DOTFILES_ROOT/irssi/irssi.symlink/config ]
+  then
+    info 'setup irssi'
+
+    user ' - What is your IRC nick?'
+    read -e irc_nick
+    user ' - What is your IRC nick password?'
+    read -e irc_pw
+    user ' - What is your IRC real name?'
+    read -e irc_real_name
+
+    sed -e "s/IRC_REAL_NAME/$irc_real_name/g" -e "s/IRC_NICK/$irc_nick/g" -e "s/IRC_PW/$irc_pw/g" $DOTFILES_ROOT/irssi/irssi.symlink/config.example > $DOTFILES_ROOT/irssi/irssi.symlink/config
+
+    success 'irssi'
+  fi
+}
 
 link_file () {
   local src=$1 dst=$2
@@ -135,6 +152,7 @@ symlink_dotfiles () {
 }
 
 setup_gitconfig
+setup_irssi
 symlink_dotfiles
 
 # Install Homebrew if OSX
