@@ -1,0 +1,1 @@
+/Users/carcand/.dotfiles/irssi/irssi.symlink/scripts/xchatnickcolor.pl

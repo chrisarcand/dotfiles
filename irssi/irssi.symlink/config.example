@@ -22,6 +22,7 @@ channels = (
   { name = "#manageiq"; chatnet = "Freenode"; autojoin = "yes"; },
   { name = "#ruby"; chatnet = "Freenode"; autojoin = "yes"; },
   { name = "#RubyOnRails"; chatnet = "Freenode"; autojoin = "yes"; },
+  { name = "#rspec"; chatnet = "Freenode"; autojoin = "yes"; },
 );
 
 aliases = {
@@ -192,7 +193,7 @@ settings = {
 };
 ignores = (
   {
-    level = "JOINS PARTS QUITSMODES";
-    channels = ( "#ruby" );
+    level = "JOINS PARTS QUITS MODES";
+    channels = ( "#ruby", "#RubyOnRails", "#rspec" );
   }
 );
