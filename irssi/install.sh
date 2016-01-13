@@ -14,3 +14,4 @@ printf "\r  [ \033[00;34m..\033[0m ] symlinking irssi plugins\n"
 
 # TODO: Loop through the scripts instead; check existence first
 ln -s $DOTFILES_ROOT/irssi/irssi.symlink/scripts/xchatnickcolor.pl $DOTFILES_ROOT/irssi/irssi.symlink/scripts/autorun/xchatnickcolor.pl
+ln -s $DOTFILES_ROOT/irssi/irssi.symlink/scripts/nicklist.pl $DOTFILES_ROOT/irssi/irssi.symlink/scripts/autorun/nicklist.pl
