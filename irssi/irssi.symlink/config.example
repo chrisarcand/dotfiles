@@ -129,7 +129,6 @@ statusbar = {
       # list of items in statusbar in the display order
       items = {
         barstart = { priority = "100"; };
-        time = { };
         user = { };
         window = { };
         window_empty = { };
@@ -194,6 +193,7 @@ settings = {
 ignores = (
   {
     level = "JOINS PARTS QUITS MODES";
-    channels = ( "#ruby", "#RubyOnRails", "#rspec" );
+    channels = ( "#manageiq", "#ruby", "#RubyOnRails", "#rspec" );
   }
 );
+hilights = ( { text = "IRC_NICK"; nick = "no"; word = "no"; } );
