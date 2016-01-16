@@ -81,6 +81,7 @@ set incsearch                                                " search as you typ
 set laststatus=2                                             " always show statusline
 set list                                                     " show trailing whitespace
 set listchars=tab:▸\ ,trail:▫
+set modeline                                                 " use vim modelines
 set nocursorline                                             " don't highlight current line
 set number                                                   " show line numbers
 set ruler                                                    " show where you are
