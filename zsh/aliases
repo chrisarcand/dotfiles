@@ -7,6 +7,7 @@ alias g='hub'                                                       \
       be='bundle exec'                                              \
       bi='bundle install'                                           \
       bif='rm Gemfile.lock && bundle install'                       \
+      :q='exit'                                                     \
       nrw='npm run-script watch'                                    \
       reload='source ~/.zshrc'                                      \
       cdir='echo -n $(pwd) | pbcopy'                                \
