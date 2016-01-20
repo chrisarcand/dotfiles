@@ -144,10 +144,10 @@ nmap <leader>c <Plug>Kwbd
 nmap <leader><space> :nohlsearch<CR>
 
 " fugitive.vim
-nmap <F9> :Gbrowse<CR>
-nmap <leader><F9> :Gbrowse!<CR>
-nmap <F10> :Gbrowse @upstream<CR>
-nmap <leader><F10> :Gbrowse! @upstream<CR>
+map <F9> :Gbrowse<CR>
+map <leader><F9> :Gbrowse!<CR>
+map <F10> :Gbrowse @upstream<CR>
+map <leader><F10> :Gbrowse! @upstream<CR>
 
 " copyshort and copylong current file name
 nmap ,cs :let @*=expand("%")<CR>
