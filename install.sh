@@ -149,6 +149,9 @@ symlink_dotfiles () {
     dst="$HOME/.$(basename "${src%.*}")"
     link_file "$src" "$dst"
   done
+
+  # Special case: /bin is a direct symlink (bin, not .bin)
+  link_file "$DOTFILES_ROOT/bin" "$HOME/bin"
 }
 
 setup_gitconfig
