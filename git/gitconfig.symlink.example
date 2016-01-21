@@ -38,6 +38,7 @@
   u = "!git add -u && git status"
   ua = "!git add --all && git status"
   cnf = "!git diff --name-only | uniq"
+  amend = commit --amend --reuse-message=HEAD
   fix = "!$EDITOR $(git cnf)"
   a = "!git add --patch && git status"
   sls = "!git stash list | cat"
