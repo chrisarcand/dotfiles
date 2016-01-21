@@ -104,6 +104,8 @@ if-shell "[ \"$COLORFGBG\" = \"11;15\" ]" "set-option -g pane-border-fg white"
 # Set window notifications
 setw -g monitor-activity on
 set -g visual-activity on
+setw -g window-status-activity-bg red
+setw -g window-status-activity-fg black
 
 # Allow the arrow key to be used immediately after changing windows
 set-option -g repeat-time 0
