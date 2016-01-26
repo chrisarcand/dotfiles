@@ -7,7 +7,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # OSX
   brew install rbenv ruby-build
 elif [[ ("$OSTYPE" == "linux-gnu") ]]; then
-  sudo dnf install --assume-yes gcc
+  sudo dnf install --assume-yes gcc openssl-devel readline-devel zlib-devel
   git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
   git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 else
