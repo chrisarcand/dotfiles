@@ -135,6 +135,9 @@ nmap <ESC>8 8gt
 nmap <ESC>9 9gt
 nmap <ESC>0 :tablast<CR>
 
+" Open ctag definition in a verical split
+map <ESC>] :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
+
 " Leader bindings -------------------------------------------------------------
 nmap <leader>a :Ack<space>
 nmap <leader>s :sp<CR>
