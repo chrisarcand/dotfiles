@@ -7,4 +7,4 @@
 # of the current branch it will show up in git-log, you won't lose track of it.
 #
 # see-also: git-resume
-git commit --no-verify -a -m"PAUSED: Use \`git resume\` to continue working."
+git add --all && git commit --no-verify -m "PAUSED: Use \`git resume\` to continue working."
