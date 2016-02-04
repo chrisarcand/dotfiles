@@ -1,5 +1,9 @@
 # MISC ENVIRONMENT VARIABLES
 
+# Always disable ManageIQ's RequestRefererService
+# https://github.com/ManageIQ/manageiq/pull/6502
+export MIQ_DISABLE_RRS=1
+
 case $(uname) in
   'Darwin')
     export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
