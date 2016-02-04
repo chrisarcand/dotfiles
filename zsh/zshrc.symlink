@@ -47,7 +47,7 @@ source $ZSH/oh-my-zsh.sh
 # all of our zsh files (excluding /_plugins)
 typeset -U config_files
 setopt extended_glob
-config_files=($DOTFILES_ROOT/(^_plugins/)#*.zsh)
+config_files=($DOTFILES_ROOT/^_plugins/**/*.zsh)
 
 # load the path files
 for file in ${(M)config_files:#*/path.zsh}
@@ -79,6 +79,7 @@ unset config_files
 # "Components" section above. Should be cut up and moved into the new scheme.
 # ================================================================================================
 
+# TODO: Move these to path.zsh files, topically
 # PATH
 case $(uname) in
   'Darwin')
@@ -93,19 +94,6 @@ esac
 export PATH=$PATH:$HOME/bin
 export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
 export PATH=$PATH:/usr/local/mysql/bin #MySQL
-
-# ALIASES
-source $DOTFILES_ROOT/zsh/aliases
-
-# MISC
-export EDITOR='vim'
-case $(uname) in
-  'Darwin')
-    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
-    export PGDATA="/usr/local/var/postgres" # Configuration files for Postgres (-D option)
-    export ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future # OSX STUPIDITY
-    ;;
-esac
 
 # Base16 Shell
 export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-shell.sh"

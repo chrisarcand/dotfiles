@@ -1,5 +1,3 @@
-# vim: set filetype=zsh:
-
 # Ye Olde Standards
 alias g='hub'                                                       \
       git='hub'                                                     \
