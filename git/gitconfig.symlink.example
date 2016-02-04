@@ -32,6 +32,7 @@
   df = diff
   dc = diff --cached
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  lgp = lg --patch
   details = log -n1 -p --format=fuller
   ls = ls-files
   col = "!git checkout $(git branch | cut -c 3- | pick)"
