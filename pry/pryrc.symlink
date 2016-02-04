@@ -7,7 +7,11 @@
 # window height itself is much more annoying.
 Pry.config.default_window_size = 3
 
-# # <----- CUSTOM COMMANDS ----->
+# Include factory_girl if I want to tinker
+if ENV['INCLUDE_FG'] && require('factory_girl')
+  FactoryGirl.find_definitions
+  include FactoryGirl::Syntax::Methods
+end
 
 # Some manual colored output for the terminal, because I don't want to bother including a gem
 class String
@@ -30,6 +34,8 @@ class String
   def bold;           "\033[1m#{self}\033[22m" end
   def reverse_color;  "\033[7m#{self}\033[27m" end
 end
+
+# # <----- CUSTOM COMMANDS ----->
 
 def with_all_tables(options={ except: [] }, &block)
   # Temporarily turn off logger, because that shit's annoying in this context
@@ -74,41 +80,3 @@ def inspect_db(options={ summary: false })
   end
 end
 
-# Pry::Commands.create_command "tables" do
-#   description "Show available database tables via ActiveRecord"
-
-#   def process
-#     begin
-#       output.puts ActiveRecord::Base.connection.tables
-#     rescue NameError => e
-#       puts e
-#       puts "You aren't in a Rails console, I bet."
-#     end
-#   end
-# end
-
-
-# # No worky yet
-# # Pry::Commands.create_command "columns" do
-# #   description "Show columns on a table via ActiveRecord"
-
-# #   def process
-# #     begin
-# #       ActiveRecord::Base.connection.columns(args[0]).map{|c| [c.name, c.type] }
-# #     rescue NameError => e
-# #       puts e
-# #       puts "You aren't in a Rails console, I bet."
-# #     end
-# #   end
-# # end
-
-
-# # <----- COMMAND ALIASES ----->
-
-# aliases = {
-#   "@" => "whereami"
-# }
-
-# aliases.each do |key, value|
-#   Pry.config.commands.alias_command key, value
-# end
