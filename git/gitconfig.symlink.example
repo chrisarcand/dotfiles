@@ -24,7 +24,7 @@
   enabled = true
 [alias]
   s = status
-  cm = commit
+  cm = commit -v
   br = branch
   co = checkout
   ff = pull --ff --ff-only
