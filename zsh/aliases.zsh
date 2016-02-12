@@ -11,7 +11,7 @@ alias g='hub'                                                       \
       cdir='echo -n $(pwd) | pbcopy'                                \
       path="echo $PATH | tr -s ':' '\n'"                            \
       tdbm='RAILS_ENV=test rake db:migrate'                         \
-      rwr='rbenv which ruby'                                        \
+      rwr='rbenv version'                                           \
       rr='rbenv rehash'
 
 # Common git aliases that I don't type <space> fast enough for
