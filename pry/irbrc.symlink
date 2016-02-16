@@ -1,3 +1,5 @@
+# vim: set filetype=ruby:
+#
 # * Try and force pry execution if irb is called
 # * If it's not able to be used, execute irb and use pry's command history!
 #
