@@ -145,6 +145,7 @@ nmap <leader>v :vsp<CR>
 nmap <leader>] :TagbarToggle<CR>
 nmap <leader>c <Plug>Kwbd
 nmap <leader><space> :nohlsearch<CR>
+nnoremap <Leader>rtw :%s/\s\+$//e<CR> "trim trailing whitespace
 
 " fugitive.vim
 map <F9> :Gbrowse<CR>
