@@ -202,7 +202,6 @@ let g:ctrlp_custom_ignore = {
   \ 'file': '\v\.(exe|so|dll|class|png|jpg|jpeg)$',
 \}
 let g:ctrlp_working_path_mode = 'ra' " Use the nearest .git directory as the cwd
-let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""' " Use ag in CtrlP for listing files. Lightning fast and respects .gitignore
 
 let g:NERDSpaceDelims = 1
 let g:NERDTreeShowHidden = 1
