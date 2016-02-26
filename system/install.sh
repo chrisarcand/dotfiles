@@ -28,6 +28,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install memcached
   brew install postgresql
   brew install openssl
+  brew install wget
   brew install readline # See https://github.com/guard/guard/wiki/Add-Readline-support-to-Ruby-on-Mac-OS-X
 
 elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
