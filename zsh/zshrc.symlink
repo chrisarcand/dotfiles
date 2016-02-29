@@ -13,7 +13,7 @@ UPDATE_ZSH_DAYS=30
 DISABLE_AUTO_TITLE="true"
 DISABLE_CORRECTION="true"
 
-plugins=(git wd virtualenv)
+plugins=(git wd rails ruby)
 
 source $ZSH/oh-my-zsh.sh
 
