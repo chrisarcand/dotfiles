@@ -23,7 +23,7 @@
 [init]
   templatedir = ~/.git_template
 [help]
-  autocorrect = 1
+  autocorrect = 0
 [pull]
   rebase = true
 [push]
