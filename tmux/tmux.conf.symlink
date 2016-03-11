@@ -44,6 +44,10 @@ bind -n C-\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
 
 bind-key C-o rotate-window
 
+# pane movement
+bind-key m command-prompt -p "join pane from:"  "join-pane -s '%%'"
+bind-key M command-prompt -p "send pane to:"  "join-pane -t '%%'"
+
 bind-key + select-layout main-horizontal
 bind-key = select-layout main-vertical
 set-window-option -g other-pane-height 25
