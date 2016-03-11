@@ -5,11 +5,21 @@
   diff = auto
   status = auto
   branch = auto
-  ui = true
+  ui = auto
+[color "diff-highlight"]
+  oldNormal = "red"
+  oldHighlight = "160 52"
+  newNormal = "green"
+  newHighlight = "118 22"
 [core]
   excludesfile = ~/.gitignore
   editor = vim
   autocrlf = input
+  pager = less -x4
+[pager]
+  log = diff-highlight | less -x4
+  show = diff-highlight | less -x4
+  diff = diff-highlight | less -x4
 [init]
   templatedir = ~/.git_template
 [help]
