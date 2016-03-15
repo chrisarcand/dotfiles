@@ -312,3 +312,33 @@ endfunction
 command! -nargs=0 RemoveConflictingAlignMaps call s:RemoveConflictingAlignMaps()
 silent! autocmd VimEnter * RemoveConflictingAlignMaps
 
+" :Bashrockets   {:foo => 'bar', :boston => 'rocks'}  ==>   {foo: 'bar', boston: 'rocks'}
+" :Hashrockets   {foo: 'bar', boston: 'rocks'}        ==>   {:foo => 'bar', :boston => 'rocks'}
+"
+" You can select a range before entering these commands. They will apply the
+" conversion to all the text in the range.
+"
+" You can also type the first few characters of either command and try to let
+" Vim tab-autocomplete it.
+"
+" Daniel Choi http://github.com/danchoi
+"
+function! s:hashrockets() range
+  let lnum = a:firstline
+  while lnum <= a:lastline
+    let newline = substitute(getline(lnum), '\(\w\+\):', ':\1 =>', 'g')
+    call setline(lnum, newline)
+    let lnum += 1
+  endwhile
+endfunction
+
+function! s:bashrockets() range
+  let lnum = a:firstline
+  while lnum <= a:lastline
+    let newline = substitute(getline(lnum), ':\(\w\+\)\s*=>', '\1:', 'g')
+    call setline(lnum, newline)
+    let lnum += 1
+  endwhile
+endfunction
+command! -range Bashrockets :<line1>,<line2>call s:bashrockets()
+command! -range Hashrockets :<line1>,<line2>call s:hashrockets()
