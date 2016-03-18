@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: git autosquash-fork [<ref>]
+# Usage: git autosquash [<ref>]
 #
 # Initiates an autosquash rebase on the commits in your fork (commits since common ancestor
 # between HEAD and master). With this you don't need to look up the merge base to rebase your PR.
