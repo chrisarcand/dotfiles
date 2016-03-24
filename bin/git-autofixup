@@ -3,6 +3,9 @@
 #
 # Commits the staged change as a fixup for the last commit that touched the
 # changed line. Useful for preparing for a `git rebase --autosquash` OR git-autosquash
+#
+# IIRC I lovingly stole this from @mislav
+
 set -e
 
 git diff --no-prefix --cached -U0 | awk '
