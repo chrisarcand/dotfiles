@@ -13,6 +13,11 @@ if ENV['INCLUDE_FG'] && require('factory_girl')
   include FactoryGirl::Syntax::Methods
 end
 
+# ManageIQ methods that need to be loaded late because pry is silly and doesn't
+# have a real method module to be included upon initialization like IRB.  Will
+# fix this upstream someday...
+include Vmdb::ConsoleMethods if defined?(Vmdb::ConsoleMethods)
+
 # Some manual colored output for the terminal, because I don't want to bother including a gem
 class String
   def black;          "\033[30m#{self}\033[0m" end
