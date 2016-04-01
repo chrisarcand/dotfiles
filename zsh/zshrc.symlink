@@ -79,6 +79,10 @@ unset config_files
 # "Components" section above. Should be cut up and moved into the new scheme.
 # ================================================================================================
 
+# Disable the 'time' reserved keyword so /usr/bin/time works
+# ¯\_(ツ)_/¯ I'm sure there's a better way to do this
+disable -r time
+
 # TODO: Move these to path.zsh files, topically
 # PATH
 case $(uname) in
