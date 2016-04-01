@@ -12,7 +12,8 @@ alias g='hub'                                                       \
       path="echo $PATH | tr -s ':' '\n'"                            \
       tdbm='RAILS_ENV=test rake db:migrate'                         \
       rwr='rbenv version'                                           \
-      rr='rbenv rehash'
+      rr='rbenv rehash'                                             \
+      time='/usr/bin/time'
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
