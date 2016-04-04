@@ -23,6 +23,7 @@ channels = (
   { name = "#ruby"; chatnet = "Freenode"; autojoin = "yes"; },
   { name = "#RubyOnRails"; chatnet = "Freenode"; autojoin = "yes"; },
   { name = "#rspec"; chatnet = "Freenode"; autojoin = "yes"; },
+  { name = "#elixir-lang"; chatnet = "Freenode"; autojoin = "yes"; },
 );
 
 aliases = {
@@ -193,7 +194,7 @@ settings = {
 ignores = (
   {
     level = "JOINS PARTS QUITS MODES";
-    channels = ( "#manageiq", "#ruby", "#RubyOnRails", "#rspec" );
+    channels = ( "#manageiq", "#ruby", "#RubyOnRails", "#rspec", "elixir-lang" );
   }
 );
 hilights = ( { text = "IRC_NICK"; nick = "no"; word = "no"; } );
