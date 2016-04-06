@@ -28,6 +28,8 @@
   rebase = true
 [push]
   default = current
+[commit]
+  gpgsign = true
 [advice]
   detachedHead = false
 [rerere]
