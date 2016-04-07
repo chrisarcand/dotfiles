@@ -58,7 +58,7 @@
   fix = "!$EDITOR $(git cnf)"
   a = "!git add --patch && git status"
   sls = "!git stash list | cat"
-  ssave = stash save
+  ssave = "!git -c commit.gpgsign=false stash save"
   sshow = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to show: \"; read choice; git stash show -p stash@{$choice}; else git stash show -p stash@{$1}; fi; }; f"
   spop = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to pop: \"; read choice; git stash pop stash@{$choice}; else git stash pop stash@{$1}; fi; }; f"
   sapply = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to apply: \"; read choice; git stash apply stash@{$choice}; else git stash apply stash@{$1}; fi; }; f"
