@@ -30,6 +30,8 @@
   default = current
 [commit]
   gpgsign = true
+[gpg]
+  program = gpg2
 [advice]
   detachedHead = false
 [rerere]
