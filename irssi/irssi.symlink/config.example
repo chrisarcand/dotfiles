@@ -194,7 +194,7 @@ settings = {
 ignores = (
   {
     level = "JOINS PARTS QUITS MODES";
-    channels = ( "#manageiq", "#ruby", "#RubyOnRails", "#rspec", "elixir-lang" );
+    channels = ( "#manageiq", "#ruby", "#RubyOnRails", "#jruby", "elixir-lang" );
   }
 );
 hilights = ( { text = "IRC_NICK"; nick = "no"; word = "no"; } );
