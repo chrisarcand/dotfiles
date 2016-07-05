@@ -83,29 +83,9 @@ unset config_files
 # ¯\_(ツ)_/¯ I'm sure there's a better way to do this
 disable -r time
 
-# TODO: Move these to path.zsh files, topically
-# PATH
-case $(uname) in
-  'Darwin')
-    # I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
-    # Also allows you to `reload` without constantly appending to your path
-    export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
-    ;;
-  'Linux')
-    ;;
-esac
-
-export PATH=$PATH:$HOME/bin
-export PATH=$PATH:/usr/local/heroku/bin # Heroku toolbelt
-export PATH=$PATH:/usr/local/mysql/bin #MySQL
-
 # Base16 Shell
 export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-shell.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
-
-# rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init - zsh)"
 
 # ssh-agent for Linux
 # Inits ssh-agent and reconnects to the same one if possible.
