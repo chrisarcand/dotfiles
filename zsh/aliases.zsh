@@ -1,7 +1,12 @@
+if command -v hub >/dev/null 2>&1; then
+  alias g='hub'                                                       \
+        git='hub'
+else
+  alias g='git'
+fi
+
 # Ye Olde Standards
-alias g='hub'                                                       \
-      git='hub'                                                     \
-      psg='ps aux | grep'                                           \
+alias psg='ps aux | grep'                                           \
       be='bundle exec'                                              \
       bi='bundle install'                                           \
       bif='rm Gemfile.lock && bundle install'                       \
