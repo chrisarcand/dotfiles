@@ -1,0 +1,6 @@
+#!/bin/bash
+# Show external IP address via whatismyip.org
+
+set -e
+
+curl -s whatismyip.org | grep -ohE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
