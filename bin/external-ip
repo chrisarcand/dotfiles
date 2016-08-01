@@ -3,4 +3,4 @@
 
 set -e
 
-curl -s whatismyip.org | grep -ohE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+dig +short myip.opendns.com @resolver1.opendns.com
