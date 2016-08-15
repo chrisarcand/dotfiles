@@ -1,9 +1,7 @@
-# kill -0 checks to see if the pid exists
-if test -f $HOME/.gpg-agent-info && kill -0 `cut -d: -f 2 $HOME/.gpg-agent-info` 2>/dev/null; then
-    GPG_AGENT_INFO=`cat $HOME/.gpg-agent-info | cut -c 16-`
+# Start up GPG agent
+if [ -f ~/.gnupg/.gpg-agent-info ] && [ -n "$(pgrep gpg-agent)" ]; then
+    source ~/.gnupg/.gpg-agent-info
+    export GPG_AGENT_INFO
 else
-# No, gpg-agent not available; start gpg-agent
-    eval `gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info`
+    eval $(gpg-agent --daemon --write-env-file ~/.gnupg/.gpg-agent-info)
 fi
-export GPG_TTY=`tty`
-export GPG_AGENT_INFO
