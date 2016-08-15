@@ -30,6 +30,7 @@
   default = current
 [commit]
   gpgsign = true
+  verbose = true
 [gpg]
   program = gpg2
 [advice]
@@ -38,7 +39,7 @@
   enabled = true
 [alias]
   s = status
-  cm = commit -v
+  cm = commit
   br = branch
   co = checkout
   ff = pull --ff --ff-only
