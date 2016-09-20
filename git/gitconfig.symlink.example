@@ -20,6 +20,8 @@
   log = diff-highlight | less -x4
   show = diff-highlight | less -x4
   diff = diff-highlight | less -x4
+[diff]
+  compactionHeuristic = true
 [init]
   templatedir = ~/.git_template
 [help]
