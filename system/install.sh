@@ -22,7 +22,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install --HEAD universal-ctags
 
   # Because launchctl sucks
-  brew install reattach-to-user-namespace --with-wrap-launchctl # Required to run services in tmux
+  brew install reattach-to-user-namespace --with-wrap-launchctl # Required to run services and working pasteboards in tmux
   brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
 
   brew install memcached
@@ -30,6 +30,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install openssl
   brew install wget
   brew install readline # See https://github.com/guard/guard/wiki/Add-Readline-support-to-Ruby-on-Mac-OS-X
+  brew install cmake
 
 elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
   sudo dnf install --assumeyes autoconf automake # build tools

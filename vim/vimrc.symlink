@@ -284,7 +284,7 @@ endif
 set t_Co=256 " 256 color mode
 let base16colorspace=256 " Access colors present in 256 colorspace
 set background=dark
-colorscheme base16-default
+colorscheme base16-default-dark
 
 " Disambiguate ,a & ,t from the Align plugin, making them fast again.
 "
