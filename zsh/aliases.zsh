@@ -17,7 +17,9 @@ alias psg='ps aux | grep'                                           \
       path="echo $PATH | tr -s ':' '\n'"                            \
       tdbm='RAILS_ENV=test rake db:migrate'                         \
       rwr='rbenv version'                                           \
-      rr='rbenv rehash'
+      rr='rbenv rehash'                                             \
+      dbundle="ruby -I $HOME/workspace/bundler/lib $HOME/workspace/bundler/exe/bundle" \
+      dgem="ruby -I $HOME/workspace/rubygems/lib $HOME/workspace/rubygems/bin/gem"
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
