@@ -165,6 +165,7 @@ nmap ,cl :let @*=expand("%:p")<CR>
 nmap <leader>b :CtrlPBuffer<CR>
 nmap <leader>t :CtrlP<CR>
 nmap <leader>m :CtrlPBufTag<CR>
+nmap <leader>M :CtrlPTag<CR>
 nmap <leader>T :CtrlPClearCache<CR>:CtrlP<CR>
 
 " NERDTree
