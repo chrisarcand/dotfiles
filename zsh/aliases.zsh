@@ -19,7 +19,8 @@ alias psg='ps aux | grep'                                           \
       rwr='rbenv version'                                           \
       rr='rbenv rehash'                                             \
       dbundle="ruby -I $HOME/workspace/bundler/lib $HOME/workspace/bundler/exe/bundle" \
-      dgem="ruby -I $HOME/workspace/rubygems/lib $HOME/workspace/rubygems/bin/gem"
+      dgem="ruby -I $HOME/workspace/rubygems/lib $HOME/workspace/rubygems/bin/gem" \
+      weather="curl http://wttr.in"
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
