@@ -8,7 +8,6 @@ export DOTFILES_ROOT=$HOME/.dotfiles
 
 # Path to your oh-my-zsh configuration.
 ZSH=$DOTFILES_ROOT/_plugins/oh-my-zsh
-ZSH_THEME="af-magic"
 UPDATE_ZSH_DAYS=30
 DISABLE_AUTO_TITLE="true"
 DISABLE_CORRECTION="true"
