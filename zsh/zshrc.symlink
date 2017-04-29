@@ -13,7 +13,7 @@ UPDATE_ZSH_DAYS=30
 DISABLE_AUTO_TITLE="true"
 DISABLE_CORRECTION="true"
 
-plugins=(git wd rails ruby mix)
+plugins=(wd rails ruby mix)
 
 source $ZSH/oh-my-zsh.sh
 
