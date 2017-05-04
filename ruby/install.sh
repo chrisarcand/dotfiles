@@ -5,7 +5,7 @@ printf "\r  [ \033[00;34m..\033[0m ] starting rbenv/ruby-build installation\n"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # OSX
-  brew install rbenv ruby-build
+  brew install chruby ruby-install
 elif [[ ("$OSTYPE" == "linux-gnu") ]]; then
   sudo dnf install --assume-yes gcc openssl-devel readline-devel zlib-devel
   git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
