@@ -86,22 +86,12 @@ bind-key -t vi-copy 'y' copy-selection
 set-option -g display-panes-time 3000
 
 # Status Bar
-set-option -g status-interval 1
-set-option -g status-left ''
-set-option -g status-right '%l:%M%p'
-set-window-option -g window-status-current-fg magenta
-set-option -g status-fg default
-set-window-option -g automatic-rename off
+set-window-option -g window-status-current-attr bold
 
-# Status Bar solarized-dark (default)
-set-option -g status-bg black
-set-option -g pane-active-border-fg black
-set-option -g pane-border-fg black
-
-# Status Bar solarized-light
-if-shell "[ \"$COLORFGBG\" = \"11;15\" ]" "set-option -g status-bg white"
-if-shell "[ \"$COLORFGBG\" = \"11;15\" ]" "set-option -g pane-active-border-fg white"
-if-shell "[ \"$COLORFGBG\" = \"11;15\" ]" "set-option -g pane-border-fg white"
+# tmux window titling for X
+set-option -g set-titles on
+set-option -g set-titles-string '[#I] #W'
+set-window-option -g automatic-rename on
 
 # Set window notifications
 setw -g monitor-activity on
@@ -112,11 +102,11 @@ setw -g window-status-activity-fg black
 # Allow the arrow key to be used immediately after changing windows
 set-option -g repeat-time 0
 
-# Borders from @nicklamuro
+## Borders from @nicklamuro
 set -g pane-active-border-fg 'colour24'
 set -g pane-border-fg 'colour238'
 
-# Set base-index for Tmuxinator
+## Set base-index for Tmuxinator
 set-window-option -g pane-base-index 1
 
 # Platform specific settings
