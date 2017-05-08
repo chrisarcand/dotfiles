@@ -43,6 +43,8 @@ Plugin 'tpope/vim-rake'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-unimpaired'
 Plugin 'tyok/nerdtree-ack'
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
 Plugin 'vim-ruby/vim-ruby'
 Plugin 'vim-scripts/Align'
 
@@ -302,6 +304,10 @@ set t_Co=256 " 256 color mode
 let base16colorspace=256 " Access colors present in 256 colorspace
 set background=dark
 colorscheme base16-default-dark
+
+" Airline (powerline) settings
+let g:airline#extensions#tabline#enabled = 1
+let g:airline_powerline_fonts=1
 
 " Disambiguate ,a & ,t from the Align plugin, making them fast again.
 "
