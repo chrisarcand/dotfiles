@@ -48,7 +48,19 @@ typeset -U config_files
 setopt extended_glob
 config_files=($DOTFILES_ROOT/^_plugins/**/*.zsh)
 
-# load the path files
+# Load the path files
+#
+# I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
+# Also allows you to `reload` without constantly appending to your path
+case $(uname) in
+  'Darwin')
+    export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
+    ;;
+  'Linux')
+    ;;
+esac
+
+
 for file in ${(M)config_files:#*/path.zsh}
 do
   source $file
