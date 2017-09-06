@@ -67,8 +67,8 @@ bind-key [ copy-mode
 bind-key ] paste-buffer
 
 # use vim-like keys for yanking/pasting
-bind-key -t vi-copy 'v' begin-selection
-bind-key -t vi-copy 'y' copy-selection
+unbind-key -T copy-mode-vi Space; bind-key -T copy-mode-vi v send-keys -X begin-selection
+unbind-key -T copy-mode-vi Enter; bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "reattach-to-user-namespace pbcopy"
 
 # For SSH clipboard forwarding...still can't get this to work.
 # # transfer copied text to attached terminal with yank:
