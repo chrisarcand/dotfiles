@@ -6,4 +6,5 @@ echo "Generating Ctags..."
 git ls-files | \
   ctags --tag-relative=yes -L - -f"$dir/$$.tags" --languages=-javascript,sql
 mv "$dir/$$.tags" "$dir/tags"
+gem ctags
 echo "Done!"
