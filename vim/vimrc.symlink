@@ -269,6 +269,9 @@ autocmd BufRead,BufNewFile *.md setlocal spell
 " Toggle spellcheck with F5
 map <F5> :setlocal spell! spelllang=en_us<CR>
 
+" Automatically assume a brand new buffer is Ruby
+" Makes ctags work across project/gems/ruby right when you open vim
+autocmd BufEnter * if &filetype == "" | setlocal ft=text | endif
 " fdoc is yaml
 autocmd BufRead,BufNewFile *.fdoc set filetype=yaml
 " md is markdown
