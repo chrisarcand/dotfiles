@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# TODO: Shouldn't hardcode chrisarcand
+
+url=$(echo "$2" | tr '[:upper:]' '[:lower:]')
+if [[ $url != *chrisarcand/* ]]; then
+  echo "Take note: You're about to push to $url, which isn't directly owned by you."
+  read -p "Are you sure? [Y|n] " -n 1 -r < /dev/tty
+  echo
+  if echo $REPLY | grep -vE '^Y$' > /dev/null
+  then
+    echo "Whew, glad I asked. Cancelling..."
+    exit 1
+  fi
+fi
