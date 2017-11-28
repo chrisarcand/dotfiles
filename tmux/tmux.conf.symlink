@@ -21,7 +21,7 @@ bind-key space next-window
 bind-key bspace previous-window
 bind-key enter next-layout
 
-set-option -g history-limit 5000
+set-option -g history-limit 50000
 bind-key K send-keys -R \; clear-history
 
 bind-key S choose-session
