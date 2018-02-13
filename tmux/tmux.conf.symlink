@@ -114,3 +114,6 @@ if-shell "uname | grep -q Darwin" "source-file $DOTFILES_ROOT/tmux/tmux-osx.conf
 
 # Plugins
 run-shell $DOTFILES_ROOT/_plugins/tmux-yank/yank.tmux
+
+# Bring over useful envars from parent envs
+set -g update-environment -r

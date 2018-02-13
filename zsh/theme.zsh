@@ -3,7 +3,8 @@
 # Direct Link: https://github.com/andyfleming/oh-my-zsh/blob/master/themes/af-magic.zsh-theme
 
 # primary prompt
-PROMPT='$FG[032]%~\
+PROMPT='%{$fg[cyan]%}%* \
+$FG[032]%~\
 $(git_prompt_info) \
 $FG[105]%(!.#.»)%{$reset_color%} '
 
