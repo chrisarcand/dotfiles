@@ -25,6 +25,8 @@ existing dotfiles with nice prompts, I take no responsibility for your system.
 Please be sure to back up your files appropriately before installation if
 there's anything important that already exists.
 
+You'll need to set up things like your default shell and fonts n' stuff in your terminal emulator yourself, after this installation.
+
 ### Organization
 
 These files follow a topic-based organizational scheme originally popularized by Zach Holman.
