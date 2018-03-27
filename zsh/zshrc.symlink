@@ -101,7 +101,7 @@ export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-s
 # ssh-agent for Linux
 # Inits ssh-agent and reconnects to the same one if possible.
 # Allows for single passphrase entry per session. This is
-# handled by Keychain on OSX
+# handled by Keychain on OSX ---- OR IS IT? I don't even know anymore.
 case $(uname) in
   'Linux')
     SSH_ENV="$HOME/.ssh/environment"
@@ -126,6 +126,9 @@ case $(uname) in
     fi
     ;;
 esac
+
+# Because it's not handled by keychain anymore? I have no idea.
+export GPG_TTY=$(tty)
 
 # TODO load a function directory instead of defining these here...
 function add_warp_points {
