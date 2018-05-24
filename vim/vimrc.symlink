@@ -15,6 +15,7 @@ call vundle#begin()
 Plugin 'gmarik/Vundle.vim'
 
 Plugin 'airblade/vim-gitgutter'
+Plugin 'Chiel92/vim-autoformat'
 Plugin 'chriskempson/base16-vim'
 Plugin 'elixir-lang/vim-elixir'
 Plugin 'edkolev/tmuxline.vim'
@@ -267,7 +268,8 @@ endif
 " Enable spellcheck automatically for markdown files
 autocmd BufRead,BufNewFile *.md setlocal spell
 " Toggle spellcheck with F5
-map <F5> :setlocal spell! spelllang=en_us<CR>
+noremap <F5> :setlocal spell! spelllang=en_us<CR>
+noremap = :Autoformat<CR>
 
 " Automatically assume a brand new buffer is Ruby
 " Makes ctags work across project/gems/ruby right when you open vim
