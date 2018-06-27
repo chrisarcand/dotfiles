@@ -139,6 +139,8 @@ function steep {
   open http://steep.it/$1minutes
 }
 
+code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
+
 if [ -f $HOME/.private-zshrc ]; then
   source $HOME/.private-zshrc
 fi
