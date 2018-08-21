@@ -7,6 +7,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   # A code-searching tool similar to ack, but faster.
   brew install the_silver_searcher
 
+  # Convenient for webhook/VCS work
+  brew cask install ngrok
+
   # Thoughtbot's awesome CLI tool for fuzzy searching basically anything
   brew tap thoughtbot/formulae
   brew install pick
