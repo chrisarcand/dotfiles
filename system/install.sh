@@ -4,12 +4,6 @@ echo ""
 printf "\r  [ \033[00;34m..\033[0m ] installing misc system packages\n"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  # Key mapper; Remap CapsLock->ESC with this
-  brew cask install seil
-
-  # For arranging windows Windows/Fedora style (opt+arrows for half screen, etc)
-  brew cask install shiftit
-
   # A code-searching tool similar to ack, but faster.
   brew install the_silver_searcher
 
