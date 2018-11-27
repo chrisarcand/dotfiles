@@ -208,7 +208,7 @@ nmap <leader>X :SyntasticToggleMode<CR>
 " END KEYBINDINGS =============================================================
 
 " plugin settings
-let g:rspec_command = 'call Send_to_Tmux("bin/rspec {spec}\n")'
+let g:rspec_command = 'call Send_to_Tmux("bundle exec rspec {spec}\n")'
 let g:tslime_always_current_session = 1
 let g:tslime_always_current_window = 1
 
@@ -272,7 +272,7 @@ endif
 autocmd BufRead,BufNewFile *.md setlocal spell
 " Toggle spellcheck with F5
 noremap <F5> :setlocal spell! spelllang=en_us<CR>
-noremap = :Autoformat<CR>
+" noremap = :Autoformat<CR>
 
 " Automatically assume a brand new buffer is Ruby
 " Makes ctags work across project/gems/ruby right when you open vim
