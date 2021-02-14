@@ -5,6 +5,10 @@ else
   alias g='git'
 fi
 
+if type nvim > /dev/null 2>&1; then
+  alias vim='nvim'
+fi
+
 # Ye Olde Standards
 alias psg='ps aux | grep'                                           \
       be='bundle exec'                                              \
@@ -20,7 +24,8 @@ alias psg='ps aux | grep'                                           \
       rr='rbenv rehash'                                             \
       dbundle="ruby -I $HOME/workspace/bundler/lib $HOME/workspace/bundler/exe/bundle" \
       dgem="ruby -I $HOME/workspace/rubygems/lib $HOME/workspace/rubygems/bin/gem" \
-      weather="curl http://wttr.in"
+      weather="curl http://wttr.in" \
+      tf="terraform"
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \

@@ -1,10 +1,9 @@
 #!/bin/sh
 set -e
-dir="`git rev-parse --git-dir`"
-trap 'rm -f "$dir/$$.tags"' EXIT
+trap 'rm -f "$$.tags"' EXIT
 echo "Generating Ctags..."
 git ls-files | \
-  ctags --tag-relative=yes -L - -f"$dir/$$.tags" --languages=-javascript,sql
-mv "$dir/$$.tags" "$dir/tags"
+  ctags --tag-relative=yes -L - -f"$$.tags" --languages=-javascript,sql
+mv "$$.tags" "tags"
 gem ctags
 echo "Done!"
