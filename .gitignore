@@ -6,3 +6,4 @@ git/gitconfig.symlink
 irssi/irssi.symlink/config
 irssi/irssi.symlink/scripts/autorun/*
 vim/.netrwhist
+bin/*
