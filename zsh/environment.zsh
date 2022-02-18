@@ -4,9 +4,6 @@
 # https://github.com/ManageIQ/manageiq/pull/6502
 export MIQ_DISABLE_RRS=1
 
-# Homebrew started requiring this explicitly I guess.
-export PATH=/opt/homebrew/bin:$PATH
-
 export SHELL=/bin/zsh
 
 case $(uname) in

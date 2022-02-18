@@ -49,12 +49,16 @@ setopt extended_glob
 config_files=($DOTFILES_ROOT/^_plugins/**/*.zsh)
 
 # Load the path files
-#
-# I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
-# Also allows you to `reload` without constantly appending to your path
 case $(uname) in
   'Darwin')
+    # I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
+    # Also allows you to `reload` without constantly appending to your path
     export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
+
+    # Homebrew started requiring this explicitly I guess.
+    # I add it here because then all path.zsh loads below can assume Homebrew is path'd correctly to
+    # use utilities to set the path, like init'ing rbenv, as an example.
+    export PATH=/opt/homebrew/bin:$PATH
     ;;
   'Linux')
     ;;

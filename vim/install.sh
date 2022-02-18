@@ -8,6 +8,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install nvim
   git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
   vim +PluginInstall! +qall
+
+  # nvim uses ~/.config/nvim; add a link to use the usual ~/.vimrc
+  mkdir -p ~/.config/nvim; ln -s ~/.vimrc ~/.config/nvim/init.vim
 elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
   # Fedora, RHEL, or CentOS
   # vim in Fedora is compiled without any X support in order to minimize the number of dependencies it has.
