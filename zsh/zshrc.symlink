@@ -170,3 +170,30 @@ rmqq() {
     fi
     qq
 }
+
+difn() {
+  docker images --format='{{.Repository}} {{.ID}}' | grep $1 | cut -d' ' -f2
+}
+
+drmi () {
+    local flag=false
+    OPTIND=1
+
+    while getopts 'f' opt; do
+        case $opt in
+            f) flag=true ;;
+            *) echo 'Error in command line parsing' >&2
+               exit 1
+        esac
+    done
+    shift "$(( OPTIND - 1 ))"
+
+    local param1="$1"
+    local param2="$2"
+
+    if "$flag"; then
+      docker images --format='{{.Repository}} {{.ID}}' | grep $1 | cut -d' ' -f2 | xargs docker image rm -f
+    else
+      docker images --format='{{.Repository}} {{.ID}}' | grep $1 | cut -d' ' -f2 | xargs docker image rm
+    fi
+}

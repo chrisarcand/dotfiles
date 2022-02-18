@@ -25,7 +25,8 @@ alias psg='ps aux | grep'                                           \
       dbundle="ruby -I $HOME/workspace/bundler/lib $HOME/workspace/bundler/exe/bundle" \
       dgem="ruby -I $HOME/workspace/rubygems/lib $HOME/workspace/rubygems/bin/gem" \
       weather="curl http://wttr.in" \
-      tf="terraform"
+      tf="terraform" \
+      curseyoudocker="osascript -e 'quit app \"Docker\"' && open -a Docker"
 
 # Common git aliases that I don't type <space> fast enough for
 alias ga='g a'                                                      \
