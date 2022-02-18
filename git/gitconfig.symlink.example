@@ -38,8 +38,8 @@
 [rerere]
   enabled = true
 ; Force no HTTPS ever
-[url "git@github.com:"]
-  insteadOf = https://github.com/
+;[url "git@github.com:"]
+;  insteadOf = https://github.com/
 [alias]
   s = status
   cm = commit
