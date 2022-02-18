@@ -19,7 +19,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install --HEAD universal-ctags
 
   # Because launchctl sucks
-  brew install reattach-to-user-namespace --with-wrap-launchctl # Required to run services and working pasteboards in tmux
+  brew install reattach-to-user-namespace # Required to run services and working pasteboards in tmux
   brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
 
   brew install memcached
