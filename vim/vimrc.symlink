@@ -6,6 +6,8 @@ set nocompatible
 " enable syntax highlighting
 syntax enable
 
+set shell=/bin/bash
+
 " configure Vundle and Plugins
 filetype on " without this vim emits a zero exit status, later, because of :ft off
 filetype off
