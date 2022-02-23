@@ -22,7 +22,7 @@
   diff = diff-highlight | less -x4
 [diff]
   compactionHeuristic = true
-	colorMoved = default
+  colorMoved = default
 [init]
   templatedir = ~/.git_template
 [help]
@@ -44,7 +44,7 @@
 ;[url "git@github.com:"]
 ;  insteadOf = https://github.com/
 [branch]
-	sort = -committerdate
+  sort = -committerdate
 [alias]
   s = status
   cm = commit
