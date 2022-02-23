@@ -22,6 +22,7 @@
   diff = diff-highlight | less -x4
 [diff]
   compactionHeuristic = true
+	colorMoved = default
 [init]
   templatedir = ~/.git_template
 [help]
@@ -31,8 +32,10 @@
 [push]
   default = current
 [commit]
-  gpgsign = true
+  gpgsign = false
   verbose = true
+[credential]
+  helper = osxkeychain
 [advice]
   detachedHead = false
 [rerere]
@@ -40,6 +43,8 @@
 ; Force no HTTPS ever
 ;[url "git@github.com:"]
 ;  insteadOf = https://github.com/
+[branch]
+	sort = -committerdate
 [alias]
   s = status
   cm = commit
@@ -47,7 +52,8 @@
   co = checkout
   co-pr = !sh -c 'git fetch origin pull/$1/head:pr/$1 && git checkout pr/$1' -
   ff = pull --ff --ff-only
-  ffu = pull --ff --ff-only upstream master
+  ffu = "!git pull --ff --ff-only upstream $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD)"
+  ffo = "!git pull --ff --ff-only origin $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD)"
   df = diff
   dc = diff --cached
   lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
@@ -69,8 +75,8 @@
   sapply = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to apply: \"; read choice; git stash apply stash@{$choice}; else git stash apply stash@{$1}; fi; }; f"
   sdrop = "!f() { if [ -z "$1" ]; then git stash list | cat; printf \"Index to drop: \"; read choice; git stash drop stash@{$choice}; else git stash drop stash@{$1}; fi; }; f"
   sclear = "stash clear"
-  clear-local-branches = "!git branch | grep -v "master" | xargs git branch -D"
-  clear-merged-branches = "!f() { git checkout --quiet master && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
+  clear-local-branches = "!git branch | grep -v "$(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD)" | xargs git branch -D"
+  clear-merged-branches = "!f() { git checkout --quiet $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD) && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
   ctags = "!.git/hooks/ctags"
 
