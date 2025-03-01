@@ -121,6 +121,7 @@ link_file () {
   fi
 }
 
+# This was never updated for Zed's config structure and is undoubtedly broken.'
 symlink_dotfiles () {
   info 'installing dotfiles'
 

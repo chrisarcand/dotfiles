@@ -1,0 +1,92 @@
+// Zed keymap
+//
+// For information on binding keys, see the Zed
+// documentation: https://zed.dev/docs/key-bindings
+//
+// To see the default key bindings run `zed: open default keymap`
+// from the command palette.
+[
+  {
+    // Active everywhere
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "cmd-alt-h": "pane::ActivateLastItem",
+      "cmd-alt-l": "pane::ActivatePrevItem",
+      "ctrl-a z": "workspace::ToggleZoom",
+      "ctrl-a o": "projects::OpenRecent"
+    }
+  },
+
+  // Make hjkl in Search project files picker work
+  {
+    "context": "Editor && !(vim_mode == normal)",
+    "bindings": {
+      "ctrl-k": "menu::SelectPrev",
+      "ctrl-j": "menu::SelectNext"
+    }
+  },
+
+  // Any keybindings for Vim normal and visual modes
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      ", d": "pane::RevealInProjectPanel",
+      ", t": "file_finder::Toggle",
+      ", v": "pane::SplitRight",
+      ", s": "pane::SplitDown",
+      ", a": ["workspace::SendKeystrokes", "cmd-shift-f"],
+      ", n": "project_symbols::Toggle",
+      ", c": "assistant::InlineAssist",
+      "ctrl-a c": "assistant::ToggleFocus",
+      "alt-cmd-j": "editor::AddSelectionBelow",
+      "alt-cmd-k": "editor::AddSelectionAbove"
+    }
+  },
+
+  {
+    "context": "AssistantPanel && (VimControl && !menu)",
+    "bindings": {
+      "ctrl-a c": "workspace::ToggleRightDock"
+    }
+  },
+
+  {
+    "context": "ProjectPanel",
+    "bindings": {
+      ", d": "workspace::ToggleLeftDock",
+      "m a": "project_panel::NewFile",
+      "m m": "project_panel::Rename",
+      "m d": "project_panel::Delete"
+    }
+  },
+
+  {
+    "context": "Editor && vim_mode == normal && extension == rb",
+    "bindings": {
+      ", r t": ["task::Spawn", { "task_name": "Run current spec file" }],
+      ", r l": ["task::Spawn", { "task_name": "Run last spec" }],
+      ", r s": ["task::Spawn", { "task_name": "Run spec under cursor" }]
+    }
+  },
+
+  {
+    "context": "Editor && vim_mode == normal && extension == go",
+    "bindings": {
+      ", r t": ["task::Spawn", { "task_name": "Run current Go test file" }],
+      ", r l": ["task::Spawn", { "task_name": "Run last Go test" }],
+      ", r s": ["task::Spawn", { "task_name": "Run Go test under cursor" }]
+    }
+  },
+
+  {
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-a s": "pane::SplitDown",
+      "ctrl-a v": "pane::SplitRight",
+      "ctrl-a c": "assistant::ToggleFocus"
+    }
+  }
+]
