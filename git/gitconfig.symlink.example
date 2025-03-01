@@ -13,27 +13,34 @@
   newHighlight = "118 22"
 [core]
   excludesfile = ~/.gitignore
-  editor = vim
+  editor = zed -w
   autocrlf = input
-  pager = less -x4
-[pager]
-  log = diff-highlight | less -x4
-  show = diff-highlight | less -x4
-  diff = diff-highlight | less -x4
+  pager = delta
+[interactive]
+  diffFilter = delta --color-only
+[delta]
+  navigate = true    # use n and N to move between diff sections
+  light = false      # set to true if you're in a terminal w/ a light background color (e.g. the default macOS terminal)
+  line-numbers = true
+[merge]
 [diff]
-  compactionHeuristic = true
+  # compactionHeuristic = true
   colorMoved = default
+	algorithm = histogram
 [init]
   templatedir = ~/.git_template
+	defaultBranch = main
 [help]
-  autocorrect = 0
+	autocorrect = prompt
 [pull]
   rebase = true
 [push]
-  default = current
-[commit]
-  gpgsign = false
+	default = simple
+; [commit]
+;   gpgsign = false
   verbose = true
+	autoSetupRemote = true
+	followTags = true
 [credential]
   helper = osxkeychain
 [advice]
@@ -41,10 +48,8 @@
 [rerere]
   enabled = true
 ; Force no HTTPS ever
-;[url "git@github.com:"]
-;  insteadOf = https://github.com/
-[branch]
-  sort = -committerdate
+[url "git@github.com:"]
+  insteadOf = https://github.com/
 [alias]
   s = status
   cm = commit
@@ -106,4 +111,18 @@
   #
   # My old 'checkoutlist' command; replaced by fuzzy search provided by thoughtbot/pick
   # col = "!select choice in $(git branch | grep -v '*'); do echo checking out $choice; git checkout $choice; break; done"
-
+[commit]
+	verbose = true
+	template = ~/.gitmessage
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate
+[tag]
+	sort = version:refname
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+[rebase]
+	autoSquash = true
