@@ -7,5 +7,5 @@
 # Insanely useful with git-autofixup
 set -e
 
-mergebranch=${1:-master}
+mergebranch=${1:-main}
 git rebase -i $(git merge-base $mergebranch HEAD) --autosquash
