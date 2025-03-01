@@ -77,6 +77,9 @@ bind-key Q confirm-before -p "kill-server? (y/n)" kill-server
 bind-key -n C-S-Left swap-window -t -1
 bind-key -n C-S-Right swap-window -t +1
 
+# Swap a window by index and stay on the currently selected window
+bind-key e command-prompt -p "swap window with:" "swap-window -t '%%'; select-window -t '%%'"
+
 bind-key [ copy-mode
 bind-key ] paste-buffer
 

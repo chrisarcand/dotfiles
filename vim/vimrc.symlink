@@ -35,8 +35,8 @@ Plugin 'nathanaelkane/vim-indent-guides'
 Plugin 'neoclide/coc.nvim'
 Plugin 'pangloss/vim-javascript'
 Plugin 'rizzatti/dash.vim'
+Plugin 'rlue/vim-fold-rspec'
 Plugin 'scrooloose/nerdtree'
-Plugin 'scrooloose/syntastic'
 Plugin 'thoughtbot/vim-rspec'
 Plugin 'tmhedberg/matchit'
 Plugin 'tomtom/tlib_vim'
@@ -195,10 +195,6 @@ nmap <leader>ra :call RunAllSpecs()<CR>
 " dash.vim documentation plugin
 nmap <leader>D <Plug>DashSearch
 
-" syntastic
-nmap <leader>x :SyntasticCheck<CR>
-nmap <leader>X :SyntasticToggleMode<CR>
-
 " " For ssh clipboard sharing - still can't get this to work.
 " " copy the current text selection to the system clipboard
 " if has('gui_running')
@@ -229,15 +225,6 @@ let g:ctrlp_root_markers = ['.ctrlp']
 
 let g:NERDSpaceDelims = 1
 let g:NERDTreeShowHidden = 1
-
-let g:syntastic_mode_map = { 'mode': 'passive' }
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 0
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-let g:syntastic_ruby_checkers = ['mri', 'rubocop']
-let g:syntastic_aggregate_errors = 1
-let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
 
 let g:endwise_no_mappings=1
 
@@ -271,9 +258,6 @@ let g:rails_projections = {
       \ }
       \}
 
-" let g:go_fmt_command = "goimports"
-let g:go_fmt_command = "gofmt"
-
 command! GoInstallMain execute 'GoInstall' . (trim(execute('pwd')))
 
 augroup go
@@ -289,7 +273,7 @@ if executable('ag')
   let g:ackprg = 'ag --vimgrep'
 
   " Use ag in CtrlP for listing files. Lightning fast and respects .gitignore
-  let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+  let g:ctrlp_user_command = 'ag %s -l --nocolor -g "" | grep -v "sorbet/rbi"'
 endif
 
 " Enable spellcheck automatically for markdown files
@@ -305,6 +289,8 @@ autocmd BufEnter * if &filetype == "" | setlocal ft=text | endif
 autocmd BufRead,BufNewFile *.fdoc set filetype=yaml
 " md is markdown
 autocmd BufRead,BufNewFile *.md set filetype=markdown
+" job is Nomad (HCL)
+autocmd BufRead,BufNewFile *.job set filetype=hcl
 " extra rails.vim help
 autocmd User Rails silent! Rnavcommand decorator      app/decorators            -glob=**/* -suffix=_decorator.rb
 autocmd User Rails silent! Rnavcommand observer       app/observers             -glob=**/* -suffix=_observer.rb
@@ -343,9 +329,16 @@ colorscheme base16-default-dark
 
 " Airline (powerline) settings
 let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#formatter = 'unique_tail'
-let g:airline#extensions#tabline#show_buffers = 0
 let g:airline_powerline_fonts=1
+let g:airline#extensions#tabline#buffer_nr_show = 1
+" let g:airline_section_b = ' %{getcwd()} | %{airline#util#wrap(airline#extensions#hunks#get_hunks(),100)}%{airline#util#wrap(airline#extensions#branch#get_head(),80)}'
+
+" Fix column number symbol
+" https://github.com/vim-airline/vim-airline/issues/2381
+if !exists('g:airline_symbols')
+    let g:airline_symbols = {}
+endif
+let g:airline_symbols.colnr = "  \u33c7"
 
 " Disambiguate ,a & ,t from the Align plugin, making them fast again.
 "
@@ -394,6 +387,7 @@ endfunction
 command! -range Bashrockets :<line1>,<line2>call s:bashrockets() | update
 command! -range Hashrockets :<line1>,<line2>call s:hashrockets() | update
 
+command! BufOnly execute '%bdelete|edit#|bdelete#'
 
 " set relativenumber
 function! NumberToggle()
@@ -415,7 +409,7 @@ set nobackup
 set nowritebackup
 
 " Give more space for displaying messages.
-set cmdheight=2
+" set cmdheight=2
 
 " Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
 " delays and poor user experience.
@@ -446,6 +440,9 @@ function! s:check_back_space() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
+
+" switch to buffer number
+nnoremap gb :ls<CR>:b
 
 " Use <c-space> to trigger completion.
 if has('nvim')
@@ -567,3 +564,6 @@ nnoremap <silent><nowait> <space>j  :<C-u>CocNext<CR>
 nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
 " Resume latest coc list.
 nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
+
+" close a buffer without closing the pane
+map <leader>q :bp<bar>sp<bar>bn<bar>bd<CR>
