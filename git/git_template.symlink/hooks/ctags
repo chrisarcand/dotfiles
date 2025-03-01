@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-trap 'rm -f "$$.tags"' EXIT
-echo "Generating Ctags..."
-git ls-files | \
-  ctags --tag-relative=yes -L - -f"$$.tags" --languages=-javascript,sql
-mv "$$.tags" "tags"
-gem ctags
-echo "Done!"
