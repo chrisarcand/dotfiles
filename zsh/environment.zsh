@@ -6,6 +6,8 @@ export MIQ_DISABLE_RRS=1
 
 export SHELL=/bin/zsh
 
+export EDITOR=zed
+
 case $(uname) in
   'Darwin')
     export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH
@@ -14,3 +16,4 @@ case $(uname) in
     ;;
 esac
 
+# eval "$(tfcdev rc)"

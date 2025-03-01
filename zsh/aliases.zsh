@@ -11,6 +11,7 @@ fi
 
 # Ye Olde Standards
 alias psg='ps aux | grep'                                           \
+      grep='ggrep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn,.idea,.tox}'                                                  \
       be='bundle exec'                                              \
       bi='bundle install'                                           \
       bif='rm Gemfile.lock && bundle install'                       \
