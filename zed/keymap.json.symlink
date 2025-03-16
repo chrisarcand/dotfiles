@@ -14,7 +14,7 @@
       "ctrl-k": "workspace::ActivatePaneUp",
       "ctrl-j": "workspace::ActivatePaneDown",
       "cmd-alt-h": "pane::ActivateLastItem",
-      "cmd-alt-l": "pane::ActivatePrevItem",
+      "cmd-alt-l": "pane::ActivatePreviousItem",
       "ctrl-a z": "workspace::ToggleZoom",
       "ctrl-a o": "projects::OpenRecent"
     }
@@ -24,7 +24,7 @@
   {
     "context": "Editor && !(vim_mode == normal)",
     "bindings": {
-      "ctrl-k": "menu::SelectPrev",
+      "ctrl-k": "menu::SelectPrevious",
       "ctrl-j": "menu::SelectNext"
     }
   },

@@ -5,7 +5,7 @@ printf "\r  [ \033[00;34m..\033[0m ] installing misc system packages\n"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # A code-searching tool similar to ack, but faster.
-  brew install the_silver_searcher
+  # brew install the_silver_searcher
 
   # Convenient for webhook/VCS work
   brew cask install ngrok
@@ -15,11 +15,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew install pick
 
   # A maintained version of ctags
-  brew tap universal-ctags/universal-ctags
-  brew install --HEAD universal-ctags
+  # brew tap universal-ctags/universal-ctags
+  # brew install --HEAD universal-ctags
 
   # Because launchctl sucks
-  brew install reattach-to-user-namespace # Required to run services and working pasteboards in tmux
+  # brew install reattach-to-user-namespace # Required to run services and working pasteboards in tmux
   brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
 
   brew install memcached
