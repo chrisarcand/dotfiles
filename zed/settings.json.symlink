@@ -40,6 +40,11 @@
     "inactive_opacity": 0.7
   },
 
+  "search": {
+    "case_sensitive": true,
+    "regex": true
+  },
+
   // Language specific settings
   "languages": {
     "Ruby": {
@@ -49,7 +54,10 @@
       // For now, Solargraph is a better choice and is the current default for the Ruby extension.
       "language_servers": ["!ruby-lsp", "solargraph", "rubocop"],
       "formatter": "language_server",
-      "format_on_save": "on"
+      "format_on_save": "off"
+    },
+    "YAML": {
+      "format_on_save": "off"
     }
   },
   "lsp": {
