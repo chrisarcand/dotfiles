@@ -17,6 +17,3 @@ else
   echo "Add installation steps to $DIR/$(basename $0)"
   exit 1
 fi
-
-# TODO: Throw this in /ctags topic
-git clone https://github.com/tpope/rbenv-ctags.git ~/.rbenv/plugins/rbenv-ctags

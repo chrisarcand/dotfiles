@@ -83,7 +83,6 @@
   clear-local-branches = "!git branch | grep -v "$(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD)" | xargs git branch -D"
   clear-merged-branches = "!f() { git checkout --quiet $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD) && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
-  ctags = "!.git/hooks/ctags"
 
   # This one doesn't work yet because my bash sucks and I can't figure out how to parameterize the author. Works as intended though.
   # files-with-author = git log --no-merges --stat --author="ChrisArcand" --name-only --pretty=format:"" | sort -u

@@ -14,10 +14,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   brew tap thoughtbot/formulae
   brew install pick
 
-  # A maintained version of ctags
-  # brew tap universal-ctags/universal-ctags
-  # brew install --HEAD universal-ctags
-
   # Because launchctl sucks
   # brew install reattach-to-user-namespace # Required to run services and working pasteboards in tmux
   brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
@@ -32,17 +28,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
   sudo dnf install --assumeyes autoconf automake # build tools
 
-  # Universal ctags
-  if [[ ! $(which ctags) ]]; then
-    git clone git@github.com:universal-ctags/ctags.git ~/ctags_install
-    cd ~/ctags_install
-    ./autogen.sh
-    ./configure
+
     make
-    sudo make install
-    cd ~
-    rm -rf ~/ctags_install
-  fi
 
   # Postgres
   if [[ ! $(which psql) ]]; then
