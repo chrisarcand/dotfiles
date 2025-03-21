@@ -54,7 +54,7 @@
   },
 
   {
-    "context": "ProjectPanel",
+    "context": "ProjectPanel && !editing",
     "bindings": {
       ", d": "workspace::ToggleLeftDock",
       "m a": "project_panel::NewFile",

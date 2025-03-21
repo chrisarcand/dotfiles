@@ -34,6 +34,7 @@
   "wrap_guides": [100],
   "format_on_save": "on",
   "tab_size": 2,
+  "soft_wrap": "none",
 
   "active_pane_modifiers": {
     "inactive_opacity": 0.7
@@ -56,6 +57,9 @@
       "format_on_save": "off"
     },
     "YAML": {
+      "format_on_save": "off"
+    },
+    "Markdown": {
       "format_on_save": "off"
     }
   },
