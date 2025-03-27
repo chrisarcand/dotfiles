@@ -10,8 +10,8 @@
   "icon_theme": "Material Icon Theme",
   "assistant": {
     "default_model": {
-      "provider": "anthropic",
-      "model": "claude-3-7-sonnet-latest"
+      "provider": "copilot_chat",
+      "model": "gpt-4o"
     },
     "version": "2"
   },

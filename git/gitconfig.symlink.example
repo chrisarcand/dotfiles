@@ -1,6 +1,21 @@
 [user]
   name = AUTHORNAME
   email = AUTHOREMAIL
+[commit]
+	verbose = true
+	template = ~/.gitmessage
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate
+[tag]
+	sort = version:refname
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+[rebase]
+	autoSquash = true
 [color]
   diff = auto
   status = auto
@@ -36,8 +51,6 @@
   rebase = true
 [push]
 	default = simple
-; [commit]
-;   gpgsign = false
   verbose = true
 	autoSetupRemote = true
 	followTags = true
@@ -47,9 +60,8 @@
   detachedHead = false
 [rerere]
   enabled = true
-; Force no HTTPS ever
 [url "git@github.com:"]
-  insteadOf = https://github.com/
+  insteadOf = https://github.com/  ; Force no HTTPS ever
 [alias]
   s = status
   cm = commit
@@ -84,25 +96,21 @@
   clear-merged-branches = "!f() { git checkout --quiet $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD) && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
   aliases = "!git config --list | grep 'alias\\.' | sed 's/alias\\.\\([^=]*\\)=\\(.*\\)/\\1\\\t => \\2/' | sort"
 
-  # This one doesn't work yet because my bash sucks and I can't figure out how to parameterize the author. Works as intended though.
-  # files-with-author = git log --no-merges --stat --author="ChrisArcand" --name-only --pretty=format:"" | sort -u
-
-  # Uncommons, but incredibly useful
-  # ----------------------------------------
-  # addprx courtesy @mitsuhiko
-  arminlog = log --pretty=format:"%C(auto,yellow)%h%C(auto)%d\\ %C(auto,reset)%s\\ \\ [%C(auto,blue)%cn%C(auto,reset),\\ %C(auto,cyan)%ar%C(auto,reset)]"
-  addprx = "!f() { b=`git symbolic-ref -q --short HEAD` && \
-    git fetch origin pull/$1/head:pr/$1 && \
-    git fetch -f origin pull/$1/merge:PR_MERGE_HEAD && \
-    git rebase --onto $b PR_MERGE_HEAD^ pr/$1 && \
-    git branch -D PR_MERGE_HEAD && \
-    git checkout $b && echo && \
-    git diff --stat $b..pr/$1 && echo && \
-    git arminlog $b..pr/$1; }; f"
-
   # Honorable Mentions
   # Unused, but may be useful for others
   # ----------------------------------------
+
+  # addprx courtesy @mitsuhiko
+  #  arminlog = log --pretty=format:"%C(auto,yellow)%h%C(auto)%d\\ %C(auto,reset)%s\\ \\ [%C(auto,blue)%cn%C(auto,reset),\\ %C(auto,cyan)%ar%C(auto,reset)]"
+  #  addprx = "!f() { b=`git symbolic-ref -q --short HEAD` && \
+  #    git fetch origin pull/$1/head:pr/$1 && \
+  #    git fetch -f origin pull/$1/merge:PR_MERGE_HEAD && \
+  #    git rebase --onto $b PR_MERGE_HEAD^ pr/$1 && \
+  #    git branch -D PR_MERGE_HEAD && \
+  #    git checkout $b && echo && \
+  #    git diff --stat $b..pr/$1 && echo && \
+  #    git arminlog $b..pr/$1; }; f"
+
   # lol = log --graph --decorate --pretty=oneline --abbrev-commit
   # lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
   # sapplyr = "!f() { git stash apply stash^{/$*}; }; f"
@@ -110,18 +118,3 @@
   #
   # My old 'checkoutlist' command; replaced by fuzzy search provided by thoughtbot/pick
   # col = "!select choice in $(git branch | grep -v '*'); do echo checking out $choice; git checkout $choice; break; done"
-[commit]
-	verbose = true
-	template = ~/.gitmessage
-[column]
-	ui = auto
-[branch]
-	sort = -committerdate
-[tag]
-	sort = version:refname
-[fetch]
-	prune = true
-	pruneTags = true
-	all = true
-[rebase]
-	autoSquash = true
