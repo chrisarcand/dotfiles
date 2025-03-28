@@ -8,4 +8,34 @@
 set -e
 
 mergebranch=${1:-main}
-git rebase -i $(git merge-base $mergebranch HEAD) --autosquash
+
+# Check if the merge branch exists
+if ! git show-ref --verify --quiet refs/remotes/origin/$mergebranch; then
+  echo "Error: Branch 'origin/$mergebranch' does not exist."
+  exit 1
+fi
+
+# Find the merge base using --fork-point
+mergebase=$(git merge-base --fork-point origin/$mergebranch HEAD)
+if [ -z "$mergebase" ]; then
+  echo "Error: Could not find a common ancestor between 'origin/$mergebranch' and HEAD."
+  exit 1
+fi
+
+# Display the merge base with short SHA and commit message
+mergebase_info=$(git log -1 --pretty=format:'%h - %s' $mergebase)
+echo "Using merge base: $mergebase_info"
+
+# Display the history of the branch up to the merge base
+echo "Branch history context (commits that will be edited in the rebase):"
+git lg $mergebase..HEAD
+
+# Prompt for confirmation
+read -p "Do you want to proceed with the rebase? (y/N): " confirm
+if [[ ! $confirm =~ ^[Yy]$ ]]; then
+  echo "Rebase aborted."
+  exit 0
+fi
+
+# Perform the rebase with autosquash
+git rebase -i $mergebase --autosquash
