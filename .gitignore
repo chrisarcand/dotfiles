@@ -3,6 +3,7 @@ Package Control.last-run
 Package Control.cache
 Package Control.system-ca-bundle
 git/gitconfig.symlink
+zed/settings.json.symlink
 irssi/irssi.symlink/config
 irssi/irssi.symlink/scripts/autorun/*
 vim/.netrwhist
