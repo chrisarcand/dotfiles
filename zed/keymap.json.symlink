@@ -6,25 +6,38 @@
 // To see the default key bindings run `zed: open default keymap`
 // from the command palette.
 [
+  //==========================================
+  // GLOBAL NAVIGATION
+  //==========================================
   {
     // Active everywhere
     "bindings": {
+      // Pane navigation with Vim-style movement keys
       "ctrl-h": "workspace::ActivatePaneLeft",
       "ctrl-l": "workspace::ActivatePaneRight",
       "ctrl-k": "workspace::ActivatePaneUp",
       "ctrl-j": "workspace::ActivatePaneDown",
+
+      // Tab navigation
       "cmd-alt-h": "pane::ActivateLastItem",
       "cmd-alt-l": "pane::ActivatePreviousItem",
+
+      // Tmux-style commands with ctrl-a prefix
       "ctrl-a z": "workspace::ToggleZoom",
       "ctrl-a o": "projects::OpenRecent",
+
+      // AI and menu navigation
       "ctrl-space": "assistant::InlineAssist",
       "ctrl-n": "menu::SelectNext",
       "ctrl-p": "menu::SelectPrevious"
     }
   },
 
-  // Make hjkl in Search project files picker work
+  //==========================================
+  // MENU NAVIGATION
+  //==========================================
   {
+    // Special case for search/file picker to allow vim-style navigation
     "context": "Editor && !(vim_mode == normal)",
     "bindings": {
       "ctrl-k": "menu::SelectPrevious",
@@ -32,40 +45,58 @@
     }
   },
 
-  // Any keybindings for Vim normal and visual modes
+  //==========================================
+  // VIM NORMAL/VISUAL MODE
+  //==========================================
   {
     "context": "VimControl && !menu",
     "bindings": {
-      ", d": "pane::RevealInProjectPanel",
-      ", t": "file_finder::Toggle",
+      // File and navigation commands with comma leader
+      ", d": "pane::RevealInProjectPanel", // Show current file in sidebar
+      ", t": "file_finder::Toggle",        // Quick open file finder
+      ", m": "outline::Toggle",            // Toggle outline view
+      ", n": "project_symbols::Toggle",    // Toggle project symbols
+      ", a": ["workspace::SendKeystrokes", "cmd-shift-f"], // Global search
+
+      // Split window commands
       ", v": "pane::SplitRight",
       ", s": "pane::SplitDown",
-      ", a": ["workspace::SendKeystrokes", "cmd-shift-f"],
-      ", m": "outline::Toggle",
-      ", n": "project_symbols::Toggle",
-      "ctrl-a c": "assistant::ToggleFocus",
-      "alt-cmd-j": "editor::AddSelectionBelow",
-      "alt-cmd-k": "editor::AddSelectionAbove"
+
+      // Assistant and multi-cursor
+      "ctrl-a c": "assistant::ToggleFocus", // Toggle AI assistant panel
+      "alt-cmd-j": "editor::AddSelectionBelow", // Add multiple cursors
+      "alt-cmd-k": "editor::AddSelectionAbove"  // Add multiple cursors
     }
   },
 
+  //==========================================
+  // AI ASSISTANT PANEL
+  //==========================================
   {
     "context": "AssistantPanel && (VimControl && !menu)",
     "bindings": {
-      "ctrl-a c": "workspace::ToggleRightDock"
+      "ctrl-a c": "workspace::ToggleRightDock" // Toggle assistant panel visibility
     }
   },
 
+  //==========================================
+  // PROJECT PANEL (FILE BROWSER)
+  //==========================================
   {
     "context": "ProjectPanel && !editing",
     "bindings": {
-      ", d": "workspace::ToggleLeftDock",
+      ", d": "workspace::ToggleLeftDock", // Toggle sidebar visibility
+
+      // File operations with 'm' prefix
       "m a": "project_panel::NewFile",
       "m m": "project_panel::Rename",
       "m d": "project_panel::Delete"
     }
   },
 
+  //==========================================
+  // LANGUAGE-SPECIFIC: RUBY TESTING
+  //==========================================
   {
     "context": "Editor && vim_mode == normal && extension == rb",
     "bindings": {
@@ -75,6 +106,9 @@
     }
   },
 
+  //==========================================
+  // LANGUAGE-SPECIFIC: GO TESTING
+  //==========================================
   {
     "context": "Editor && vim_mode == normal && extension == go",
     "bindings": {
@@ -84,12 +118,16 @@
     }
   },
 
+  //==========================================
+  // TERMINAL
+  //==========================================
   {
     "context": "Terminal",
     "bindings": {
+      // Terminal-specific split commands
       "ctrl-a s": "pane::SplitDown",
       "ctrl-a v": "pane::SplitRight",
-      "ctrl-a c": "assistant::ToggleFocus"
+      "ctrl-a c": "assistant::ToggleFocus" // Toggle AI assistant from terminal
     }
   }
 ]

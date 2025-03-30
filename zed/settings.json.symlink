@@ -7,7 +7,16 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  //==========================================
+  // GENERAL SETTINGS
+  //==========================================
+  "vim_mode": true,
+  "cursor_blink": false,
   "icon_theme": "Material Icon Theme",
+
+  //==========================================
+  // AI ASSISTANT AND COPILOT
+  //==========================================
   "assistant": {
     "default_model": {
       "provider": "anthropic",
@@ -18,36 +27,67 @@
   "features": {
     "edit_prediction_provider": "copilot"
   },
-  "vim_mode": true,
 
-  // Font / Color settings
+  //==========================================
+  // APPEARANCE
+  //==========================================
+  // Font settings
   "ui_font_size": 14,
   "buffer_font_size": 14.0,
   "buffer_font_family": "Inconsolata for Powerline",
-  // "buffer_font_family": "IBM Plex Sans",
-  "cursor_blink": false,
+
+  // Theme settings
   "theme": {
     "mode": "system",
     "light": "Base16 Classic Dark",
     "dark": "One Dark"
   },
 
-  // Formatting
-  "preferred_line_length": 100,
-  "wrap_guides": [100],
-  "format_on_save": "on",
-  "tab_size": 2,
-  "soft_wrap": "none",
-
+  // UI appearance
   "active_pane_modifiers": {
     "inactive_opacity": 0.7
   },
-
   "tabs": {
     "file_icons": true,
     "git_status": true
   },
 
+  //==========================================
+  // CODE DISPLAY AND EDITING
+  //==========================================
+  // Text formatting
+  "preferred_line_length": 100,
+  "wrap_guides": [100],
+  "soft_wrap": "none",
+  "tab_size": 2,
+  "format_on_save": "on",
+
+  // Code guides and hints
+  "indent_guides": {
+    "enabled": true,
+    "coloring": "indent_aware"
+  },
+  "inlay_hints": {
+    "enabled": false,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true,
+    "show_background": false,
+    "edit_debounce_ms": 700,
+    "scroll_debounce_ms": 50,
+    "toggle_on_modifiers_press": null
+  },
+
+  // Diagnostics display
+  "diagnostics": {
+    "inline": {
+      "enabled": true
+    }
+  },
+
+  //==========================================
+  // SEARCH AND FILE MANAGEMENT
+  //==========================================
   "search": {
     "case_sensitive": true,
     "regex": true
@@ -70,29 +110,9 @@
     "Git Config": ["gitconfig.symlink*"]
   },
 
-  "diagnostics": {
-    "inline": {
-      "enabled": true
-    }
-  },
-
-  "indent_guides": {
-    "enabled": true,
-    "coloring": "indent_aware"
-  },
-
-  "inlay_hints": {
-    "enabled": false,
-    "show_type_hints": true,
-    "show_parameter_hints": true,
-    "show_other_hints": true,
-    "show_background": false,
-    "edit_debounce_ms": 700,
-    "scroll_debounce_ms": 50,
-    "toggle_on_modifiers_press": null
-  },
-
-  // Language specific settings
+  //==========================================
+  // LANGUAGE-SPECIFIC SETTINGS
+  //==========================================
   "languages": {
     "Ruby": {
       // As of this writing, Ruby LSP is not a great language server to yet use with Zed.
@@ -110,6 +130,10 @@
       "format_on_save": "off"
     }
   },
+
+  //==========================================
+  // LANGUAGE SERVER PROTOCOL SETTINGS
+  //==========================================
   "lsp": {
     "solargraph": {
       "settings": {
