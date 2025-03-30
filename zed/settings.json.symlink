@@ -70,6 +70,28 @@
     "Git Config": ["gitconfig.symlink*"]
   },
 
+  "diagnostics": {
+    "inline": {
+      "enabled": true
+    }
+  },
+
+  "indent_guides": {
+    "enabled": true,
+    "coloring": "indent_aware"
+  },
+
+  "inlay_hints": {
+    "enabled": false,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true,
+    "show_background": false,
+    "edit_debounce_ms": 700,
+    "scroll_debounce_ms": 50,
+    "toggle_on_modifiers_press": null
+  },
+
   // Language specific settings
   "languages": {
     "Ruby": {
