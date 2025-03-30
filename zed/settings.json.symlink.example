@@ -107,7 +107,11 @@
   ],
 
   "file_types": {
-    "JSONC": ["*.json.symlink"],
+    "JSONC": [
+      "settings.json.symlink*",
+      "keymap.json.symlink*",
+      "tasks.json.symlink*"
+    ],
     "Git Config": ["gitconfig.symlink*"]
   },
 
