@@ -41,7 +41,8 @@
       ", v": "pane::SplitRight",
       ", s": "pane::SplitDown",
       ", a": ["workspace::SendKeystrokes", "cmd-shift-f"],
-      ", m": "project_symbols::Toggle",
+      ", m": "outline::Toggle",
+      ", n": "project_symbols::Toggle",
       "ctrl-a c": "assistant::ToggleFocus",
       "alt-cmd-j": "editor::AddSelectionBelow",
       "alt-cmd-k": "editor::AddSelectionAbove"
