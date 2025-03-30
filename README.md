@@ -5,7 +5,10 @@ Your dotfiles are how you personalize your system. These are mine.
 This contains my own configurations for git, zed, zsh using oh-my-zsh, ruby, pry, and more.
 The provided installer includes support for the following OS/distributions:
 
-- Mac OSX
+- MacOS
+
+...that's it really, I still have some of this lying around but I won't expect it to work:
+
 - Fedora
 - Red Hat Enterprise Linux
 - CentOS
@@ -57,29 +60,10 @@ The organization is as follows:
 
 ### Zed
 
-**TODO: I switched from nvim to zed. Although many of these bindings are the same, I some probably don't work anymore. They're all from the previous setup.**
-
-Many of the basic bindings are from [Maximum Awesome](https://github.com/square/maximum-awesome), the set of dotfiles I originally started using with vim.
-I change these pretty often, but here's a short sampling of the standard flow:
-
-- `,` is the Vim leader key
-- `,d` brings up [NERDTree](https://github.com/scrooloose/nerdtree), a sidebar buffer for navigating and manipulating files
-- `,f` finds current file in NERDTree sidebar
-- `,t` brings up [ctrlp.vim](https://github.com/kien/ctrlp.vim), a project file filter for easily opening specific files
-- `,b` restricts ctrlp.vim to open buffers
-- `,a` starts project search with [ack.vim](https://github.com/mileszs/ack.vim) using [ag](https://github.com/ggreer/the_silver_searcher) (like ack)
-- `ds`/`cs` delete/change surrounding characters (e.g. `"Hey!"` + `ds"` = `Hey!`, `"Hey!"` + `cs"'` = `'Hey!'`) with [vim-surround](https://github.com/tpope/vim-surround)
-- `\\\` toggles current line comment
-- `\\` toggles visual selection comment lines
-- `vii`/`vai` visually selects _in_ or _around_ the cursor's indent
-- `,[space]` cancels highlight (:nohl)
-- `<C-]>` jumps to definition of method/class/variable/module using ctags
-- `<C-t>` goes back to where you jumped from (ctags)
-- `,l` begins aligning lines on a string, usually used as `,l=` to align assignments
-- `<C-hjkl>` move between windows, shorthand for `<C-w> hjkl`
-- `,rs` runs current RSpec example, `,rt` runs full RSpec file, `,rl` runs last RSpec example...all within [vim-dispatch](https://github.com/tpope/vim-dispatch)
-- `K` greps project for current word under cursor
-- And loads more...
+Some time back I switched from vim/nvim to Zed. Many of the basic bindings emulate my old vim+tmux
+setup, which originally came from [Maximum Awesome](https://github.com/square/maximum-awesome), the
+set of dotfiles I originally started using with vim. `,` is the Vim leader key, and `ctrl-a z` is
+the Tmux-style prefix.
 
 ## Contribute
 
