@@ -5,7 +5,7 @@ printf "\r  [ \033[00;34m..\033[0m ] starting git installation\n"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # OSX
-  brew install git hub
+  brew install git gh
 elif [[ ("$OSTYPE" == "linux-gnu") && (-f "/etc/fedora-release" || -f "/etc/redhat-release") ]]; then
   # Fedora, RHEL, or CentOS
   sudo dnf install --assumeyes git

@@ -1,9 +1,4 @@
-if command -v hub >/dev/null 2>&1; then
-  alias g='hub'                                                       \
-        git='hub'
-else
-  alias g='git'
-fi
+alias g='git'                                                       \
 
 if type nvim > /dev/null 2>&1; then
   alias vim='nvim'
