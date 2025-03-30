@@ -10,10 +10,13 @@
   "icon_theme": "Material Icon Theme",
   "assistant": {
     "default_model": {
-      "provider": "copilot_chat",
-      "model": "gpt-4o"
+      "provider": "anthropic",
+      "model": "claude-3-7-sonnet-latest"
     },
     "version": "2"
+  },
+  "features": {
+    "edit_prediction_provider": "copilot"
   },
   "vim_mode": true,
 
@@ -40,9 +43,31 @@
     "inactive_opacity": 0.7
   },
 
+  "tabs": {
+    "file_icons": true,
+    "git_status": true
+  },
+
   "search": {
     "case_sensitive": true,
     "regex": true
+  },
+
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/.svn",
+    "**/.hg",
+    "**/.jj",
+    "**/CVS",
+    "**/.DS_Store",
+    "**/Thumbs.db",
+    "**/.classpath",
+    "**/.settings"
+  ],
+
+  "file_types": {
+    "JSONC": ["*.json.symlink"],
+    "Git Config": ["gitconfig.symlink*"]
   },
 
   // Language specific settings

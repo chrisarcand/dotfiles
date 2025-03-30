@@ -16,7 +16,10 @@
       "cmd-alt-h": "pane::ActivateLastItem",
       "cmd-alt-l": "pane::ActivatePreviousItem",
       "ctrl-a z": "workspace::ToggleZoom",
-      "ctrl-a o": "projects::OpenRecent"
+      "ctrl-a o": "projects::OpenRecent",
+      "ctrl-space": "assistant::InlineAssist",
+      "ctrl-n": "menu::SelectNext",
+      "ctrl-p": "menu::SelectPrevious"
     }
   },
 
@@ -38,8 +41,7 @@
       ", v": "pane::SplitRight",
       ", s": "pane::SplitDown",
       ", a": ["workspace::SendKeystrokes", "cmd-shift-f"],
-      ", n": "project_symbols::Toggle",
-      ", c": "assistant::InlineAssist",
+      ", m": "project_symbols::Toggle",
       "ctrl-a c": "assistant::ToggleFocus",
       "alt-cmd-j": "editor::AddSelectionBelow",
       "alt-cmd-k": "editor::AddSelectionAbove"
