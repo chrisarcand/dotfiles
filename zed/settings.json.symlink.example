@@ -7,6 +7,12 @@
 // To see all of Zed's default settings without changing your
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
+//
+// @omit-from-template: [
+//   .assistant,
+//   .active_pane_modifiers.inactive_opacity
+// ]
+//
 {
   //==========================================
   // GENERAL SETTINGS
