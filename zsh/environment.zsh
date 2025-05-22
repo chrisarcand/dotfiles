@@ -8,6 +8,11 @@ export SHELL=/bin/zsh
 
 export EDITOR=zed
 
+export DOCKER_CLI_HINTS=false
+
+# https://github.com/go-nv/goenv/issues/121
+export GOENV_GOMOD_VERSION_ENABLE=1
+
 case $(uname) in
   'Darwin')
     export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/:$DYLD_LIBRARY_PATH

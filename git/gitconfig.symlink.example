@@ -73,7 +73,7 @@
   ffo = "!git pull --ff --ff-only origin $(awk -F "/" '{print $NF}' .git/refs/remotes/origin/HEAD)"
   df = diff
   dc = diff --cached
-  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr - %C(cyan)%ad%Cgreen)%Creset %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %I:%M %p'
   lgl = log --color --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
   lgp = lg --patch
   l = --no-pager lg -15
