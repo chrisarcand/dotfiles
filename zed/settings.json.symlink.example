@@ -19,7 +19,7 @@
   //==========================================
   "vim_mode": true,
   "cursor_blink": false,
-  "minimap": { "show": "auto" },
+  "minimap": { "show": "never" }, // The map is great sometimes but very distracting with lots of panes.
   "icon_theme": "Material Icon Theme",
 
   //==========================================
@@ -149,11 +149,8 @@
   //==========================================
   "languages": {
     "Ruby": {
-      // As of this writing, Ruby LSP is not a great language server to yet use with Zed.
-      // There are several features that don't work, such as go-to-definition and find-references.
-      // See this issue for more details: https://github.com/zed-industries/zed/issues/4834
-      // For now, Solargraph is a better choice and is the current default for the Ruby extension.
-      "language_servers": ["!ruby-lsp", "solargraph", "!rubocop"],
+      "tab_size": 2,
+      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop"],
       "formatter": "language_server",
       "format_on_save": "on"
     },
@@ -169,23 +166,14 @@
   // LANGUAGE SERVER PROTOCOL SETTINGS
   //==========================================
   "lsp": {
-    "solargraph": {
-      "settings": {
-        "use_bundler": true
-      },
+    "ruby-lsp": {
       "initialization_options": {
-        "diagnostics": true,
-        "formatting": true
+        "enabledFeatures": {
+          "diagnostics": false, // Ruby LSP uses pull-based diagnostics which Zed doesn't support yet.
+          "formatting": true
+        },
+        "formatter": "standard"
       }
     }
-
-    // "ruby-lsp": {
-    //   "initialization_options": {
-    //     "enabledFeatures": {
-    //       // Ruby LSP uses pull-based diagnostics which Zed doesn't support yet.
-    //       "diagnostics": false
-    //     }
-    //   }
-    // }
   }
 }
