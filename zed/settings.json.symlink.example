@@ -150,7 +150,7 @@
   "languages": {
     "Ruby": {
       "tab_size": 2,
-      "language_servers": ["ruby-lsp", "!solargraph", "!rubocop"],
+      "language_servers": ["ruby-lsp", "!sorbet", "!solargraph", "!rubocop"],
       "formatter": "language_server",
       "format_on_save": "on"
     },
