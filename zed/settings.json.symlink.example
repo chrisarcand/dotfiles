@@ -26,16 +26,18 @@
   // AI ASSISTANT AND COPILOT
   //==========================================
   "agent": {
+    "message_editor_min_lines": 4,
+    "use_modifier_to_send": true,
+    "play_sound_when_agent_done": true,
     "default_profile": "write",
     "always_allow_tool_actions": true,
     "default_model": {
       "provider": "copilot_chat",
-      "model": "gpt-4.1"
+      "model": "claude-sonnet-4.5",
     },
-    "version": "2"
   },
   "features": {
-    "edit_prediction_provider": "copilot"
+    "edit_prediction_provider": "copilot",
   },
 
   "language_models": {
@@ -46,10 +48,25 @@
           "name": "qwen2.5-coder:32b",
           "display_name": "qwen 2.5 coder (32b)",
           "max_tokens": 32768,
-          "supports_tools": true
-        }
-      ]
-    }
+          "supports_tools": true,
+        },
+      ],
+    },
+  },
+
+  "context_servers": {
+    "mcp-server-github": {
+      "enabled": true,
+      "settings": {
+        "github_personal_access_token": "<foobar>",
+      },
+    },
+    "atlassian": {
+      "env": {},
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"],
+    },
   },
 
   //==========================================
@@ -64,16 +81,16 @@
   "theme": {
     "mode": "system",
     "light": "Base16 Classic Dark",
-    "dark": "One Dark"
+    "dark": "One Dark",
   },
 
   // UI appearance
   "active_pane_modifiers": {
-    "inactive_opacity": 0.7
+    "inactive_opacity": 0.7,
   },
   "tabs": {
     "file_icons": true,
-    "git_status": true
+    "git_status": true,
   },
 
   //==========================================
@@ -89,7 +106,7 @@
   // Code guides and hints
   "indent_guides": {
     "enabled": true,
-    "coloring": "indent_aware"
+    "coloring": "indent_aware",
   },
   "inlay_hints": {
     "enabled": false,
@@ -99,7 +116,7 @@
     "show_background": false,
     "edit_debounce_ms": 700,
     "scroll_debounce_ms": 50,
-    "toggle_on_modifiers_press": null
+    "toggle_on_modifiers_press": null,
   },
 
   // Diagnostics display
@@ -108,16 +125,16 @@
     "inline": {
       "enabled": true,
       "padding": 10,
-      "min_column": 100
-    }
+      "min_column": 100,
+    },
   },
 
   //==========================================
   // SEARCH AND FILE MANAGEMENT
   //==========================================
   "search": {
-    "case_sensitive": true,
-    "regex": true
+    "case_sensitive": false,
+    "regex": true,
   },
 
   "seed_search_query_from_cursor": "selection",
@@ -132,16 +149,16 @@
     "**/Thumbs.db",
     "**/.classpath",
     "**/.settings",
-    "*.rbi"
+    "*.rbi",
   ],
 
   "file_finder": {
-    "modal_max_width": "xlarge"
+    "modal_max_width": "xlarge",
   },
 
   "file_types": {
     "JSONC": ["settings.json.symlink*", "keymap.json.symlink*", "tasks.json.symlink*"],
-    "Git Config": ["gitconfig.symlink*"]
+    "Git Config": ["gitconfig.symlink*"],
   },
 
   //==========================================
@@ -152,14 +169,14 @@
       "tab_size": 2,
       "language_servers": ["ruby-lsp", "!sorbet", "!solargraph", "!rubocop"],
       "formatter": "language_server",
-      "format_on_save": "on"
+      "format_on_save": "on",
     },
     "YAML": {
-      "format_on_save": "off"
+      "format_on_save": "off",
     },
     "Markdown": {
-      "format_on_save": "off"
-    }
+      "format_on_save": "off",
+    },
   },
 
   //==========================================
@@ -170,10 +187,13 @@
       "initialization_options": {
         "enabledFeatures": {
           "diagnostics": false, // Ruby LSP uses pull-based diagnostics which Zed doesn't support yet.
-          "formatting": true
+          "formatting": true,
         },
-        "formatter": "standard"
-      }
-    }
-  }
+        "formatter": "standard",
+      },
+    },
+    "sorbet": {
+      "args": ["--ignore", "gems/*/rbi"],
+    },
+  },
 }
