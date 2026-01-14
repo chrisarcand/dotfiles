@@ -2,12 +2,30 @@
 #
 # git-aicm: AI-powered commit message generator using GitHub Copilot
 #
-# Usage: git aicm
+# Usage: git aicm [-b]
+#
+# Options:
+#   -b    Break up staged changes into multiple purposeful commits
 #
 # This script generates a commit message for staged changes using GitHub Copilot.
 # Edit the COMMIT_PROMPT variable below to customize how commit messages are generated.
 
 set -e
+
+# Parse command line options
+BREAK_UP_COMMITS=false
+while getopts "b" opt; do
+    case $opt in
+        b)
+            BREAK_UP_COMMITS=true
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            echo "Usage: git aicm [-b]"
+            exit 1
+            ;;
+    esac
+done
 
 # ============================================================================
 # CUSTOMIZE YOUR COMMIT MESSAGE PROMPT HERE
@@ -79,6 +97,75 @@ in markdown code blocks.
 EOF
 
 # ============================================================================
+# PROMPT FOR BREAKING UP COMMITS
+# ============================================================================
+
+read -r -d '' BREAKUP_PROMPT <<'EOF' || true
+You are an expert at organizing Git commits following the "purposeful commits" philosophy.
+
+Analyze the git diff provided and break it down into multiple logical, purposeful commits.
+Each commit should represent a single logical step that builds toward the overall goal.
+
+Follow these principles:
+- "Make the change easy, then make the easy change" - Kent Beck
+- Refactoring/preparation work should be separate commits from feature additions
+- Configuration changes that have broader impact should be isolated
+- Each commit should have tests passing (if applicable)
+- Typically 2-4 commits for most changes, rarely more than 5
+
+For each commit, provide:
+1. The files/hunks that belong in that commit
+2. A commit message following the same format as the single commit prompt
+
+Output format:
+=== COMMIT 1 ===
+Files: path/to/file1.go (lines 10-50), path/to/file2.go (entire file)
+
+<type>: <subject>
+
+<body explaining WHY>
+
+=== COMMIT 2 ===
+Files: path/to/file3.go (lines 100-150)
+
+<type>: <subject>
+
+<body explaining WHY>
+
+Guidelines:
+- Be strategic about commit boundaries - group related changes together
+- Think about the story you're telling through the commit sequence
+- Consider what would make code review easier
+- Each commit should be independently understandable
+- Use the same commit message guidelines as the single commit prompt
+
+Output each commit with clear delimiters so they can be parsed and applied automatically.
+
+Example output format:
+=== COMMIT 1 ===
+FILES:
+path/to/file1.go:10-50
+path/to/file2.go:1-EOF
+
+MESSAGE:
+refactor: extract authentication into pluggable interface
+
+The existing authentication logic was tightly coupled to password-based
+auth, making it difficult to add new authentication methods...
+
+=== COMMIT 2 ===
+FILES:
+path/to/file3.go:100-150
+
+MESSAGE:
+feat: add Google OAuth authentication backend
+
+With the pluggable interface in place, we can now easily add...
+
+Only respond with the commit breakdown in this exact format. No additional explanations.
+EOF
+
+# ============================================================================
 # Main script - no need to edit below this line
 # ============================================================================
 
@@ -114,11 +201,18 @@ show_spinner() {
 # Get the staged diff
 DIFF=$(git diff --cached)
 
-# Build the full prompt
-FULL_PROMPT="$COMMIT_PROMPT
+# Build the full prompt based on mode
+if [ "$BREAK_UP_COMMITS" = true ]; then
+    FULL_PROMPT="$BREAKUP_PROMPT
 
 Git diff:
 $DIFF"
+else
+    FULL_PROMPT="$COMMIT_PROMPT
+
+Git diff:
+$DIFF"
+fi
 
 # Call GitHub Copilot CLI and extract the message with spinner
 # Capture all lines, not just the first one, to get the full commit message with body
@@ -169,7 +263,133 @@ if [ -z "$MSG" ]; then
     exit 1
 fi
 
-# Show the generated message
+# Handle break up commits mode differently
+if [ "$BREAK_UP_COMMITS" = true ]; then
+    echo "Generated commit breakdown:"
+    echo "═════════════════════════════════════════════════════════════════"
+    echo "$MSG"
+    echo "═════════════════════════════════════════════════════════════════"
+    echo ""
+
+    # Ask for confirmation
+    printf "Create all these commits? [Y/n] "
+    read -r REPLY
+
+    if [[ "$REPLY" =~ ^[Nn]$ ]]; then
+        echo "Commits cancelled."
+        exit 1
+    fi
+
+    echo ""
+    echo "Creating commits..."
+
+    # Parse the output and create commits
+    COMMIT_COUNT=0
+    CURRENT_FILES=""
+    CURRENT_MESSAGE=""
+    IN_FILES=false
+    IN_MESSAGE=false
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^===\ COMMIT\ [0-9]+\ ===$ ]]; then
+            # If we have a previous commit, apply it
+            if [ -n "$CURRENT_MESSAGE" ]; then
+                COMMIT_COUNT=$((COMMIT_COUNT + 1))
+                echo "Creating commit $COMMIT_COUNT..."
+
+                # Reset staging
+                git reset > /dev/null 2>&1
+
+                # Stage the files for this commit
+                while IFS= read -r file_spec; do
+                    if [ -n "$file_spec" ]; then
+                        # Parse file:line-range format
+                        FILE_PATH=$(echo "$file_spec" | cut -d: -f1)
+                        LINE_RANGE=$(echo "$file_spec" | cut -d: -f2-)
+
+                        if [[ "$LINE_RANGE" == "1-EOF" ]] || [[ "$LINE_RANGE" == "$FILE_PATH" ]]; then
+                            # Stage entire file
+                            git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
+                        else
+                            # For line ranges, we'll have to stage the whole file
+                            # (proper line-range staging would require git add -p automation)
+                            git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
+                        fi
+                    fi
+                done <<< "$CURRENT_FILES"
+
+                # Create the commit
+                TEMP_FILE=$(mktemp)
+                echo "$CURRENT_MESSAGE" > "$TEMP_FILE"
+                git commit -F "$TEMP_FILE" > /dev/null 2>&1
+                rm "$TEMP_FILE"
+
+                echo "  ✓ Committed"
+            fi
+
+            # Reset for next commit
+            CURRENT_FILES=""
+            CURRENT_MESSAGE=""
+            IN_FILES=false
+            IN_MESSAGE=false
+
+        elif [[ "$line" == "FILES:" ]]; then
+            IN_FILES=true
+            IN_MESSAGE=false
+
+        elif [[ "$line" == "MESSAGE:" ]]; then
+            IN_FILES=false
+            IN_MESSAGE=true
+
+        elif [ "$IN_FILES" = true ] && [ -n "$line" ]; then
+            CURRENT_FILES="$CURRENT_FILES$line"$'\n'
+
+        elif [ "$IN_MESSAGE" = true ]; then
+            if [ -z "$CURRENT_MESSAGE" ]; then
+                CURRENT_MESSAGE="$line"
+            else
+                CURRENT_MESSAGE="$CURRENT_MESSAGE"$'\n'"$line"
+            fi
+        fi
+    done <<< "$MSG"
+
+    # Don't forget the last commit
+    if [ -n "$CURRENT_MESSAGE" ]; then
+        COMMIT_COUNT=$((COMMIT_COUNT + 1))
+        echo "Creating commit $COMMIT_COUNT..."
+
+        # Reset staging
+        git reset > /dev/null 2>&1
+
+        # Stage the files for this commit
+        while IFS= read -r file_spec; do
+            if [ -n "$file_spec" ]; then
+                FILE_PATH=$(echo "$file_spec" | cut -d: -f1)
+                LINE_RANGE=$(echo "$file_spec" | cut -d: -f2-)
+
+                if [[ "$LINE_RANGE" == "1-EOF" ]] || [[ "$LINE_RANGE" == "$FILE_PATH" ]]; then
+                    git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
+                else
+                    git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
+                fi
+            fi
+        done <<< "$CURRENT_FILES"
+
+        # Create the commit
+        TEMP_FILE=$(mktemp)
+        echo "$CURRENT_MESSAGE" > "$TEMP_FILE"
+        git commit -F "$TEMP_FILE" > /dev/null 2>&1
+        rm "$TEMP_FILE"
+
+        echo "  ✓ Committed"
+    fi
+
+    echo ""
+    echo "✓ Created $COMMIT_COUNT commits successfully!"
+    exit 0
+fi
+
+# Show the generated message (single commit mode)
 echo "Generated commit message:"
 echo "─────────────────────────────────────────────────────────────────"
 echo "$MSG"
