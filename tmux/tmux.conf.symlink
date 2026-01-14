@@ -21,8 +21,8 @@ set -g history-limit 50000
 # Display tmux messages for 4 seconds
 set -g display-time 4000
 
-# Refresh status bar more often
-set -g status-interval 5
+# Refresh status bar every second (for seconds display in clock)
+set -g status-interval 1
 
 # Focus events enabled for terminals that support them
 set -g focus-events on
@@ -138,6 +138,9 @@ set -g status-right "#{E:@catppuccin_status_host}"
 set -agF status-right "#{E:@catppuccin_status_battery}"
 set -agF status-right "#{E:@catppuccin_status_cpu}"
 set -ag status-right "#[fg=#89b4fa]#[fg=#11111b,bg=#89b4fa] MEM #[fg=#cdd6f4,bg=#313244] #{ram_percentage} "
+
+# Override date_time format to include seconds
+set -g @catppuccin_date_time_text " %Y-%m-%d %H:%M:%S"
 set -agF status-right "#{E:@catppuccin_status_date_time}"
 
 # Visual indicator for zoomed pane
