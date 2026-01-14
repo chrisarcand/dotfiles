@@ -140,6 +140,9 @@ set -agF status-right "#{E:@catppuccin_status_cpu}"
 set -ag status-right "#[fg=#89b4fa]#[fg=#11111b,bg=#89b4fa] MEM #[fg=#cdd6f4,bg=#313244] #{ram_percentage} "
 set -agF status-right "#{E:@catppuccin_status_date_time}"
 
+# Visual indicator for zoomed pane
+set -g status-left "#{?window_zoomed_flag,#[fg=#11111b#,bg=#f38ba8#,bold] 🔍 ZOOMED #[fg=#f38ba8#,bg=#1e1e2e] ,}"
+
 # Load catppuccin theme
 run ~/.dotfiles/_plugins/catppuccin-tmux/catppuccin.tmux
 
@@ -150,6 +153,10 @@ run ~/.dotfiles/_plugins/tmux-cpu/cpu.tmux
 # Activity monitoring
 setw -g monitor-activity on
 set -g visual-activity on
+
+# Pane border colors - highlight when zoomed
+set -g pane-border-style "#{?window_zoomed_flag,fg=#f38ba8,fg=#313244}"
+set -g pane-active-border-style "#{?window_zoomed_flag,fg=#f38ba8,fg=#cba6f7}"
 
 # ===========================
 # Additional Nice Features
