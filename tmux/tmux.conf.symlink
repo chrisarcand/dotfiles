@@ -1,0 +1,175 @@
+# Chris Arcand's tmux configuration
+
+# Use C-a as prefix (like GNU screen)
+unbind C-b
+set -g prefix C-a
+bind C-a send-prefix
+
+# Enable mouse support
+set -g mouse on
+
+# Start window and pane numbering at 1
+set -g base-index 1
+setw -g pane-base-index 1
+
+# Renumber windows when one is closed
+set -g renumber-windows on
+
+# Increase scrollback buffer size
+set -g history-limit 50000
+
+# Display tmux messages for 4 seconds
+set -g display-time 4000
+
+# Refresh status bar more often
+set -g status-interval 5
+
+# Focus events enabled for terminals that support them
+set -g focus-events on
+
+# Super useful when using "grouped sessions" and multi-monitor setup
+setw -g aggressive-resize on
+
+# Enable true color support
+set -g default-terminal "screen-256color"
+set -ga terminal-overrides ",xterm-256color:Tc"
+
+# Faster command sequences - use 10ms like neovim recommends
+set -s escape-time 10
+
+# Allow arrow keys to be used immediately after changing windows
+set -g repeat-time 0
+
+# Display panes for longer
+set -g display-panes-time 3000
+
+# Easy config reload
+bind R source-file ~/.tmux.conf \; display-message "tmux.conf reloaded."
+
+# Split panes - v for vertical, s for horizontal (like your old config)
+bind v split-window -h -c "#{pane_current_path}"
+bind s split-window -v -c "#{pane_current_path}"
+
+# Vim-style pane navigation with prefix
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+# Smart pane switching with awareness of Vim splits (Ctrl+hjkl without prefix)
+# See: https://github.com/christoomey/vim-tmux-navigator
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' \
+    | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|n?vim?x?)(diff)?$'"
+bind -n 'C-h' if-shell "$is_vim" 'send-keys C-h'  'select-pane -L'
+bind -n 'C-j' if-shell "$is_vim" 'send-keys C-j'  'select-pane -D'
+bind -n 'C-k' if-shell "$is_vim" 'send-keys C-k'  'select-pane -U'
+bind -n 'C-l' if-shell "$is_vim" 'send-keys C-l'  'select-pane -R'
+bind ] paste-buffer
+bind -T copy-mode-vi v send -X begin-selection
+bind -T copy-mode-vi 'C-h' select-pane -L
+bind -T copy-mode-vi 'C-j' select-pane -D
+bind -T copy-mode-vi 'C-k' select-pane -U
+bind -T copy-mode-vi 'C-l' select-pane -R
+
+# Copy mode vim bindings
+setw -g mode-keys vi
+bind [ copy-mode
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
+bind -T copy-mode-vi C-v send -X rectangle-toggle
+
+# Window navigation
+bind space next-window
+bind bspace previous-window
+bind n next-window
+bind p previous-window
+
+# Create new window in current path
+bind c new-window -c "#{pane_current_path}"
+
+# Additional useful bindings from old config
+bind : command-prompt
+bind r refresh-client
+bind L clear-history
+bind K send-keys -R \; clear-history
+bind enter next-layout
+
+# Pane management
+bind a last-pane
+bind q display-panes
+bind C-o rotate-window
+
+# Session management
+bind S choose-session
+
+# Layout bindings for 3+ panes
+bind + select-layout main-horizontal
+bind = select-layout main-vertical
+set-window-option -g other-pane-height 25
+set-window-option -g other-pane-width 80
+
+# Pane movement commands
+bind m command-prompt -p "join pane from:" "join-pane -s '%%'"
+bind M command-prompt -p "send pane to:" "join-pane -t '%%'"
+
+# Move windows left/right with Ctrl+Shift+Arrow
+bind -n C-S-Left swap-window -t -1
+bind -n C-S-Right swap-window -t +1
+
+# Swap window by index
+bind e command-prompt -p "swap window with:" "swap-window -t '%%'; select-window -t '%%'"
+
+# ===========================
+# Catppuccin Theme
+# ===========================
+
+# Configure catppuccin
+set -g @catppuccin_flavor "mocha"
+set -g @catppuccin_window_status_style "rounded"
+
+# Use window name (#W) instead of pane title (#T)
+set -g @catppuccin_window_text " #W"
+set -g @catppuccin_window_current_text " #W"
+
+# Status bar configuration
+set -g status-left-length 100
+set -g status-right-length 100
+set -g status-left ""
+set -g status-right "#{E:@catppuccin_status_host}"
+set -agF status-right "#{E:@catppuccin_status_battery}"
+set -agF status-right "#{E:@catppuccin_status_cpu}"
+set -ag status-right "#[fg=#89b4fa]#[fg=#11111b,bg=#89b4fa] MEM #[fg=#cdd6f4,bg=#313244] #{ram_percentage} "
+set -agF status-right "#{E:@catppuccin_status_date_time}"
+
+# Load catppuccin theme
+run ~/.dotfiles/_plugins/catppuccin-tmux/catppuccin.tmux
+
+# Load additional plugins for status modules
+run ~/.dotfiles/_plugins/tmux-battery/battery.tmux
+run ~/.dotfiles/_plugins/tmux-cpu/cpu.tmux
+
+# Activity monitoring
+setw -g monitor-activity on
+set -g visual-activity on
+
+# ===========================
+# Additional Nice Features
+# ===========================
+
+# Automatic window naming (off to allow manual renaming)
+set-window-option -g automatic-rename off
+
+# tmux window titling for X
+set -g set-titles on
+set -g set-titles-string '[#I] #W'
+
+# Enable clipboard integration (macOS)
+set -g set-clipboard on
+
+# Kill session (with confirmation)
+bind X confirm-before -p "Kill session #S (y/n)?" "run-shell 'tmux switch-client -n \\\; kill-session -t \"\$(tmux display-message -p \"#S\")\"'"
+
+# Kill server (with confirmation)
+bind Q confirm-before -p "kill-server? (y/n)" kill-server
+
+# Bring over useful environment variables from parent
+set -g update-environment -r
