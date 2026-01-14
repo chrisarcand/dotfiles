@@ -6,7 +6,9 @@ set -g prefix C-a
 bind C-a send-prefix
 
 # Enable mouse support
-set -g mouse on
+# NOTE: Mouse mode disabled to allow Ghostty Cmd+Click URL opening
+# When mouse is on, tmux intercepts all mouse events including Cmd+Click
+set -g mouse off
 
 # Start window and pane numbering at 1
 set -g base-index 1
@@ -183,3 +185,19 @@ bind Q confirm-before -p "kill-server? (y/n)" kill-server
 
 # Bring over useful environment variables from parent
 set -g update-environment -r
+
+# ===========================
+# URL Opening in tmux
+# ===========================
+# NOTE: tmux mouse mode completely intercepts Cmd+Click, preventing terminal URL detection.
+# To use Cmd+Click for URLs in Ghostty, you must set "set -g mouse off" above.
+#
+# Alternative: Use these tmux keybindings to open URLs:
+# - Prefix + u: Opens the last URL visible in the pane
+# - Prefix + U: Opens URL selector with fzf (if installed)
+
+# Open the last URL in the current pane
+bind u run-shell 'tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_~%:#-]*" | tail -n1 | xargs open'
+
+# Interactive URL selector with fzf (requires fzf)
+bind U run-shell 'tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_~%:#-]*" | fzf-tmux -p 80%,80% --multi --bind "enter:execute(open {})+abort"'
