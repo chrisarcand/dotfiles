@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+#
+# git-aicm: AI-powered commit message generator using GitHub Copilot
+#
+# Usage: git aicm
+#
+# This script generates a commit message for staged changes using GitHub Copilot.
+# Edit the COMMIT_PROMPT variable below to customize how commit messages are generated.
+
+set -e
+
+# ============================================================================
+# CUSTOMIZE YOUR COMMIT MESSAGE PROMPT HERE
+# ============================================================================
+# This is the prompt sent to GitHub Copilot to generate your commit message.
+# Edit this to match your preferred commit message style and conventions.
+# ============================================================================
+
+read -r -d '' COMMIT_PROMPT <<'EOF' || true
+You are an expert at writing detailed, meaningful Git commit messages following conventional commit format.
+
+Analyze the git diff provided and generate a commit message with BOTH a subject line and a detailed body.
+
+Format:
+<type>: <subject>
+[BLANK LINE - REQUIRED]
+<body paragraphs explaining WHY>
+[BLANK LINE between each paragraph]
+
+Where type is one of:
+- feat: A new feature
+- fix: A bug fix
+- docs: Documentation changes
+- style: Code style changes (formatting, missing semicolons, etc)
+- refactor: Code refactoring without changing functionality
+- test: Adding or updating tests
+- chore: Maintenance tasks, dependency updates, etc
+
+REQUIRED Guidelines:
+- Subject should be imperative mood (e.g., "add" not "added" or "adds")
+- Keep subject under 50 characters
+- Do not end subject with a period
+- Subject should be lowercase after the type
+- CRITICAL: You MUST include a completely blank line after the subject line before the body
+- CRITICAL: You MUST include a completely blank line between each paragraph in the body
+- ALWAYS include a detailed body section after the blank line
+- Body should be written in prose format (full sentences and paragraphs)
+- Body should explain WHY the changes are being made, not just WHAT was changed
+- Body should provide context: What problem does this solve? Why this approach? What are the implications?
+- If this change has broader impacts beyond the immediate feature (e.g., changes to shared config, performance implications, breaking changes), call those out explicitly
+- Write for your future self: What will you wish you had documented when you're looking at this commit six months from now?
+- Consider if this change is "making the change easy" (refactoring/prep work) or "making the easy change" (the actual feature), and explain accordingly
+- Body lines should wrap at 72 characters
+
+Example of good commit with WHY (note the blank lines):
+feat: add caching layer to user API endpoints
+[← BLANK LINE HERE]
+The user API endpoints were experiencing high latency during peak traffic
+because we were querying the database on every request. This was causing
+timeouts and poor user experience during busy periods.
+[← BLANK LINE HERE]
+This change introduces Redis caching with a 5-minute TTL for user profile
+data. We chose Redis because it's already part of our infrastructure and
+handles our expected load. The 5-minute TTL balances freshness with
+performance - user profiles don't change frequently enough to warrant
+more aggressive cache invalidation.
+[← BLANK LINE HERE]
+This should reduce average response time from 200ms to ~20ms for cached
+requests and significantly reduce database load during peak hours.
+
+You may use markdown formatting like bulleted or numbered lists where appropriate
+to supplement the prose description, but the majority of the body should be
+written in paragraph form. Lists should only be used to clarify specific points,
+not replace explanatory prose entirely.
+
+Only respond with the commit message itself, nothing else. No additional
+explanations or commentary outside the commit message. Do not wrap the output
+in markdown code blocks.
+EOF
+
+# ============================================================================
+# Main script - no need to edit below this line
+# ============================================================================
+
+# Check if copilot CLI is available
+if ! command -v copilot &> /dev/null; then
+    echo "Error: GitHub Copilot CLI not found."
+    echo "Install it with: npm install -g @github/copilot"
+    exit 1
+fi
+
+# Check if there are staged changes
+if git diff --cached --quiet; then
+    echo "No staged changes to commit."
+    echo "Use 'git add' to stage changes first."
+    exit 1
+fi
+
+# Function to show spinner animation
+show_spinner() {
+    local pid=$1
+    local message=$2
+    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+
+    while kill -0 $pid 2>/dev/null; do
+        i=$(( (i+1) % ${#spin} ))
+        printf "\r${spin:$i:1} %s" "$message"
+        sleep 0.1
+    done
+    printf "\r"
+}
+
+# Get the staged diff
+DIFF=$(git diff --cached)
+
+# Build the full prompt
+FULL_PROMPT="$COMMIT_PROMPT
+
+Git diff:
+$DIFF"
+
+# Call GitHub Copilot CLI and extract the message with spinner
+# Capture all lines, not just the first one, to get the full commit message with body
+(copilot --prompt "$FULL_PROMPT" > /tmp/git-aicm-output.$$ 2>&1) &
+COPILOT_PID=$!
+
+show_spinner $COPILOT_PID "Generating commit with Copilot..."
+
+wait $COPILOT_PID
+COPILOT_OUTPUT=$(cat /tmp/git-aicm-output.$$)
+rm -f /tmp/git-aicm-output.$$
+
+echo ""
+
+# Filter out metadata lines but keep the actual commit message INCLUDING blank lines
+# We need to preserve blank lines between paragraphs, so we can't use grep -v with empty line patterns
+# Instead, we'll filter line by line and keep everything that's not metadata
+MSG=""
+IN_MESSAGE=false
+while IFS= read -r line; do
+    # Skip metadata lines
+    if echo "$line" | grep -q "^Total\|^Usage\|claude-sonnet\|gpt-\|Premium request\|duration\|code changes"; then
+        continue
+    fi
+
+    # If we hit a non-metadata, non-empty line, we're in the message
+    if [ -n "$line" ]; then
+        IN_MESSAGE=true
+    fi
+
+    # Once we're in the message, capture everything (including blank lines)
+    if [ "$IN_MESSAGE" = true ]; then
+        if [ -z "$MSG" ]; then
+            MSG="$line"
+        else
+            MSG="$MSG"$'\n'"$line"
+        fi
+    fi
+done <<< "$COPILOT_OUTPUT"
+
+# Trim any trailing blank lines
+MSG=$(echo "$MSG" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+
+# Check if we got a message
+if [ -z "$MSG" ]; then
+    echo "Failed to generate commit message."
+    echo "Please try again or write the commit message manually."
+    exit 1
+fi
+
+# Show the generated message
+echo "Generated commit message:"
+echo "─────────────────────────────────────────────────────────────────"
+echo "$MSG"
+echo "─────────────────────────────────────────────────────────────────"
+echo ""
+
+# Ask for confirmation
+printf "Commit with this message? [Y/n/e] "
+read -r REPLY
+
+case "$REPLY" in
+    [eE])
+        # Edit the message
+        TEMP_FILE=$(mktemp)
+        echo "$MSG" > "$TEMP_FILE"
+
+        # Use git's configured editor
+        GIT_EDITOR=$(git config core.editor || echo "${EDITOR:-vim}")
+        $GIT_EDITOR "$TEMP_FILE"
+
+        # Check if file has content after editing
+        if [ -s "$TEMP_FILE" ]; then
+            # Debug: Show what we're about to commit
+            echo ""
+            echo "Committing with edited message:"
+            echo "─────────────────────────────────────────────────────────────────"
+            cat "$TEMP_FILE"
+            echo "─────────────────────────────────────────────────────────────────"
+            echo ""
+            git commit -F "$TEMP_FILE"
+            rm "$TEMP_FILE"
+            echo "Committed with edited message."
+        else
+            rm "$TEMP_FILE"
+            echo "Commit cancelled (empty message)."
+            exit 1
+        fi
+        ;;
+    [nN])
+        echo "Commit cancelled."
+        exit 1
+        ;;
+    *)
+        # Default: yes
+        # Write message to temp file to preserve multi-line formatting
+        TEMP_FILE=$(mktemp)
+        echo "$MSG" > "$TEMP_FILE"
+        git commit -F "$TEMP_FILE"
+        rm "$TEMP_FILE"
+        echo "Committed successfully!"
+        ;;
+esac
