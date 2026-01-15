@@ -2,21 +2,3 @@ shell-integration-features = no-cursor
 cursor-style=block
 cursor-style-blink=false
 font-family="IBM Plex Mono"
-
-# URL handling - Cmd+Click to open links
-# This is controlled by link-url, not keybindings
-mouse-hide-while-typing = false
-click-repeat-interval = 300
-link-url = true
-
-# Navigation between splits using Ctrl+hjkl (vim-style)
-# keybind = ctrl+h=goto_split:left
-# keybind = ctrl+j=goto_split:bottom
-# keybind = ctrl+k=goto_split:top
-# keybind = ctrl+l=goto_split:right
-
-# Leader key (ctrl+a) followed by 'v' for vertical split
-# keybind = ctrl+a>v=new_split:right
-
-# Leader key (ctrl+a) followed by 's' for horizontal split
-# keybind = ctrl+a>s=new_split:down
