@@ -5,10 +5,9 @@ unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
 
-# Enable mouse support
-# NOTE: Mouse mode disabled to allow Ghostty Cmd+Click URL opening
-# When mouse is on, tmux intercepts all mouse events including Cmd+Click
-set -g mouse off
+# Enable mouse support for scrolling, pane selection, and resizing
+# NOTE: This prevents Ghostty Cmd+Click URL opening, use Ctrl+a u/U instead
+set -g mouse on
 
 # Start window and pane numbering at 1
 set -g base-index 1
@@ -92,7 +91,8 @@ bind c new-window -c "#{pane_current_path}"
 bind : command-prompt
 bind r refresh-client
 bind L clear-history
-bind K send-keys -R \; clear-history
+bind k send-keys C-l
+bind K send-keys -R \; clear-history \; send-keys Enter
 bind enter next-layout
 
 # Pane management
@@ -189,15 +189,8 @@ set -g update-environment -r
 # ===========================
 # URL Opening in tmux
 # ===========================
-# NOTE: tmux mouse mode completely intercepts Cmd+Click, preventing terminal URL detection.
-# To use Cmd+Click for URLs in Ghostty, you must set "set -g mouse off" above.
-#
-# Alternative: Use these tmux keybindings to open URLs:
-# - Prefix + u: Opens the last URL visible in the pane
-# - Prefix + U: Opens URL selector with fzf (if installed)
+# Since tmux mouse mode intercepts Cmd+Click, use keybinding to open URLs:
+# - Prefix + u: Interactive URL selector with fzf (install with: brew install fzf)
 
-# Open the last URL in the current pane
-bind u run-shell 'tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_~%:#-]*" | tail -n1 | xargs open'
-
-# Interactive URL selector with fzf (requires fzf)
-bind U run-shell 'tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_~%:#-]*" | fzf-tmux -p 80%,80% --multi --bind "enter:execute(open {})+abort"'
+# Interactive URL selector with fzf (requires fzf: brew install fzf)
+bind u run-shell 'if command -v fzf >/dev/null 2>&1; then tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_%:@#&+~-]*[a-zA-Z0-9/]" | sort -u | fzf-tmux -p 80%,80% --prompt="Select URL: " | xargs -I {} open "{}"; else tmux display-message "fzf not installed. Install with: brew install fzf"; fi'
