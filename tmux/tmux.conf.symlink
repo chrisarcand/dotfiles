@@ -193,4 +193,4 @@ set -g update-environment -r
 # - Prefix + u: Interactive URL selector with fzf (install with: brew install fzf)
 
 # Interactive URL selector with fzf (requires fzf: brew install fzf)
-bind u run-shell 'if command -v fzf >/dev/null 2>&1; then tmux capture-pane -J -p | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_%:@#&+~-]*[a-zA-Z0-9/]" | sort -u | fzf-tmux -p 80%,80% --prompt="Select URL: " | xargs -I {} open "{}"; else tmux display-message "fzf not installed. Install with: brew install fzf"; fi'
+bind u run-shell 'if command -v fzf >/dev/null 2>&1; then tmux capture-pane -J -p -S - | grep -oE "(https?|ftp|file)://[a-zA-Z0-9./?=_%:@#&+~-]*[a-zA-Z0-9/]" | tac | awk "!seen[\$0]++" | fzf-tmux -p 80%,80% --prompt="Select URL: " | xargs -I {} open "{}"; else tmux display-message "fzf not installed. Install with: brew install fzf"; fi'
