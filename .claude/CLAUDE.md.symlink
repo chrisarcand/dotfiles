@@ -1,0 +1,10 @@
+# Claude Code User-Level Context
+
+This file is loaded at startup for all Claude Code sessions.
+Use it to add persistent instructions, preferences, or context.
+
+<!-- Example:
+- I prefer descriptive variable names over abbreviations
+- Use tabs for indentation in Go code, spaces elsewhere
+- When writing commit messages, follow conventional commits format
+-->

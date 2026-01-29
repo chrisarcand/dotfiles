@@ -8,3 +8,4 @@ irssi/irssi.symlink/config
 irssi/irssi.symlink/scripts/autorun/*
 vim/.netrwhist
 bin/*
+.claude/settings.local.json
