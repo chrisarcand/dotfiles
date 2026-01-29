@@ -69,13 +69,11 @@ REQUIRED Guidelines:
 - Write for your future self: What will you wish you had documented when you're looking at this commit six months from now?
 - Consider if this change is "making the change easy" (refactoring/prep work) or "making the easy change" (the actual feature), and explain accordingly
 - Body lines should wrap at 72 characters
+- Most changes should be no more than a paragraph or two. Don't be verbose just for the sake of
+  being verbose. Only the most complex situations should call for several paragraphs of explanation.
 
 Example of good commit with WHY (note the blank lines):
 feat: add caching layer to user API endpoints
-[← BLANK LINE HERE]
-The user API endpoints were experiencing high latency during peak traffic
-because we were querying the database on every request. This was causing
-timeouts and poor user experience during busy periods.
 [← BLANK LINE HERE]
 This change introduces Redis caching with a 5-minute TTL for user profile
 data. We chose Redis because it's already part of our infrastructure and
