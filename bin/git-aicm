@@ -232,7 +232,7 @@ MSG=""
 IN_MESSAGE=false
 while IFS= read -r line; do
     # Skip metadata lines
-    if echo "$line" | grep -q "^Total\|^Usage\|claude-sonnet\|gpt-\|Premium request\|duration\|code changes"; then
+    if echo "$line" | grep -q "^Total\|^Usage\|claude-sonnet\|gpt-\|Premium request\|duration\|code changes\|^API time spent\|^Breakdown by AI model"; then
         continue
     fi
 
