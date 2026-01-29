@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tmux show-options:*)",
+      "Bash(tmux show-environment:*)",
+      "Bash(tmux source-file:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "hashicorp@hashicorp-agent-skills": true,
+    "technology@hashicorp-agent-skills": true
+  },
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      }
+    }
+  }
+}
