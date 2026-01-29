@@ -2,6 +2,21 @@
 
 This directory contains custom executable scripts and binaries used across the system.
 
+## How This Directory Works
+
+The `bin/` directory is in your `$PATH`, so anything here can be executed from anywhere.
+
+**The directory is gitignored by default** (`bin/*` in `.gitignore`), which means:
+- You can casually drop temporary tools, binaries, or one-off scripts here without worrying about accidentally committing them
+- Your `~/bin` can contain both shared dotfiles scripts AND temporary local-only stuff
+- Only scripts explicitly added with `git add -f` are tracked and shared
+
+**To share a script in dotfiles:** `git add -f bin/your-script`
+
+**Currently shared in git:**
+- Curated shell scripts for git, docker, and system utilities
+- Markdown documentation (`.md` files are excepted from gitignore via `!bin/*.md`)
+
 ## Script Categories
 
 ### Git Utilities
@@ -49,8 +64,9 @@ These are internal HashiCorp development tools and are specific to HashiCorp eng
 - `terragrunt` - Terragrunt infrastructure-as-code tool
 
 ### Other Tools
-- `oc` - OpenShift CLI tool
 - `atlas-console` / `atlasshell` - Atlas (MongoDB) console wrappers
+
+**Note:** Other tools may exist in your local `bin/` directory but are not tracked in git. The gitignore pattern allows you to keep temporary and local-only tools here without cluttering the shared dotfiles.
 
 ## Notes
 
