@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Claude settings symlink setup
+# Claude Code system configuration symlink setup
 
 DOTFILES_ROOT=~/.dotfiles
 
@@ -15,7 +15,7 @@ fi
 
 if [ ! -L ~/.claude/settings.json ]; then
   echo "Symlinking Claude settings.json..."
-  ln -s $DOTFILES_ROOT/.claude/settings.json.symlink ~/.claude/settings.json
+  ln -s $DOTFILES_ROOT/claude/settings.json.symlink ~/.claude/settings.json
   echo "✓ Claude settings.json symlinked"
 else
   echo "✓ Claude settings.json already symlinked"
@@ -29,7 +29,7 @@ fi
 
 if [ ! -L ~/.claude/CLAUDE.md ]; then
   echo "Symlinking Claude CLAUDE.md..."
-  ln -s $DOTFILES_ROOT/.claude/CLAUDE.md.symlink ~/.claude/CLAUDE.md
+  ln -s $DOTFILES_ROOT/claude/CLAUDE.md.symlink ~/.claude/CLAUDE.md
   echo "✓ Claude CLAUDE.md symlinked"
 else
   echo "✓ Claude CLAUDE.md already symlinked"
@@ -43,7 +43,7 @@ fi
 
 if [ ! -L ~/.claude/agents ]; then
   echo "Symlinking Claude agents directory..."
-  ln -s $DOTFILES_ROOT/.claude/agents.symlink ~/.claude/agents
+  ln -s $DOTFILES_ROOT/claude/agents.symlink ~/.claude/agents
   echo "✓ Claude agents directory symlinked"
 else
   echo "✓ Claude agents directory already symlinked"

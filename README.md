@@ -78,7 +78,7 @@ Some tools with installers:
 - `ghostty/install.sh` - Ghostty terminal
 - `docker/install.sh` - Docker Desktop
 - `system/install.sh` - System packages via Homebrew
-- `.claude/install.sh` - Claude Code CLI setup
+- `claude/install.sh` - Claude Code CLI system configuration
 
 ### Security Notes
 
