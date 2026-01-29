@@ -2,3 +2,8 @@ shell-integration-features = no-cursor
 cursor-style=block
 cursor-style-blink=false
 font-family="IBM Plex Mono"
+# Shift+Enter support for Claude Code with tmux
+# Ghostty sends [27;2;13~ for Shift+Enter, but Claude Code doesn't recognize it
+# This keybind sends ESC+CR (\x1b\r) which works reliably with tmux
+# See: https://github.com/anthropics/claude-code/issues/1282
+keybind = shift+enter=text:\x1b\r
