@@ -2,7 +2,7 @@
 
 Your dotfiles are how you personalize your system. These are mine.
 
-This contains my own configurations for git, zed, zsh using oh-my-zsh, ruby, pry, and more.
+This contains my own configurations for git, zed, zsh using oh-my-zsh, ruby, pry, tmux, ghostty, and more.
 The provided installer includes support for the following OS/distributions:
 
 - MacOS
@@ -12,6 +12,33 @@ The provided installer includes support for the following OS/distributions:
 - Fedora
 - Red Hat Enterprise Linux
 - CentOS
+
+## What's Included
+
+**Development Tools:**
+- Git configuration with extensive aliases and hooks
+- Ruby/rbenv environment
+- Node.js/nvm environment
+- Go/goenv environment
+- Terraform/tfenv environment
+- Docker configuration
+
+**Editors & Terminal:**
+- Zed editor (vim-mode keybindings)
+- Ghostty terminal emulator
+- Tmux with vim-style navigation
+- Pry and IRB configurations for Ruby
+
+**Shell:**
+- Zsh with oh-my-zsh framework
+- Custom aliases and functions
+- Claude Code CLI integration
+
+**Custom Scripts:**
+- 40+ custom utilities in `bin/` (see `bin/README.md` for details)
+- Git utilities including AI-powered commit messages
+- Docker management scripts
+- System utilities
 
 ## Installation
 
@@ -29,6 +56,43 @@ Please be sure to back up your files appropriately before installation if
 there's anything important that already exists.
 
 You'll need to set up things like your default shell and fonts n' stuff in your terminal emulator yourself, after this installation.
+
+### What Gets Installed
+
+The install script will:
+1. Symlink all `.symlink` files to your `$HOME` directory
+2. Run topic-specific install scripts found in each directory
+3. Set up git configuration (prompts for name/email)
+4. Install language version managers (rbenv, nvm, goenv)
+5. Install core tools via Homebrew (on macOS)
+
+Some tools with installers:
+- `git/install.sh` - Git and GitHub CLI
+- `zsh/install.sh` - Zsh shell
+- `ruby/install.sh` - rbenv and ruby-build
+- `node/install.sh` - nvm (Node version manager)
+- `golang/install.sh` - goenv (Go version manager)
+- `terraform/install.sh` - Terraform environment setup
+- `tmux/install.sh` - Tmux terminal multiplexer
+- `zed/install.sh` - Zed editor
+- `ghostty/install.sh` - Ghostty terminal
+- `docker/install.sh` - Docker Desktop
+- `system/install.sh` - System packages via Homebrew
+- `.claude/install.sh` - Claude Code CLI setup
+
+### Security Notes
+
+This repository follows security best practices:
+- Secrets and credentials use environment variables (never hardcoded)
+- Private configuration can be added via `~/.private-zshrc` (not tracked in git)
+- Sensitive files are excluded via `.gitignore`
+- Git hooks provide safety checks for pushes to non-personal repositories
+
+**Required Environment Variables:**
+- `GITHUB_TOKEN` - Used by Claude Code's GitHub Copilot MCP server
+- AWS credentials should be configured via `~/.aws/config` (not in dotfiles)
+
+Keep sensitive information out of tracked files. Use environment variables or the private config pattern.
 
 ### Organization
 
