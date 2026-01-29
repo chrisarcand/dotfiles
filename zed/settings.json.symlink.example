@@ -26,6 +26,53 @@
   // AI ASSISTANT AND COPILOT
   //==========================================
   "agent": {
+    "favorite_models": [
+      // As of 1/29/26, for most tasks I use Anthropic's Claude 4.5 model lineup, summarized as follows:
+      //
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // | Model Name                   | Bedrock Cost (1M Tok)   | Role                             | Best Use Case                    |
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // | Claude Opus 4.5              | In: $5.00 | Out: $25.00 | Powerhouse (Deepest Thinker)     | "Bet the company" decisions,     |
+      // |                              |                         |                                  | research, complex architecture.  |
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // | Claude Sonnet 4.5            | In: $3.00 | Out: $15.00 | Workhorse (Standard Default)     | Daily coding, production apps,   |
+      // |                              |                         |                                  | general reasoning & writing.     |
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // | Claude Haiku 4.5             | In: $1.00 | Out: $5.00  | Speedster (Fast & Cheap)         | High volume tasks, simple logic, |
+      // |                              |                         |                                  | extraction, autocomplete.        |
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // | *Thinking Mode* (Any Model)  | Same rates per 1M       | Enhanced Logic                   | Hard math/bugs.                  |
+      // |                              | (Pays as Output tokens) |                                  | WARNING: Burns 2x-5x more tokens |
+      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      {
+        "provider": "copilot_chat",
+        "model": "claude-opus-4.5",
+      },
+      {
+        "provider": "amazon-bedrock",
+        "model": "claude-sonnet-4-5",
+      },
+      {
+        "provider": "amazon-bedrock",
+        "model": "claude-opus-4-5",
+      },
+      {
+        "provider": "amazon-bedrock",
+        "model": "claude-haiku-4-5",
+      },
+      {
+        "provider": "copilot_chat",
+        "model": "claude-sonnet-4.5",
+      },
+      {
+        "provider": "amazon-bedrock",
+        "model": "claude-opus-4-5-thinking",
+      },
+      {
+        "provider": "amazon-bedrock",
+        "model": "claude-sonnet-4-5-thinking",
+      },
+    ],
     "message_editor_min_lines": 4,
     "use_modifier_to_send": true,
     "play_sound_when_agent_done": true,
@@ -41,16 +88,9 @@
   },
 
   "language_models": {
-    "ollama": {
-      "api_url": "http://localhost:11434",
-      "available_models": [
-        {
-          "name": "qwen2.5-coder:32b",
-          "display_name": "qwen 2.5 coder (32b)",
-          "max_tokens": 32768,
-          "supports_tools": true,
-        },
-      ],
+    "bedrock": {
+      "authentication_method": "named_profile",
+      "profile": "sandbox_bedrock",
     },
   },
 
@@ -58,7 +98,7 @@
     "mcp-server-github": {
       "enabled": true,
       "settings": {
-        "github_personal_access_token": "<foobar>",
+        "github_personal_access_token": "<SHHHHHH>",
       },
     },
     "atlassian": {
