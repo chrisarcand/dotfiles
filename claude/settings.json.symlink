@@ -8,7 +8,8 @@
   },
   "enabledPlugins": {
     "hashicorp@hashicorp-agent-skills": true,
-    "technology@hashicorp-agent-skills": true
+    "technology@hashicorp-agent-skills": true,
+    "gopls-lsp@claude-plugins-official": true
   },
   "mcpServers": {
     "github": {
