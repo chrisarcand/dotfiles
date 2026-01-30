@@ -8,8 +8,9 @@
     typeset -g ZSH_CLAUDE_KEY='^z'
 
 # Configuration options
+# Context adds latency - disabled by default for speed
 (( ! ${+ZSH_CLAUDE_SEND_CONTEXT} )) &&
-    typeset -g ZSH_CLAUDE_SEND_CONTEXT=true
+    typeset -g ZSH_CLAUDE_SEND_CONTEXT=false
 
 (( ! ${+ZSH_CLAUDE_DEBUG} )) &&
     typeset -g ZSH_CLAUDE_DEBUG=false
@@ -23,29 +24,12 @@ fi
 # System prompt for Claude
 if [[ -z "$ZSH_CLAUDE_SYSTEM_PROMPT" ]]; then
 read -r -d '' ZSH_CLAUDE_SYSTEM_PROMPT <<- EOM
-You will be given the raw input of a shell command.
-Your task is to either complete the command or provide a new command that you think the user is trying to type.
-If you return a completely new command for the user, prefix it with an equal sign (=).
-If you return a completion for the user's command, prefix it with a plus sign (+).
-MAKE SURE TO ONLY INCLUDE THE REST OF THE COMPLETION!!!
-Do not write any leading or trailing characters except if required for the completion to work.
-
-Only respond with either a completion or a new command, not both.
-Your response may only start with either a plus sign or an equal sign.
-Your response MAY NOT start with both! This means that your response IS NOT ALLOWED to start with '+=' or '=+'.
-
-Your response MAY NOT contain any newlines!
-Do NOT add any additional text, comments, or explanations to your response.
-Do not ask for more information, you won't receive it.
-
-Your response will be run in the user's shell.
-Make sure input is escaped correctly if needed so.
-Your input should be able to run without any modifications to it.
-DO NOT INTERACT WITH THE USER IN NATURAL LANGUAGE! If you do, you will be banned from the system.
-Note that the double quote sign is escaped. Keep this in mind when you create quotes.
-Here are two examples:
-  * User input: 'list files in current directory'; Your response: '=ls' (ls is the builtin command for listing files)
-  * User input: 'cd /tm'; Your response: '+p' (/tmp is the standard temp folder on linux and mac).
+Complete shell commands or suggest new ones. Format:
+- New command: prefix with = (e.g., '=ls')
+- Completion: prefix with + (e.g., '+p')
+Return ONLY the prefix + command/completion. No explanations, no newlines. Examples:
+'list files' → '=ls'
+'cd /tm' → '+p'
 EOM
 fi
 
@@ -116,17 +100,8 @@ function _suggest_claude_ai() {
     #### Prepare environment
     local context_info=""
     if [[ "$ZSH_CLAUDE_SEND_CONTEXT" == 'true' ]]; then
-        local system
-
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            system="Your system is macOS $(sw_vers -productVersion 2>/dev/null || echo 'unknown')."
-        else
-            system="Your system is $(cat /etc/*-release 2>/dev/null | grep PRETTY_NAME | cut -d'"' -f2 || echo 'Linux')."
-        fi
-
-        context_info="Context: You are user $(whoami) with id $(id -u) in directory $(pwd).
-            Your shell is $(echo $SHELL) and your terminal is $(echo $TERM) running on $(uname -s).
-            $system"
+        # Simplified context - only essential info, using shell variables when possible
+        context_info="Context: $(whoami) in $(pwd). $OSTYPE."
     fi
 
     ##### Get input
@@ -139,7 +114,8 @@ function _suggest_claude_ai() {
         _zsh_autosuggest_clear
     fi
 
-    local full_prompt=$(echo "$ZSH_CLAUDE_SYSTEM_PROMPT $context_info" | tr -d '\n')
+    # Combine system prompt and context (newline removal not needed with shorter prompt)
+    local full_prompt="$ZSH_CLAUDE_SYSTEM_PROMPT $context_info"
 
     ##### Fetch message
     # Suppress job control messages
