@@ -1,27 +1,67 @@
 #!/usr/bin/env bash
 #
 # git-aicm: AI-powered commit message generator using GitHub Copilot
-#
-# Usage: git aicm [-b]
-#
-# Options:
-#   -b    Break up staged changes into multiple purposeful commits
-#
-# This script generates a commit message for staged changes using GitHub Copilot.
-# Edit the COMMIT_PROMPT variable below to customize how commit messages are generated.
 
 set -e
 
+# Help function
+show_help() {
+    cat << 'EOF'
+git-aicm: AI-Powered Commit Messages
+
+Generate commit messages for staged changes using GitHub Copilot.
+
+USAGE:
+    git aicm [OPTIONS]
+
+OPTIONS:
+    -b              Break up staged changes into multiple purposeful commits
+    -h, --help      Show this help message
+
+REQUIREMENTS:
+    GitHub Copilot CLI: npm install -g @github/copilot
+
+CUSTOMIZATION:
+    Edit the COMMIT_PROMPT variable in this script to customize message style.
+
+EXAMPLES:
+    git add <files>
+    git aicm
+
+    git add <files>
+    git aicm -b
+
+MORE INFO:
+    Philosophy behind -b flag: https://chrisarcand.com/purposeful-commits/
+EOF
+    exit 0
+}
+
 # Parse command line options
 BREAK_UP_COMMITS=false
-while getopts "b" opt; do
+while getopts "bh-:" opt; do
     case $opt in
         b)
             BREAK_UP_COMMITS=true
             ;;
+        h)
+            show_help
+            ;;
+        -)
+            case "${OPTARG}" in
+                help)
+                    show_help
+                    ;;
+                *)
+                    echo "Invalid option: --$OPTARG" >&2
+                    echo "Usage: git aicm [-b] [-h|--help]"
+                    exit 1
+                    ;;
+            esac
+            ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
-            echo "Usage: git aicm [-b]"
+            echo "Usage: git aicm [-b] [-h|--help]"
             exit 1
             ;;
     esac
