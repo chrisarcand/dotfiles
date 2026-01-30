@@ -1,28 +1,28 @@
 #!/usr/bin/env zsh
 
-# GitHub Copilot CLI integration for zsh
-# Inspired by Myzel394/zsh-copilot but adapted for GitHub Copilot CLI
+# Claude Code CLI integration for zsh
+# Inspired by Myzel394/zsh-copilot but adapted for Claude Code CLI using Haiku 4.5
 
 # Default key binding - Ctrl+Z
-(( ! ${+ZSH_COPILOT_KEY} )) &&
-    typeset -g ZSH_COPILOT_KEY='^z'
+(( ! ${+ZSH_CLAUDE_KEY} )) &&
+    typeset -g ZSH_CLAUDE_KEY='^z'
 
 # Configuration options
-(( ! ${+ZSH_COPILOT_SEND_CONTEXT} )) &&
-    typeset -g ZSH_COPILOT_SEND_CONTEXT=true
+(( ! ${+ZSH_CLAUDE_SEND_CONTEXT} )) &&
+    typeset -g ZSH_CLAUDE_SEND_CONTEXT=true
 
-(( ! ${+ZSH_COPILOT_DEBUG} )) &&
-    typeset -g ZSH_COPILOT_DEBUG=false
+(( ! ${+ZSH_CLAUDE_DEBUG} )) &&
+    typeset -g ZSH_CLAUDE_DEBUG=false
 
-# Check if copilot CLI is available
-if ! command -v copilot &> /dev/null; then
-    echo "GitHub Copilot CLI not found. Please install it: npm install -g @github/copilot"
+# Check if claude CLI is available
+if ! command -v claude &> /dev/null; then
+    echo "Claude Code CLI not found. Please visit https://github.com/anthropics/claude-code"
     return 1
 fi
 
-# System prompt for Copilot
-if [[ -z "$ZSH_COPILOT_SYSTEM_PROMPT" ]]; then
-read -r -d '' ZSH_COPILOT_SYSTEM_PROMPT <<- EOM
+# System prompt for Claude
+if [[ -z "$ZSH_CLAUDE_SYSTEM_PROMPT" ]]; then
+read -r -d '' ZSH_CLAUDE_SYSTEM_PROMPT <<- EOM
 You will be given the raw input of a shell command.
 Your task is to either complete the command or provide a new command that you think the user is trying to type.
 If you return a completely new command for the user, prefix it with an equal sign (=).
@@ -49,42 +49,37 @@ Here are two examples:
 EOM
 fi
 
-if [[ "$ZSH_COPILOT_DEBUG" == 'true' ]]; then
-    touch /tmp/zsh-copilot.log
+if [[ "$ZSH_CLAUDE_DEBUG" == 'true' ]]; then
+    touch /tmp/zsh-claude.log
 fi
 
-function _fetch_copilot_suggestion() {
+function _fetch_claude_suggestion() {
     local input="$1"
-    local full_prompt="$2"
+    local system_prompt="$2"
 
-    # Build the full prompt for copilot
-    local copilot_prompt="$full_prompt
-
-User input: $input
-
-Remember: Start with = for new command, + for completion. No explanations."
-
-    # Call GitHub Copilot CLI with --prompt flag
-    local response=$(copilot --prompt "$copilot_prompt" 2>&1)
+    # Call Claude Code CLI with --print flag (non-interactive mode)
+    # Using Haiku 4.5 model for fast, cost-effective completions
+    local response=$(claude --print --model haiku --system-prompt "$system_prompt" --output-format text "$input" 2>&1)
     local response_code=$?
 
-    if [[ "$ZSH_COPILOT_DEBUG" == 'true' ]]; then
-        echo "{\"date\":\"$(date)\",\"log\":\"Called Copilot CLI\",\"input\":\"$input\",\"response\":\"$response\",\"response_code\":\"$response_code\"}" >> /tmp/zsh-copilot.log
+    if [[ "$ZSH_CLAUDE_DEBUG" == 'true' ]]; then
+        echo "{\"date\":\"$(date)\",\"log\":\"Called Claude Code CLI\",\"input\":\"$input\",\"response\":\"$response\",\"response_code\":\"$response_code\"}" >> /tmp/zsh-claude.log
     fi
 
     if [[ $response_code -ne 0 ]]; then
-        echo "Error fetching suggestions from GitHub Copilot CLI." > /tmp/.zsh_copilot_error
+        echo "Error fetching suggestions from Claude Code CLI." > /tmp/.zsh_claude_error
         return 1
     fi
 
-    # Extract just the command from copilot output, filtering out usage stats
-    local message=$(echo "$response" | grep -v "^Total\|^Usage\|claude-sonnet\|gpt-\|Premium request\|duration\|code changes" | grep -v "^\s*$" | head -1 | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+    # With --output-format text, Claude returns clean output without stats
+    # Just trim whitespace
+    local message=$(echo "$response" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
 
-    if [[ "$ZSH_COPILOT_DEBUG" == 'true' ]]; then
-        echo "{\"date\":\"$(date)\",\"log\":\"Extracted message\",\"message\":\"$message\"}" >> /tmp/zsh-copilot.log
+    if [[ "$ZSH_CLAUDE_DEBUG" == 'true' ]]; then
+        echo "{\"date\":\"$(date)\",\"log\":\"Extracted message\",\"message\":\"$message\"}" >> /tmp/zsh-claude.log
     fi
 
-    echo "$message" > /tmp/zsh_copilot_suggestion || return 1
+    echo "$message" > /tmp/zsh_claude_suggestion || return 1
 }
 
 function _show_loading_animation() {
@@ -117,10 +112,10 @@ function _show_loading_animation() {
     trap - SIGINT
 }
 
-function _suggest_copilot_ai() {
+function _suggest_claude_ai() {
     #### Prepare environment
     local context_info=""
-    if [[ "$ZSH_COPILOT_SEND_CONTEXT" == 'true' ]]; then
+    if [[ "$ZSH_CLAUDE_SEND_CONTEXT" == 'true' ]]; then
         local system
 
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -135,7 +130,7 @@ function _suggest_copilot_ai() {
     fi
 
     ##### Get input
-    rm -f /tmp/zsh_copilot_suggestion /tmp/.zsh_copilot_error
+    rm -f /tmp/zsh_claude_suggestion /tmp/.zsh_claude_error
     local input=$(echo "${BUFFER:0:$CURSOR}" | tr '\n' ';')
     input=$(echo "$input" | sed 's/"/\\"/g')
 
@@ -144,38 +139,38 @@ function _suggest_copilot_ai() {
         _zsh_autosuggest_clear
     fi
 
-    local full_prompt=$(echo "$ZSH_COPILOT_SYSTEM_PROMPT $context_info" | tr -d '\n')
+    local full_prompt=$(echo "$ZSH_CLAUDE_SYSTEM_PROMPT $context_info" | tr -d '\n')
 
     ##### Fetch message
     # Suppress job control messages
     setopt local_options no_notify no_monitor
-    _fetch_copilot_suggestion "$input" "$full_prompt" &
+    _fetch_claude_suggestion "$input" "$full_prompt" &
     local pid=$!
 
     _show_loading_animation $pid
     wait $pid
     local response_code=$?
 
-    if [[ "$ZSH_COPILOT_DEBUG" == 'true' ]]; then
-        echo "{\"date\":\"$(date)\",\"log\":\"Fetched message\",\"input\":\"$input\",\"response_code\":\"$response_code\"}" >> /tmp/zsh-copilot.log
+    if [[ "$ZSH_CLAUDE_DEBUG" == 'true' ]]; then
+        echo "{\"date\":\"$(date)\",\"log\":\"Fetched message\",\"input\":\"$input\",\"response_code\":\"$response_code\"}" >> /tmp/zsh-claude.log
     fi
 
-    if [[ ! -f /tmp/zsh_copilot_suggestion ]]; then
+    if [[ ! -f /tmp/zsh_claude_suggestion ]]; then
         if (( ${+functions[_zsh_autosuggest_clear]} )); then
             _zsh_autosuggest_clear
         fi
-        zle -M "$(cat /tmp/.zsh_copilot_error 2>/dev/null || echo 'No suggestion available at this time. Please try again later.')"
+        zle -M "$(cat /tmp/.zsh_claude_error 2>/dev/null || echo 'No suggestion available at this time. Please try again later.')"
         return 1
     fi
 
-    local message=$(cat /tmp/zsh_copilot_suggestion)
+    local message=$(cat /tmp/zsh_claude_suggestion)
 
     ##### Process response
     local first_char=${message:0:1}
     local suggestion=${message:1:${#message}}
 
-    if [[ "$ZSH_COPILOT_DEBUG" == 'true' ]]; then
-        echo "{\"date\":\"$(date)\",\"log\":\"Suggestion extracted.\",\"input\":\"$input\",\"first_char\":\"$first_char\",\"suggestion\":\"$suggestion\"}" >> /tmp/zsh-copilot.log
+    if [[ "$ZSH_CLAUDE_DEBUG" == 'true' ]]; then
+        echo "{\"date\":\"$(date)\",\"log\":\"Suggestion extracted.\",\"input\":\"$input\",\"first_char\":\"$first_char\",\"suggestion\":\"$suggestion\"}" >> /tmp/zsh-claude.log
     fi
 
     ##### Show the suggestion to the user!
@@ -201,15 +196,17 @@ function _suggest_copilot_ai() {
     zle redisplay
 }
 
-function zsh-copilot() {
-    echo "ZSH GitHub Copilot CLI is now active. Press $ZSH_COPILOT_KEY to get suggestions."
+function zsh-claude() {
+    echo "ZSH Claude Code CLI is now active. Press $ZSH_CLAUDE_KEY to get suggestions."
     echo ""
     echo "Configurations:"
-    echo "    - ZSH_COPILOT_KEY: Key to press to get suggestions (default: ^z, value: $ZSH_COPILOT_KEY)."
-    echo "    - ZSH_COPILOT_SEND_CONTEXT: If \`true\`, will send context information (whoami, shell, pwd, etc.) to the AI (default: true, value: $ZSH_COPILOT_SEND_CONTEXT)."
-    echo "    - ZSH_COPILOT_SYSTEM_PROMPT: System prompt to use for the AI model (uses a built-in prompt by default)."
-    echo "    - ZSH_COPILOT_DEBUG: Enable debug logging to /tmp/zsh-copilot.log (default: false, value: $ZSH_COPILOT_DEBUG)."
+    echo "    - ZSH_CLAUDE_KEY: Key to press to get suggestions (default: ^z, value: $ZSH_CLAUDE_KEY)."
+    echo "    - ZSH_CLAUDE_SEND_CONTEXT: If \`true\`, will send context information (whoami, shell, pwd, etc.) to Claude (default: true, value: $ZSH_CLAUDE_SEND_CONTEXT)."
+    echo "    - ZSH_CLAUDE_SYSTEM_PROMPT: System prompt to use for the AI model (uses a built-in prompt by default)."
+    echo "    - ZSH_CLAUDE_DEBUG: Enable debug logging to /tmp/zsh-claude.log (default: false, value: $ZSH_CLAUDE_DEBUG)."
+    echo ""
+    echo "Using Claude Haiku 4.5 model for fast, cost-effective shell completions."
 }
 
-zle -N _suggest_copilot_ai
-bindkey "$ZSH_COPILOT_KEY" _suggest_copilot_ai
+zle -N _suggest_claude_ai
+bindkey "$ZSH_CLAUDE_KEY" _suggest_claude_ai
