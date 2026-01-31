@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# git-aicm: AI-powered commit message generator using GitHub Copilot
+# git-aicm: AI-powered commit message generator using Claude Code
 
 set -e
 
@@ -9,7 +9,7 @@ show_help() {
     cat << 'EOF'
 git-aicm: AI-Powered Commit Messages
 
-Generate commit messages for staged changes using GitHub Copilot.
+Generate commit messages for staged changes using Claude Code.
 
 USAGE:
     git aicm [OPTIONS]
@@ -19,7 +19,7 @@ OPTIONS:
     -h, --help      Show this help message
 
 REQUIREMENTS:
-    GitHub Copilot CLI: npm install -g @github/copilot
+    Claude Code CLI: https://github.com/anthropics/claude-code
 
 CUSTOMIZATION:
     Edit the COMMIT_PROMPT variable in this script to customize message style.
@@ -70,7 +70,7 @@ done
 # ============================================================================
 # CUSTOMIZE YOUR COMMIT MESSAGE PROMPT HERE
 # ============================================================================
-# This is the prompt sent to GitHub Copilot to generate your commit message.
+# This is the system prompt sent to Claude to generate your commit message.
 # Edit this to match your preferred commit message style and conventions.
 # ============================================================================
 
@@ -207,10 +207,10 @@ EOF
 # Main script - no need to edit below this line
 # ============================================================================
 
-# Check if copilot CLI is available
-if ! command -v copilot &> /dev/null; then
-    echo "Error: GitHub Copilot CLI not found."
-    echo "Install it with: npm install -g @github/copilot"
+# Check if claude CLI is available
+if ! command -v claude &> /dev/null; then
+    echo "Error: Claude Code CLI not found."
+    echo "Install it from: https://github.com/anthropics/claude-code"
     exit 1
 fi
 
@@ -239,60 +239,30 @@ show_spinner() {
 # Get the staged diff
 DIFF=$(git diff --cached)
 
-# Build the full prompt based on mode
+# Select system prompt based on mode
 if [ "$BREAK_UP_COMMITS" = true ]; then
-    FULL_PROMPT="$BREAKUP_PROMPT
-
-Git diff:
-$DIFF"
+    SYSTEM_PROMPT="$BREAKUP_PROMPT"
 else
-    FULL_PROMPT="$COMMIT_PROMPT
-
-Git diff:
-$DIFF"
+    SYSTEM_PROMPT="$COMMIT_PROMPT"
 fi
 
-# Call GitHub Copilot CLI and extract the message with spinner
-# Capture all lines, not just the first one, to get the full commit message with body
-(copilot --prompt "$FULL_PROMPT" > /tmp/git-aicm-output.$$ 2>&1) &
-COPILOT_PID=$!
+# Call Claude Code CLI with --print for non-interactive output
+# Uses haiku for speed and cost-effectiveness
+(claude --print --model haiku --system-prompt "$SYSTEM_PROMPT" --output-format text "Git diff:
 
-show_spinner $COPILOT_PID "Generating commit with Copilot..."
+$DIFF" > /tmp/git-aicm-output.$$ 2>/dev/null) &
+CLAUDE_PID=$!
 
-wait $COPILOT_PID
-COPILOT_OUTPUT=$(cat /tmp/git-aicm-output.$$)
+show_spinner $CLAUDE_PID "Generating commit with Claude..."
+
+wait $CLAUDE_PID
+MSG=$(cat /tmp/git-aicm-output.$$)
 rm -f /tmp/git-aicm-output.$$
 
 echo ""
 
-# Filter out metadata lines but keep the actual commit message INCLUDING blank lines
-# We need to preserve blank lines between paragraphs, so we can't use grep -v with empty line patterns
-# Instead, we'll filter line by line and keep everything that's not metadata
-MSG=""
-IN_MESSAGE=false
-while IFS= read -r line; do
-    # Skip metadata lines
-    if echo "$line" | grep -q "^Total\|^Usage\|claude-sonnet\|gpt-\|Premium request\|duration\|code changes\|^API time spent\|^Breakdown by AI model"; then
-        continue
-    fi
-
-    # If we hit a non-metadata, non-empty line, we're in the message
-    if [ -n "$line" ]; then
-        IN_MESSAGE=true
-    fi
-
-    # Once we're in the message, capture everything (including blank lines)
-    if [ "$IN_MESSAGE" = true ]; then
-        if [ -z "$MSG" ]; then
-            MSG="$line"
-        else
-            MSG="$MSG"$'\n'"$line"
-        fi
-    fi
-done <<< "$COPILOT_OUTPUT"
-
-# Trim any trailing blank lines
-MSG=$(echo "$MSG" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+# Trim leading/trailing blank lines
+MSG=$(echo "$MSG" | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}')
 
 # Check if we got a message
 if [ -z "$MSG" ]; then
