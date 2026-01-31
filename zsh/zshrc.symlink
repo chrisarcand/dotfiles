@@ -201,6 +201,3 @@ drmi () {
       docker images --format='{{.Repository}} {{.ID}}' | grep $1 | cut -d' ' -f2 | xargs docker image rm
     fi
 }
-
-# Created by `pipx` on 2026-01-20 20:50:59
-export PATH="$PATH:/Users/chris/.local/bin"
