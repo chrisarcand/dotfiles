@@ -121,7 +121,6 @@ link_file () {
   fi
 }
 
-# This was never updated for Zed's config structure and is undoubtedly broken.'
 symlink_dotfiles () {
   info 'installing dotfiles'
 
@@ -129,7 +128,29 @@ symlink_dotfiles () {
 
   for src in $(find -H "$DOTFILES_ROOT" -maxdepth 2 -name '*.symlink' -not -path '*.git*')
   do
-    dst="$HOME/.$(basename "${src%.*}")"
+    local topic_dir="$(dirname "$src")"
+    local filename="$(basename "${src%.*}")"
+
+    if [ -f "$topic_dir/.symlink_base" ]; then
+      local base="$(cat "$topic_dir/.symlink_base")"
+      dst="$HOME/$base/$filename"
+      mkdir -p "$HOME/$base"
+
+      # Clean up stale symlink at the old wrong location
+      local stale="$HOME/.$filename"
+      if [ "$stale" != "$dst" ] && [ -L "$stale" ]; then
+        local stale_target="$(readlink "$stale")"
+        case "$stale_target" in
+          */.dotfiles/*)
+            rm -f "$stale"
+            success "cleaned up stale symlink $stale"
+            ;;
+        esac
+      fi
+    else
+      dst="$HOME/.$filename"
+    fi
+
     link_file "$src" "$dst"
   done
 
@@ -139,6 +160,12 @@ symlink_dotfiles () {
 
 setup_gitconfig
 symlink_dotfiles
+
+# Initialize git submodules (plugins)
+info 'initializing submodules'
+cd "$DOTFILES_ROOT"
+git submodule update --init --recursive 2>/dev/null
+success 'submodules'
 
 # Install Homebrew if OSX
 if [[ ("$OSTYPE" == "darwin"*) && (! $(which brew)) ]]; then
