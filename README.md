@@ -7,12 +7,6 @@ The provided installer includes support for the following OS/distributions:
 
 - MacOS
 
-...that's it really, I still have some of this lying around but I won't expect it to work:
-
-- Fedora
-- Red Hat Enterprise Linux
-- CentOS
-
 ## What's Included
 
 **Development Tools:**
@@ -35,7 +29,7 @@ The provided installer includes support for the following OS/distributions:
 - Claude Code CLI integration
 
 **Custom Scripts:**
-- 40+ custom utilities in `bin/` (see `bin/README.md` for details)
+- 20+ custom utilities in `bin/` (see `bin/README.md` for details)
 - Git utilities including AI-powered commit messages
 - Docker management scripts
 - System utilities
@@ -60,11 +54,11 @@ You'll need to set up things like your default shell and fonts n' stuff in your 
 ### What Gets Installed
 
 The install script will:
-1. Symlink all `.symlink` files to your `$HOME` directory
-2. Run topic-specific install scripts found in each directory
-3. Set up git configuration (prompts for name/email)
-4. Install language version managers (rbenv, nvm, goenv)
-5. Install core tools via Homebrew (on macOS)
+1. Set up git configuration (prompts for name/email)
+2. Symlink all `.symlink` files to the appropriate location (see Organization below)
+3. Initialize git submodules (oh-my-zsh, tmux plugins)
+4. Install Homebrew (on macOS, if not already installed)
+5. Run topic-specific install scripts found in each directory
 
 Some tools with installers:
 - `git/install.sh` - Git and GitHub CLI
@@ -78,7 +72,7 @@ Some tools with installers:
 - `ghostty/install.sh` - Ghostty terminal
 - `docker/install.sh` - Docker Desktop
 - `system/install.sh` - System packages via Homebrew
-- `claude/install.sh` - Claude Code CLI system configuration
+- `claude/install.sh` - Claude Code directory setup
 
 ### Security Notes
 
@@ -88,8 +82,9 @@ This repository follows security best practices:
 - Sensitive files are excluded via `.gitignore`
 - Git hooks provide safety checks for pushes to non-personal repositories
 
-**Required Environment Variables:**
-- `GITHUB_TOKEN` - Used by Claude Code's GitHub Copilot MCP server
+**Optional Environment Variables:**
+- `GITHUB_TOKEN` - Used by the GitHub MCP server configured in Claude Code settings
+- `USE_CLAUDE_BEDROCK` - Set to `1` in `~/.private-zshrc` to use AWS Bedrock as the Claude provider
 - AWS credentials should be configured via `~/.aws/config` (not in dotfiles)
 
 Keep sensitive information out of tracked files. Use environment variables or the private config pattern.
@@ -114,9 +109,15 @@ The organization is as follows:
   expected to set up autocomplete.
 
 - **\<topic\>/\*.symlink**
-  Any files ending in `.symlink` get symlinked into your $HOME when you use the
-  provided install script. This is so you can keep all of those versioned in
-  your dotfiles but still keep those autoloaded files in your home directory.
+  Any files ending in `.symlink` get symlinked into your `$HOME` when you use the
+  provided install script (e.g. `git/gitconfig.symlink` → `~/.gitconfig`).
+
+- **\<topic\>/.symlink_base**
+  If a topic directory contains a `.symlink_base` file, its contents specify
+  the path (relative to `$HOME`) where that topic's `.symlink` files should be
+  linked instead of the default `~/.<name>`. For example, `zed/.symlink_base`
+  contains `.config/zed`, so `zed/settings.json.symlink` is linked to
+  `~/.config/zed/settings.json`.
 
 - **\_plugins/**
   This directory houses git submodules to properly version important external dependencies. I don't

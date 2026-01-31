@@ -49,20 +49,14 @@ setopt extended_glob
 config_files=($DOTFILES_ROOT/^_plugins/**/*.zsh)
 
 # Load the path files
-case $(uname) in
-  'Darwin')
-    # I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
-    # Also allows you to `reload` without constantly appending to your path
-    export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
+# I hardcode the intial path so that tmux doesn't fuck it up and append duplicates
+# Also allows you to `reload` without constantly appending to your path
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/texbin
 
-    # Homebrew started requiring this explicitly I guess.
-    # I add it here because then all path.zsh loads below can assume Homebrew is path'd correctly to
-    # use utilities to set the path, like init'ing rbenv, as an example.
-    export PATH=/opt/homebrew/bin:$PATH
-    ;;
-  'Linux')
-    ;;
-esac
+# Homebrew started requiring this explicitly I guess.
+# I add it here because then all path.zsh loads below can assume Homebrew is path'd correctly to
+# use utilities to set the path, like init'ing rbenv, as an example.
+export PATH=/opt/homebrew/bin:$PATH
 
 
 for file in ${(M)config_files:#*/path.zsh}
@@ -101,35 +95,6 @@ disable -r time
 # Base16 Shell
 export BASE16_SHELL="$DOTFILES_ROOT/fonts_and_colorschemes/base16-default.dark-shell.sh"
 [[ -s $BASE16_SHELL ]] && . $BASE16_SHELL
-
-# ssh-agent for Linux
-# Inits ssh-agent and reconnects to the same one if possible.
-# Allows for single passphrase entry per session. This is
-# handled by Keychain on OSX ---- OR IS IT? I don't even know anymore.
-case $(uname) in
-  'Linux')
-    SSH_ENV="$HOME/.ssh/environment"
-
-    function start_agent {
-      echo "Initializing new SSH agent..."
-      /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-      chmod 600 "${SSH_ENV}"
-      . "${SSH_ENV}" > /dev/null
-      ssh-add
-    }
-
-    # Source SSH settings, if applicable
-    if [ -f "${SSH_ENV}" ]; then
-      . "${SSH_ENV}" > /dev/null
-      ps -ef | grep ${SSH_AGENT_PID} |
-      grep ssh-agent$ > /dev/null || {
-        start_agent;
-      }
-    else
-      start_agent;
-    fi
-    ;;
-esac
 
 # Because it's not handled by keychain anymore? I have no idea.
 export GPG_TTY=$(tty)

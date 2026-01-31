@@ -4,6 +4,11 @@ DOTFILES_ROOT=~/.dotfiles
 
 set -e
 
+if [[ "$OSTYPE" != "darwin"* ]]; then
+  echo "These dotfiles only support macOS."
+  exit 1
+fi
+
 echo ''
 
 info () {
@@ -29,11 +34,7 @@ setup_gitconfig () {
   then
     info 'setup gitconfig'
 
-    git_credential='cache'
-    if [ "$(uname -s)" == "Darwin" ]
-    then
-      git_credential='osxkeychain'
-    fi
+    git_credential='osxkeychain'
 
     user ' - What is your GitHub author name?'
     read -e git_authorname
@@ -167,8 +168,8 @@ cd "$DOTFILES_ROOT"
 git submodule update --init --recursive 2>/dev/null
 success 'submodules'
 
-# Install Homebrew if OSX
-if [[ ("$OSTYPE" == "darwin"*) && (! $(which brew)) ]]; then
+# Install Homebrew
+if [[ ! $(which brew) ]]; then
   ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 fi
 
