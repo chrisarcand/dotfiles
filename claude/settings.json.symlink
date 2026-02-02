@@ -1,9 +1,37 @@
 {
+  "outputStyle": "Explanatory",
   "permissions": {
     "allow": [
-      "Bash(tmux show-options:*)",
-      "Bash(tmux show-environment:*)",
-      "Bash(tmux source-file:*)"
+      "Bash(curl:*)",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__getJiraIssue",
+      "mcp__atlassian__transitionJiraIssue",
+      "mcp__atlassian__editJiraIssue",
+      "mcp__atlassian__search",
+      "Bash(grep:*)",
+      "Bash(xargs ls:*)",
+      "Bash(ls:*)",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "Bash(find:*)",
+      "mcp__atlassian__atlassianUserInfo",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "WebFetch(domain:github.com)",
+      "Bash(claude mcp --help:*)",
+      "WebFetch(domain:docs.claude.ai)",
+      "Bash(claude config:*)",
+      "Bash(readlink:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:developer.hashicorp.com)",
+      "WebFetch(domain:www.hashicorp.com)",
+      "WebFetch(domain:support.hashicorp.com)",
+      "WebFetch(domain:edgeguides.rubyonrails.org)",
+      "WebFetch(domain:guides.rubyonrails.org)",
+      "WebFetch(domain:discuss.rubyonrails.org)",
+      "WebFetch(domain:api.rubyonrails.org)",
+      "Bash(git log:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)"
     ]
   },
   "enabledPlugins": {
