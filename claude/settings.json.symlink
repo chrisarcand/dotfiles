@@ -1,5 +1,4 @@
 {
-  "outputStyle": "Explanatory",
   "permissions": {
     "allow": [
       "Bash(curl:*)",
@@ -35,8 +34,8 @@
     ]
   },
   "enabledPlugins": {
-    "hashicorp@hashicorp-agent-skills": true,
-    "technology@hashicorp-agent-skills": true,
+    "hashicorp@hashicorp-agent-skills": false,
+    "technology@hashicorp-agent-skills": false,
     "gopls-lsp@claude-plugins-official": true
   },
   "mcpServers": {

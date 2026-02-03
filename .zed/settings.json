@@ -1,0 +1,7 @@
+// An annoying override because Claude doesn't understand JSONC:
+// https://github.com/anthropics/claude-code/issues/17968
+{
+  "file_types": {
+    "JSON": ["claude/settings.json.symlink"],
+  },
+}

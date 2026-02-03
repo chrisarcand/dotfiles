@@ -38,8 +38,8 @@ alias wow='git status'                                              \
 
 # Wrap claude with Bedrock config when USE_CLAUDE_BEDROCK=1.
 # Set USE_CLAUDE_BEDROCK=1 in ~/.private-zshrc on work machines.
-if [[ "$USE_CLAUDE_BEDROCK" == "1" ]]; then
-  claude() {
+claude() {
+  if [[ "$USE_CLAUDE_BEDROCK" == "1" ]]; then
     # Specify the model to use for most requests. Default: claude-sonnet-4-5.
     export ANTHROPIC_MODEL="global.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
@@ -76,7 +76,7 @@ if [[ "$USE_CLAUDE_BEDROCK" == "1" ]]; then
     # entirely (MAX_THINKING_TOKENS=0). Extended thinking improves performance on complex reasoning and
     # coding tasks but impacts prompt caching efficiency.
     export MAX_THINKING_TOKENS=${MAX_THINKING_TOKENS:-4000}
+  fi
 
-    command claude "${@}"
-  }
-fi
+  command claude "${@}"
+}
