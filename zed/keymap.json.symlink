@@ -13,6 +13,9 @@
   {
     // Active everywhere
     "bindings": {
+      // Terminal panel toggle
+      "shift-cmd-j": "terminal_panel::Toggle",
+
       // Pane navigation with Vim-style movement keys
       "ctrl-h": "workspace::ActivatePaneLeft",
       "ctrl-l": "workspace::ActivatePaneRight",
@@ -30,8 +33,8 @@
       // AI and menu navigation
       "ctrl-space": "assistant::InlineAssist",
       "ctrl-n": "menu::SelectNext",
-      "ctrl-p": "menu::SelectPrevious"
-    }
+      "ctrl-p": "menu::SelectPrevious",
+    },
   },
 
   //==========================================
@@ -42,8 +45,8 @@
     "context": "Editor && !(vim_mode == normal)",
     "bindings": {
       "ctrl-k": "menu::SelectPrevious",
-      "ctrl-j": "menu::SelectNext"
-    }
+      "ctrl-j": "menu::SelectNext",
+    },
   },
 
   //==========================================
@@ -54,9 +57,9 @@
     "bindings": {
       // File and navigation commands with comma leader
       ", d": "pane::RevealInProjectPanel", // Show current file in sidebar
-      ", t": "file_finder::Toggle",        // Quick open file finder
-      ", m": "outline::Toggle",            // Toggle outline view
-      ", n": "project_symbols::Toggle",    // Toggle project symbols
+      ", t": "file_finder::Toggle", // Quick open file finder
+      ", m": "outline::Toggle", // Toggle outline view
+      ", n": "project_symbols::Toggle", // Toggle project symbols
       ", a": ["workspace::SendKeystrokes", "cmd-shift-f"], // Global search
 
       // Split window commands
@@ -66,8 +69,8 @@
       // Assistant and multi-cursor
       "ctrl-a c": "assistant::ToggleFocus", // Toggle AI assistant panel
       "alt-cmd-j": "editor::AddSelectionBelow", // Add multiple cursors
-      "alt-cmd-k": "editor::AddSelectionAbove"  // Add multiple cursors
-    }
+      "alt-cmd-k": "editor::AddSelectionAbove", // Add multiple cursors
+    },
   },
 
   //==========================================
@@ -76,8 +79,8 @@
   {
     "context": "AssistantPanel && (VimControl && !menu)",
     "bindings": {
-      "ctrl-a c": "workspace::ToggleRightDock" // Toggle assistant panel visibility
-    }
+      "ctrl-a c": "workspace::ToggleRightDock", // Toggle assistant panel visibility
+    },
   },
 
   //==========================================
@@ -91,8 +94,8 @@
       // File operations with 'm' prefix
       "m a": "project_panel::NewFile",
       "m m": "project_panel::Rename",
-      "m d": "project_panel::Delete"
-    }
+      "m d": "project_panel::Delete",
+    },
   },
 
   //==========================================
@@ -103,8 +106,8 @@
     "bindings": {
       ", r t": ["task::Spawn", { "task_name": "Run current spec file" }],
       ", r l": ["task::Spawn", { "task_name": "Run last spec" }],
-      ", r s": ["task::Spawn", { "task_name": "Run spec under cursor" }]
-    }
+      ", r s": ["task::Spawn", { "task_name": "Run spec under cursor" }],
+    },
   },
 
   //==========================================
@@ -115,8 +118,8 @@
     "bindings": {
       ", r t": ["task::Spawn", { "task_name": "Run current Go test file" }],
       ", r l": ["task::Spawn", { "task_name": "Run last Go test" }],
-      ", r s": ["task::Spawn", { "task_name": "Run Go test under cursor" }]
-    }
+      ", r s": ["task::Spawn", { "task_name": "Run Go test under cursor" }],
+    },
   },
 
   //==========================================
@@ -128,7 +131,7 @@
       // Terminal-specific split commands
       "ctrl-a s": "pane::SplitDown",
       "ctrl-a v": "pane::SplitRight",
-      "ctrl-a c": "assistant::ToggleFocus" // Toggle AI assistant from terminal
-    }
-  }
+      "ctrl-a c": "assistant::ToggleFocus", // Toggle AI assistant from terminal
+    },
+  },
 ]
