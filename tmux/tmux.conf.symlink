@@ -19,8 +19,8 @@ set -g renumber-windows on
 # Increase scrollback buffer size
 set -g history-limit 50000
 
-# Display tmux messages for 4 seconds
-set -g display-time 4000
+# Display tmux messages for 750ms (default)
+set -g display-time 750
 
 # Refresh status bar every second (for seconds display in clock)
 set -g status-interval 1

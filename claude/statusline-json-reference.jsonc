@@ -1,0 +1,548 @@
+// Claude Code Status Line JSON Reference
+// This is the complete structure of the JSON passed via stdin to status line scripts
+// Documentation: https://code.claude.com/docs/en/statusline
+// Last updated: 2026-02-05
+//
+// ============================================================================
+// DELIVERY MECHANISM & UPDATE FREQUENCY
+// ============================================================================
+//
+// The status line operates as a detached subprocess that receives JSON via stdin.
+// Updates are THROTTLED to run at most every 300ms to prevent render thrashing.
+// This means you're seeing SAMPLED snapshots, not continuous real-time data.
+// Transient spikes (like brief "thinking" bursts) may be missed between samples.
+
+{
+  // ============================================================================
+  // METADATA
+  // ============================================================================
+
+  // Always set to "Status" for status line hooks
+  // Use this discriminator to implement "Single-File Architecture" hooks that handle
+  // multiple event types (PreToolUse, SessionStart, Status) in one script
+  "hook_event_name": "Status",
+
+  // Unique identifier for this Claude Code session
+  // Changes each time you start a new conversation
+  //
+  // ⚠️  KNOWN ISSUE - "Zombie Session ID" Regression:
+  // During session resumption (claude --resume <id>), hooks may receive the
+  // session_id from the ORIGINAL session state rather than the active context.
+  // RECOMMENDATION: Cross-reference this ID with transcript_path filename to
+  // ensure they match before trusting the session identity.
+  "session_id": "abc123...",
+
+  // Absolute path to the transcript JSON file for this session
+  // Contains the full conversation history
+  //
+  // Format: .jsonl (JSON Lines) - one event per line
+  // This allows O(1) append operations instead of O(n) file rewrites
+  // Each line is a separate JSON object representing a turn event:
+  //   - User Prompt, Assistant Thought, Tool Use, Tool Result
+  //
+  // POWER USER TIP: Your status line script can read this file directly
+  // to access raw data not exposed in the summary JSON (e.g., `tail -n 1`
+  // to see the absolute latest tool output before it's summarized)
+  "transcript_path": "/path/to/transcript.jsonl",
+
+  // Current version of Claude Code
+  // Format: "major.minor.patch" (e.g., "1.0.80")
+  "version": "1.0.80",
+
+  // ============================================================================
+  // MODEL INFORMATION
+  // ============================================================================
+
+  "model": {
+    // Full model identifier as used by the API
+    //
+    // ANTHROPIC API FORMAT (Direct API Connection):
+    //   Clean, simple identifiers without prefix/suffix decoration
+    //   Examples:
+    //     - "claude-opus-4-6"
+    //     - "claude-sonnet-4-5-20250929"
+    //     - "claude-haiku-4-5-20251001"
+    //
+    //   ⚠️  IMPORTANT: There is NO "-thinking" suffix in model.id
+    //   "Extended Thinking" and "Adaptive Thinking" are API parameters
+    //   (e.g., budget_tokens), NOT distinct model identifiers.
+    //   You CANNOT detect thinking mode from model.id alone.
+    //   Effect is visible in token metrics: massive spike in total_output_tokens
+    //   relative to visible text (thought traces consume tokens but may be hidden).
+    //
+    // BEDROCK API FORMAT (AWS Enterprise):
+    //   Format: "[region.]anthropic.claude-{model}-{version}-v{variant}:0"
+    //
+    //   Standard (Regional) Inference:
+    //     - "anthropic.claude-opus-4-6-v1:0"
+    //     - "anthropic.claude-sonnet-4-5-20250929-v1:0"
+    //
+    //   Cross-Region Inference Profiles (CRIS):
+    //     Prefix indicates region affinity or global routing
+    //     - "global.anthropic.claude-opus-4-6-v1:0"  (global routing)
+    //     - "us.anthropic.claude-sonnet-4-5-20250929-v1:0"  (US region)
+    //     - "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"  (EU region)
+    //     - "jp.anthropic.claude-opus-4-6-v1:0"  (Japan region)
+    //     - "au.anthropic.claude-opus-4-6-v1:0"  (Australia region)
+    //
+    //   ⚠️  PARSING WARNING FOR STATUS LINE SCRIPTS:
+    //   Do NOT use exact string equality (e.g., id == "claude-sonnet-4-5")
+    //   Scripts will fail for Bedrock users due to prefix/suffix variations.
+    //   RECOMMENDED: Use substring matching or regex (e.g., "sonnet-4-5" in id)
+    //
+    // BEDROCK MODEL IDS (as of Feb 2026):
+    //   ┌──────────────────┬─────────────────────────────────────────────┬────────────────────────┐
+    //   │ Model            │ Base Bedrock Model ID                       │ Regional Availability  │
+    //   ├──────────────────┼─────────────────────────────────────────────┼────────────────────────┤
+    //   │ Opus 4.6         │ anthropic.claude-opus-4-6-v1:0              │ All regions            │
+    //   │ Sonnet 4.5       │ anthropic.claude-sonnet-4-5-20250929-v1:0   │ global, us, eu, jp     │
+    //   │ Sonnet 4         │ anthropic.claude-sonnet-4-20250514-v1:0     │ global, us, eu, apac   │
+    //   │ Opus 4.5         │ anthropic.claude-opus-4-5-20251101-v1:0     │ global, us, eu         │
+    //   │ Opus 4.1         │ anthropic.claude-opus-4-1-20250805-v1:0     │ us only                │
+    //   │ Opus 4           │ anthropic.claude-opus-4-20250514-v1:0       │ us only                │
+    //   │ Haiku 4.5        │ anthropic.claude-haiku-4-5-20251001-v1:0    │ global, us, eu         │
+    //   │ Sonnet 3.7*      │ anthropic.claude-3-7-sonnet-20250219-v1:0   │ us, eu, apac           │
+    //   │ Haiku 3.5*       │ anthropic.claude-3-5-haiku-20241022-v1:0    │ us only                │
+    //   │ Haiku 3          │ anthropic.claude-3-haiku-20240307-v1:0      │ us, eu, apac           │
+    //   └──────────────────┴─────────────────────────────────────────────┴────────────────────────┘
+    //   * Deprecated models (Sonnet 3.7: Oct 2025, Haiku 3.5: Dec 2025)
+    //
+    // BEDROCK INFERENCE ROUTING & PRICING:
+    //
+    //   Global Endpoints (prefix: "global."):
+    //     - Dynamic routing to any available region for maximum availability
+    //     - No data residency guarantees (may route through US, EU, Tokyo, etc.)
+    //     - NO pricing premium - same cost as Anthropic direct API
+    //     - Best for: Latency-sensitive apps where data residency is flexible
+    //     - Example: "global.anthropic.claude-opus-4-6-v1:0"
+    //
+    //   Regional Endpoints (prefix: region code like "us.", "eu.", "jp.", "au."):
+    //     - Guaranteed data routing through SPECIFIC regions only
+    //     - 10% PRICING PREMIUM over global endpoints
+    //     - Required for: GDPR, HIPAA, data sovereignty compliance (CRIS)
+    //     - Potentially higher latency if local region is congested
+    //     - Examples:
+    //       * "us.anthropic.claude-opus-4-6-v1:0"  (US West 2, US East 1)
+    //       * "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"  (Europe Frankfurt)
+    //       * "jp.anthropic.claude-opus-4-6-v1:0"  (Tokyo)
+    //       * "au.anthropic.claude-opus-4-6-v1:0"  (Sydney)
+    //
+    //   Standard Bedrock IDs (no region prefix):
+    //     - Legacy format (pre-CRIS) or models without global support
+    //     - Regional pricing (varies by model generation)
+    //     - Example: "anthropic.claude-opus-4-6-v1:0"
+    //
+    //   Note: Older models (Opus 4.1, Opus 4, Sonnet 4, Haiku 3.x) don't support
+    //         global endpoints and use regional-only infrastructure
+    //
+    // References:
+    //   - https://platform.claude.com/docs/en/build-with-claude/claude-on-amazon-bedrock
+    //   - https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html
+    "id": "claude-opus-4-5",
+
+    // Short human-readable display name
+    // Examples: "Opus", "Sonnet", "Haiku"
+    // This is what most status lines should display
+    // Note: This is consistent across both Anthropic API and Bedrock
+    "display_name": "Opus"
+  },
+
+  // ============================================================================
+  // WORKSPACE & DIRECTORIES
+  // ============================================================================
+
+  // Current working directory (same as workspace.current_dir)
+  // This is the directory where Claude Code is currently operating
+  "cwd": "/current/working/directory",
+
+  "workspace": {
+    // Current working directory where Claude is operating right now
+    // Can change if you use `cd` or if Claude changes directories
+    "current_dir": "/current/working/directory",
+
+    // Original project directory where you started the session
+    // This stays constant throughout the session
+    "project_dir": "/original/project/directory"
+  },
+
+  // ============================================================================
+  // OUTPUT CONFIGURATION
+  // ============================================================================
+
+  "output_style": {
+    // Name of the output style being used
+    // Default is "default", but users can customize output formatting
+    // Examples: "default", "compact", "verbose", etc.
+    "name": "default"
+  },
+
+  // ============================================================================
+  // COST & PERFORMANCE METRICS
+  // ============================================================================
+
+  "cost": {
+    // Estimated total cost in USD for this session
+    // Calculated CLIENT-SIDE using token counts × internal pricing table
+    //
+    // ⚠️  ACCURACY WARNING - Bedrock Regional Premium:
+    // As of Feb 2026, AWS Bedrock charges a 10% premium for Regional Inference
+    // Profiles (e.g., "us.anthropic..." is 10% more expensive than "global.anthropic...").
+    // If the CLI's internal pricing table doesn't distinguish between regional
+    // and global prefixes, this field will UNDERREPORT costs by ~10% for users
+    // on regional endpoints.
+    //
+    // RECOMMENDATION: For accurate billing, cross-reference this estimate with
+    // your actual AWS CloudWatch or Anthropic API billing dashboard.
+    //
+    // Accumulates across the entire session (only increases, never decreases)
+    "total_cost_usd": 0.01234,
+
+    // Total elapsed time since session started (milliseconds)
+    // Wall clock time, not just API time
+    "total_duration_ms": 45000,
+
+    // Total time spent waiting for API responses (milliseconds)
+    // Subset of total_duration_ms - only API call time
+    "total_api_duration_ms": 2300,
+
+    // Total lines of code added by Claude during this session
+    // Calculated by aggregating the payload of Write and Edit tool calls
+    //
+    // ⚠️  CRITICAL: This is NOT derived from `git diff`
+    // - If YOU manually edit a file, git diff changes but this counter does NOT
+    // - This isolates the AGENT's contribution from the USER's contribution
+    // - Enables productivity metrics: Cost per Line = total_cost_usd / (added + removed)
+    //
+    // Only counts Claude's tool operations, not manual file edits
+    "total_lines_added": 156,
+
+    // Total lines of code removed by Claude during this session
+    // Counts deletions from Edit tool operations only
+    //
+    // Same isolation logic: Claude's deletions only, not your manual edits
+    "total_lines_removed": 23
+  },
+
+  // ============================================================================
+  // CONTEXT WINDOW & TOKEN USAGE
+  // ============================================================================
+
+  "context_window": {
+    // ------------------------------------------------------------------------
+    // ⚠️  THE ODOMETER vs THE FUEL GAUGE - CRITICAL DISTINCTION
+    // ------------------------------------------------------------------------
+    // total_input_tokens / total_output_tokens = "THE ODOMETER"
+    //   → Cumulative work done across the entire session
+    //   → Can grow to millions, far exceeding context_window_size
+    //   → Use for: cost calculations, session statistics
+    //
+    // current_usage.* = "THE FUEL GAUGE"
+    //   → Size of the LAST API call's context window
+    //   → This is your proximity to the hard limit (e.g., 200k tokens)
+    //   → Use for: avoiding "Context Limit Reached" errors
+    //
+    // ------------------------------------------------------------------------
+    // SESSION TOTALS (Cumulative across entire session)
+    // These only increase, never decrease
+    // ------------------------------------------------------------------------
+
+    // Total input tokens sent across the ENTIRE session
+    // Includes: user messages, system prompts, tool results, conversation history
+    // Cumulative: starts at 0, grows with each turn, never decreases
+    // "THE ODOMETER" - Can exceed context_window_size in long sessions
+    "total_input_tokens": 15234,
+
+    // Total output tokens generated across the ENTIRE session
+    // Includes: Claude's text responses, tool call parameters
+    // Includes HIDDEN "thinking" tokens (Extended Thinking / Adaptive Thinking)
+    // Cumulative: starts at 0, grows with each turn, never decreases
+    "total_output_tokens": 4521,
+
+    // ------------------------------------------------------------------------
+    // CONTEXT WINDOW CAPACITY
+    // ------------------------------------------------------------------------
+
+    // Maximum token capacity for this model's context window
+    // Examples: 200000 for Sonnet/Opus 4.5, 100000 for older models
+    // This is the "working memory" size for the current conversation
+    "context_window_size": 200000,
+
+    // ------------------------------------------------------------------------
+    // CONTEXT WINDOW USAGE PERCENTAGES
+    // Pre-calculated percentages based on current_usage vs context_window_size
+    // ------------------------------------------------------------------------
+
+    // Percentage of context window currently used (0-100)
+    // Calculated from current_usage tokens vs context_window_size
+    //
+    // AUTO-COMPACTION CYCLE:
+    // When this approaches ~90-95%, Claude Code triggers "Auto-Compact":
+    //   - Older turns are summarized to free up context space
+    //   - used_percentage suddenly DROPS (e.g., 95% → 50%)
+    //   - total_input_tokens keeps RISING (odometer behavior)
+    //   - A PreCompact hook event is fired before summarization
+    //
+    // Observable artifacts after compaction:
+    //   - current_usage.input_tokens drops significantly
+    //   - Conversation history in transcript_path is condensed
+    "used_percentage": 42.5,
+
+    // Percentage of context window currently remaining/free (0-100)
+    // Always equals (100 - used_percentage)
+    // Shows how much "working memory" is still available
+    // Monitor this to avoid hitting context limits mid-task
+    "remaining_percentage": 57.5,
+
+    // ------------------------------------------------------------------------
+    // LAST API CALL USAGE
+    // Token counts from the MOST RECENT request/response only
+    // NOT cumulative, NOT the full context window - just the last turn
+    // "THE FUEL GAUGE" - This shows proximity to context limits
+    // ------------------------------------------------------------------------
+
+    "current_usage": {
+      // Input tokens sent in the LAST API call only
+      // Includes: user's last message + system prompt + context that was sent
+      // This number reflects what was transmitted in the most recent request
+      // Changes with every turn - represents only that single turn's input
+      // "THE FUEL GAUGE" - This is the authoritative metric for context capacity
+      "input_tokens": 8500,
+
+      // Output tokens generated in the LAST API call only
+      // This is literally how many tokens were in Claude's most recent response
+      // Includes HIDDEN "thinking" tokens if Extended/Adaptive Thinking is enabled
+      // Changes with every turn - represents only that single turn's output
+      // If Claude's last message was 1,200 tokens, this will show 1,200
+      "output_tokens": 1200,
+
+      // ------------------------------------------------------------------------
+      // PROMPT CACHING TELEMETRY - "Cache Health" Analysis
+      // ------------------------------------------------------------------------
+
+      // Tokens written to cache in the LAST API call only
+      // First time content is cached, it costs the same as input tokens
+      // But enables cheaper cache reads on subsequent turns (~90% discount)
+      // Common for: system prompts, large files read for first time
+      // Changes each turn - only shows cache creation from that specific turn
+      //
+      // CACHE HEALTH INDICATORS:
+      //   Cold Start: cache_creation is HIGH, cache_read is 0
+      //     → First turn, system prompt being cached for the first time
+      //   Warm State: cache_creation is LOW, cache_read is HIGH
+      //     → Optimal efficiency, reusing cached content
+      //   Cache Thrashing: cache_creation stays HIGH across many turns
+      //     → BAD: Agent is constantly breaking cache structure
+      //     → Causes: changing system prompts, reordering history
+      //     → Result: Excessive costs, no cache benefit
+      "cache_creation_input_tokens": 5000,
+
+      // Tokens read from cache in the LAST API call only
+      // These are tokens retrieved from cache instead of being resent
+      // ~90% cheaper than regular input tokens (~0.1x cost vs 1.0x)
+      // Common for: system prompts (cached once, read every turn after)
+      // Changes each turn - only shows cache reads from that specific turn
+      //
+      // High cache_read values indicate good cache efficiency and cost savings
+      "cache_read_input_tokens": 2000
+    }
+
+    // ⚠️  NULL EDGE CASE - Critical for Script Robustness:
+    // current_usage can be NULL in two scenarios:
+    //   1. Session startup (Phase 1): Before the first API inference
+    //   2. After crash/restart: When hooks fire before model initialization
+    //
+    // SCRIPT REQUIREMENT: You MUST handle this null state defensively
+    // Bad:  tokens=$(jq '.context_window.current_usage.input_tokens')
+    // Good: tokens=$(jq 'if .context_window.current_usage then .context_window.current_usage.input_tokens else 0 end')
+    //
+    // Failing to handle null will crash your status line script
+  }
+}
+
+// ============================================================================
+// UNDERSTANDING THE TOKEN METRICS
+// ============================================================================
+
+// SESSION TOTALS vs LAST TURN:
+// - total_input_tokens / total_output_tokens = Running totals across entire session
+//   * Only go UP, never down
+//   * Use for cost calculations and session statistics
+//
+// - current_usage.* = Tokens from the MOST RECENT API call only
+//   * Changes with EVERY turn to reflect that turn's usage
+//   * NOT cumulative, NOT the full context window
+//   * Shows how expensive the last exchange was
+
+// EXAMPLE SCENARIO:
+// Turn 1: You send "Read the README" (50 tokens), Claude responds (500 tokens)
+//   System prompt (20k tokens) sent and cached
+//   - total_input_tokens: 20,050
+//   - total_output_tokens: 500
+//   - current_usage.input_tokens: 20,050 (just this turn's input)
+//   - current_usage.output_tokens: 500 (just this turn's output)
+//   - current_usage.cache_creation_input_tokens: 20,000 (system prompt cached)
+//   - current_usage.cache_read_input_tokens: 0
+//
+// Turn 2: You send "Summarize it" (30 tokens), Claude responds (700 tokens)
+//   System prompt retrieved from cache
+//   - total_input_tokens: 20,080 (cumulative: 20,050 + 30)
+//   - total_output_tokens: 1,200 (cumulative: 500 + 700)
+//   - current_usage.input_tokens: 30 (JUST this turn's new input)
+//   - current_usage.output_tokens: 700 (JUST this turn's output)
+//   - current_usage.cache_creation_input_tokens: 0
+//   - current_usage.cache_read_input_tokens: 20,000 (system prompt from cache)
+//
+// Turn 3: You send a long message (5k tokens), Claude responds briefly (100 tokens)
+//   - total_input_tokens: 25,080 (cumulative)
+//   - total_output_tokens: 1,300 (cumulative)
+//   - current_usage.input_tokens: 5,000 (JUST this turn - much higher!)
+//   - current_usage.output_tokens: 100 (JUST this turn - much lower!)
+//   - current_usage.cache_read_input_tokens: 20,000 (system prompt again)
+
+// CACHE MECHANICS:
+// - cache_creation_input_tokens: First time content is cached
+//   * Costs same as regular input tokens
+//   * Enables future savings via cache reads
+//   * Common for: system prompts, large files, repeated content
+//
+// - cache_read_input_tokens: Content retrieved from cache
+//   * ~90% cheaper than regular input
+//   * Huge cost savings for repeated content
+//   * Example: System prompt cached on turn 1, read from cache every turn after
+
+// COST CALCULATION:
+// Total session cost = (total_input_tokens × input_price) + (total_output_tokens × output_price)
+// Note: Cache creation costs same as input, cache reads are ~10% of input cost
+// The provided total_cost_usd may not be accurate for Bedrock/non-Anthropic providers
+//
+// PRODUCTIVITY METRICS:
+// Cost per Line of Code = total_cost_usd / (total_lines_added + total_lines_removed)
+// This isolates the agent's efficiency independent of manual edits
+
+// ============================================================================
+// INTEGRATION BEST PRACTICES & ERROR HANDLING
+// ============================================================================
+
+// 1. HANDLING THE NULL USAGE EDGE CASE
+//    Since current_usage can be null at startup, use defensive coding:
+//
+//    Bad (Bash - will crash):
+//      INPUT_TOKENS=$(echo "$JSON" | jq '.context_window.current_usage.input_tokens')
+//
+//    Good (Bash - handles null safely):
+//      INPUT_TOKENS=$(echo "$JSON" | jq 'if .context_window.current_usage then .context_window.current_usage.input_tokens else 0 end')
+//
+//    Python example:
+//      usage = data['context_window'].get('current_usage')
+//      tokens = usage['input_tokens'] if usage else 0
+
+// 2. ROBUST MODEL IDENTIFICATION
+//    Given Bedrock ID fragmentation (regional prefixes), avoid exact equality:
+//
+//    Bad (Python):
+//      if model_id == "claude-sonnet-4-5":  # Fails for Bedrock users
+//
+//    Good (Python - substring matching):
+//      if "sonnet-4-5" in model_id.lower():
+//          color = "BLUE"
+//      elif "opus" in model_id.lower():
+//          color = "ORANGE"
+
+// 3. VALIDATING SESSION PERSISTENCE
+//    Detect "Zombie Session" bug where session_id refers to old context:
+//
+//    Bash example:
+//      SESSION_ID=$(echo "$JSON" | jq -r '.session_id')
+//      TRANSCRIPT=$(echo "$JSON" | jq -r '.transcript_path')
+//      if [[ ! "$TRANSCRIPT" =~ $SESSION_ID ]]; then
+//          echo "⚠️  WARNING: Session ID Mismatch Detected"
+//      fi
+
+// 4. CACHE HEALTH VISUALIZATION
+//    Visualize cache efficiency to detect thrashing:
+//
+//    Python example:
+//      cache_create = usage.get('cache_creation_input_tokens', 0)
+//      cache_read = usage.get('cache_read_input_tokens', 0)
+//
+//      if cache_create > cache_read * 0.5:
+//          status = "🟠 Cache Thrashing"  # Bad: creating more than reading
+//      elif cache_read > 10000:
+//          status = "🟢 Warm Cache"       # Good: high reuse
+//      else:
+//          status = "🔵 Cold Start"       # Expected: first turn
+
+// ============================================================================
+// LIFECYCLE ANALYSIS: ATTRIBUTE CHANGES DURING A TYPICAL SESSION
+// ============================================================================
+
+// Phase 1: Session Initialization
+//   User Action: Run `claude` (starts new session)
+//   Status Event State:
+//     - hook_event_name: "Status"
+//     - session_id: abc-123 (new UUID)
+//     - cost.total_cost_usd: 0
+//     - context_window.current_usage: null (no inference yet!)
+//     - workspace.current_dir: matches shell pwd
+
+// Phase 2: First Prompt (Cold Cache)
+//   User Action: "Analyze the file src/main.py"
+//   System Action: Claude reads file, constructs system prompt, sends request
+//   Status Event State:
+//     - cost.total_cost_usd: increments (e.g., $0.02)
+//     - current_usage.input_tokens: spikes (e.g., 5,000 for system + file)
+//     - current_usage.cache_creation_input_tokens: ~5,000 (entire context cached)
+//     - current_usage.cache_read_input_tokens: 0 (cold start)
+
+// Phase 3: Follow-Up (Warm Cache)
+//   User Action: "Refactor the main function"
+//   System Action: Claude sends new message + cached history
+//   Status Event State:
+//     - cost.total_cost_usd: increments marginally (cache discount!)
+//     - current_usage.input_tokens: ~5,050 (5k cached + 50 new)
+//     - current_usage.cache_read_input_tokens: ~5,000 (cache hit!)
+//     - current_usage.cache_creation_input_tokens: ~50 (only new message)
+//
+//   INSIGHT: Status line should visualize this efficiency - turn cost is
+//            significantly lower due to cache reuse
+
+// Phase 4: Agentic Tool Use (Thinking & Coding)
+//   User Action: Model decides to write code
+//   System Action: "Thinking" block generates 2,000 tokens (invisible in transcript),
+//                  then calls Write("src/main.py")
+//   Status Event State:
+//     - total_output_tokens: spikes by 2,000+ (thinking tokens counted here!)
+//     - cost.total_lines_added: increments by number of lines in new file
+//     - cost.total_lines_removed: increments if lines were replaced
+//
+//   VERIFICATION: lines_added tracks tool activity, NOT git commits
+//                 File is modified on disk but not yet committed
+
+// Phase 5: Compaction (The Reset)
+//   Scenario: Session drags on; current_usage hits 190,000 tokens
+//   System Action: Auto-compact triggers
+//   Status Event State:
+//     - context_window.used_percentage: drops from 95% to ~50%
+//     - current_usage.input_tokens: drops significantly (history summarized)
+//     - total_input_tokens: NO CHANGE (odometer keeps climbing)
+//
+//   Observable: A PreCompact hook event fires before this happens
+
+// ============================================================================
+// KNOWN ISSUES & WORKAROUNDS (Feb 2026)
+// ============================================================================
+
+// 1. "Zombie Session ID" Regression
+//    Problem: During `claude --resume`, session_id may refer to original state
+//    Impact: Hooks may read wrong transcript file
+//    Workaround: Cross-reference session_id with transcript_path filename
+
+// 2. Bedrock Regional Premium Underreporting
+//    Problem: total_cost_usd may not include 10% regional endpoint premium
+//    Impact: Costs underreported by ~10% for users on us./eu./jp./au. profiles
+//    Workaround: Implement manual pricing table or cross-check AWS billing
+
+// 3. Thinking Mode Invisibility
+//    Problem: No model.id suffix to indicate Extended/Adaptive Thinking mode
+//    Impact: Cannot detect thinking mode from model identifier alone
+//    Workaround: Infer from token anomalies (high total_output_tokens vs visible text)

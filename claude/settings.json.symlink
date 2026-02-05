@@ -50,5 +50,10 @@
   "attribution": {
     "commit": "",
     "pr": ""
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.dotfiles/claude/statusline.sh",
+    "padding": 0
   }
 }
