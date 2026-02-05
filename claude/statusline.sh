@@ -141,7 +141,7 @@ for ((i=0; i<BAR_WIDTH; i++)); do
         BAR_CONTENT="${BAR_CONTENT}▱"
     fi
 done
-USAGE_BAR="${DIM_GRAY}[${USAGE_COLOR}${BAR_CONTENT}${DIM_GRAY}]${RESET}"
+USAGE_BAR="${USAGE_COLOR}${BAR_CONTENT}${RESET} "
 
 # Format all numbers at once
 CONTEXT_SIZE_FMT=$(format_large_number "$CONTEXT_SIZE")
@@ -154,7 +154,7 @@ TOTAL_OUT_FMT=$(format_number "$TOTAL_OUTPUT")
 
 # Build status line (3 lines)
 # Line 1: Model • window size • usage % with bar • (path)
-LINE1="${ORANGE}${MODEL}${RESET} • ${DIM_GRAY}${CONTEXT_SIZE_FMT} window${RESET} • ${USAGE_COLOR}${USED_DISPLAY} used${RESET} ${USAGE_BAR} • ${DIM_GRAY}(${CWD})${RESET}"
+LINE1="${ORANGE}${MODEL}${RESET} • ${DIM_GRAY}${CONTEXT_SIZE_FMT} window${RESET} • ${USAGE_COLOR}${USED_DISPLAY} used${RESET} ${USAGE_BAR} • ${DIM_GRAY}${CWD}${RESET}"
 
 # Line 2: Last turn metrics
 LINE2="${CYAN}Turn:${RESET} ${CYAN}↑ ${CURRENT_IN_FMT}${RESET} ${BOLD_CYAN}↓ ${CURRENT_OUT_FMT}${RESET} • ${YELLOW}Cache:${RESET} ${YELLOW}↑ ${CACHE_CREATED_FMT}${RESET} ${BOLD_YELLOW}↓ ${CACHE_READ_FMT}${RESET}"
