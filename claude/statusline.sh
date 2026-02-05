@@ -23,13 +23,14 @@
 # ANSI color codes
 ORANGE='\033[38;5;208m'      # Orange for model name
 CYAN='\033[96m'              # Bright cyan for window context
+BOLD_CYAN='\033[1;96m'       # Bold cyan for output numbers
 GREEN='\033[92m'             # Green for session totals
-YELLOW='\033[93m'            # Yellow for cache label
-LIGHT_YELLOW='\033[38;5;227m' # Light yellow for cache read (↓)
-GOLD='\033[38;5;220m'        # Gold/darker yellow for cache write (↑)
+YELLOW='\033[93m'            # Yellow for cache numbers
+BOLD_YELLOW='\033[1;93m'     # Bold yellow for cache read (↓)
 BOLD_LIGHT_BLUE='\033[1;96m' # Bold light cyan for cost (bold + bright cyan)
 DIM_GRAY='\033[38;5;245m'    # Dim gray for directory (more visible than bright black)
 WHITE='\033[97m'
+BOLD_WHITE='\033[1;97m'      # Bold white for output numbers
 RESET='\033[0m'
 
 # Progress bar colors (for context window usage)
@@ -156,10 +157,10 @@ TOTAL_OUT_FMT=$(format_number "$TOTAL_OUTPUT")
 LINE1="${ORANGE}${MODEL}${RESET} • ${DIM_GRAY}${CONTEXT_SIZE_FMT} window${RESET} • ${USAGE_COLOR}${USED_DISPLAY} used${RESET} ${USAGE_BAR} • ${DIM_GRAY}(${CWD})${RESET}"
 
 # Line 2: Last turn metrics
-LINE2="${WHITE}Turn:${RESET} ${CYAN}↑ ${CURRENT_IN_FMT}${RESET} ${CYAN}↓ ${CURRENT_OUT_FMT}${RESET} • ${YELLOW}Cache:${RESET} ${LIGHT_YELLOW}↓ ${CACHE_READ_FMT}${RESET} ${GOLD}↑ ${CACHE_CREATED_FMT}${RESET}"
+LINE2="${CYAN}Turn:${RESET} ${CYAN}↑ ${CURRENT_IN_FMT}${RESET} ${BOLD_CYAN}↓ ${CURRENT_OUT_FMT}${RESET} • ${YELLOW}Cache:${RESET} ${YELLOW}↑ ${CACHE_CREATED_FMT}${RESET} ${BOLD_YELLOW}↓ ${CACHE_READ_FMT}${RESET}"
 
 # Line 3: Session totals with cost estimate
-LINE3="${GREEN}Session:${RESET} ${WHITE}↑ ${TOTAL_IN_FMT}${RESET} ${WHITE}↓ ${TOTAL_OUT_FMT}${RESET} • ${BOLD_LIGHT_BLUE}~\$${TOTAL_COST}${RESET}"
+LINE3="${WHITE}Session:${RESET} ${WHITE}↑ ${TOTAL_IN_FMT}${RESET} ${BOLD_WHITE}↓ ${TOTAL_OUT_FMT}${RESET} • ${BOLD_LIGHT_BLUE}~\$${TOTAL_COST}${RESET}"
 
 # Output with newlines
 echo -e "$LINE1"
