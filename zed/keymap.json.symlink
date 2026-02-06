@@ -134,4 +134,39 @@
       "ctrl-a c": "assistant::ToggleFocus", // Toggle AI assistant from terminal
     },
   },
+
+  //==========================================
+  // HACKS
+  //==========================================
+  // In Vim, comma (,) has a default binding: it reverses the last f/t/F/T character search
+  // (opposite direction of semicolon). This creates an "ambiguous sequence" when using comma
+  // as a leader key, because Zed doesn't know if you mean:
+  //   - "," alone (complete command: reverse search)
+  //   - "," + another key (prefix for multi-key sequence like ", d" or ", t")
+  //
+  // Zed's timeout behavior (hardcoded to 1000ms as of PR #42659):
+  //   - Ambiguous sequences: timeout after 1 second and execute the base command
+  //   - Pure prefixes: wait indefinitely for the next key
+  //
+  // Without this fix, pressing comma would:
+  //   1. Trigger the which-key popup
+  //   2. Wait 1 second
+  //   3. Timeout and execute the reverse-search command
+  //   4. The popup disappears before you can complete the sequence
+  //
+  // By setting ",": null, we remove the default binding, making comma a "pure prefix" with
+  // no ambiguity. Now the which-key popup stays visible indefinitely until you complete
+  // the sequence or press Escape.
+  //
+  // Trade-off: You lose the reverse character search on comma (but semicolon still works).
+  //
+  // References:
+  //   - https://github.com/zed-industries/zed/pull/42659 (timeout implementation)
+  //   - https://github.com/zed-industries/zed/issues/46347 (similar issue with space key)
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      ",": null,
+    },
+  },
 ]

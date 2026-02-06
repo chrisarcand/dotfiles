@@ -19,6 +19,10 @@
   //==========================================
   "vim_mode": true,
   "cursor_blink": false,
+  "which_key": {
+    "enabled": true,
+    "delay_ms": 0,
+  },
   "minimap": { "show": "never" }, // The map is great sometimes but very distracting with lots of panes.
   "icon_theme": "Material Icon Theme",
 
@@ -83,8 +87,9 @@
       "model": "claude-sonnet-4.5",
     },
   },
-  "features": {
-    "edit_prediction_provider": "copilot",
+
+  "edit_predictions": {
+    "provider": "copilot",
   },
 
   "language_models": {
