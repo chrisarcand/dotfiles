@@ -1,4 +1,8 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "Bash(curl:*)",
@@ -33,6 +37,11 @@
       "Bash(git pull:*)"
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.dotfiles/claude/statusline.sh",
+    "padding": 0
+  },
   "enabledPlugins": {
     "hashicorp@hashicorp-agent-skills": false,
     "technology@hashicorp-agent-skills": false,
@@ -46,14 +55,5 @@
         "Authorization": "Bearer ${GITHUB_TOKEN}"
       }
     }
-  },
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.dotfiles/claude/statusline.sh",
-    "padding": 0
   }
 }

@@ -40,8 +40,10 @@ alias wow='git status'                                              \
 # Set USE_CLAUDE_BEDROCK=1 in ~/.private-zshrc on work machines.
 claude() {
   if [[ "$USE_CLAUDE_BEDROCK" == "1" ]]; then
-    # Specify the model to use for most requests. Default: claude-sonnet-4-5.
-    export ANTHROPIC_MODEL="global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    # Override model aliases in the model picker to use Bedrock models
+    export ANTHROPIC_DEFAULT_SONNET_MODEL="global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    export ANTHROPIC_DEFAULT_HAIKU_MODEL="global.anthropic.claude-haiku-4-5-20251001-v1:0"
+    export ANTHROPIC_DEFAULT_OPUS_MODEL="anthropic.claude-opus-4-6-v1"
 
     # Specify a faster model to use for quick operations. Default: claude-haiku-4-5.
     export ANTHROPIC_SMALL_FAST_MODEL="global.anthropic.claude-haiku-4-5-20251001-v1:0"
