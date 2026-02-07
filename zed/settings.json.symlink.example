@@ -31,23 +31,10 @@
   //==========================================
   "agent": {
     "favorite_models": [
-      // As of 1/29/26, for most tasks I use Anthropic's Claude 4.5 model lineup, summarized as follows:
-      //
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
-      // | Model Name                   | Bedrock Cost (1M Tok)   | Role                             | Best Use Case                    |
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
-      // | Claude Opus 4.5              | In: $5.00 | Out: $25.00 | Powerhouse (Deepest Thinker)     | "Bet the company" decisions,     |
-      // |                              |                         |                                  | research, complex architecture.  |
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
-      // | Claude Sonnet 4.5            | In: $3.00 | Out: $15.00 | Workhorse (Standard Default)     | Daily coding, production apps,   |
-      // |                              |                         |                                  | general reasoning & writing.     |
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
-      // | Claude Haiku 4.5             | In: $1.00 | Out: $5.00  | Speedster (Fast & Cheap)         | High volume tasks, simple logic, |
-      // |                              |                         |                                  | extraction, autocomplete.        |
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
-      // | *Thinking Mode* (Any Model)  | Same rates per 1M       | Enhanced Logic                   | Hard math/bugs.                  |
-      // |                              | (Pays as Output tokens) |                                  | WARNING: Burns 2x-5x more tokens |
-      // +------------------------------+-------------------------+----------------------------------+----------------------------------+
+      // For most tasks I use Anthropic's Claude 4.5 model lineup.
+      // For current Bedrock pricing, see: https://aws.amazon.com/bedrock/pricing/
+      // (Look for "Anthropic" section, prices shown per 1M tokens)
+      // Note: Regional Inference Profiles (us./eu./jp./au. prefixes) have a 10% premium
       {
         "provider": "copilot_chat",
         "model": "claude-opus-4.5",

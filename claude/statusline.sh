@@ -3,22 +3,12 @@
 # Pure bash implementation of ccstatusline
 # Reads Claude Code status from stdin and formats it
 
-# Bedrock Pricing (as of 1/29/26) - per 1M tokens:
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
-# | Model Name                   | Bedrock Cost (1M Tok)   | Role                             | Best Use Case                    |
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
-# | Claude Opus 4.5              | In: $5.00 | Out: $25.00 | Powerhouse (Deepest Thinker)     | "Bet the company" decisions,     |
-# |                              |                         |                                  | research, complex architecture.  |
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
-# | Claude Sonnet 4.5            | In: $3.00 | Out: $15.00 | Workhorse (Standard Default)     | Daily coding, production apps,   |
-# |                              |                         |                                  | general reasoning & writing.     |
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
-# | Claude Haiku 4.5             | In: $1.00 | Out: $5.00  | Speedster (Fast & Cheap)         | High volume tasks, simple logic, |
-# |                              |                         |                                  | extraction, autocomplete.        |
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
-# | *Thinking Mode* (Any Model)  | Same rates per 1M       | Enhanced Logic                   | Hard math/bugs.                  |
-# |                              | (Pays as Output tokens) |                                  | WARNING: Burns 2x-5x more tokens |
-# +------------------------------+-------------------------+----------------------------------+----------------------------------+
+# Bedrock Pricing:
+# For current pricing on Claude models via AWS Bedrock, see:
+# https://aws.amazon.com/bedrock/pricing/
+# (Look for "Anthropic" section, prices shown per 1M tokens)
+#
+# Note: Regional Inference Profiles (us./eu./jp./au. prefixes) have a 10% premium over global endpoints
 
 # ANSI color codes
 ORANGE='\033[38;5;208m'      # Orange for model name
@@ -92,6 +82,9 @@ fi
 [[ "$MODEL_ID" == *"anthropic."* ]] && MODEL="${MODEL} (Bedrock)"
 
 # Determine pricing and calculate cost in a single awk call for performance
+# Pricing values below are for Bedrock global endpoints (per 1M tokens)
+# For current pricing, see: https://aws.amazon.com/bedrock/pricing/ (Anthropic section)
+# Note: This calculation does NOT account for the 10% regional endpoint premium
 TOTAL_COST=$(awk -v model_id="$MODEL_ID" -v total_in="$TOTAL_INPUT" -v total_out="$TOTAL_OUTPUT" 'BEGIN {
     # Determine pricing based on model
     if (index(model_id, "opus") > 0) {
