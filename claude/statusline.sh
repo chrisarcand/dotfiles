@@ -45,7 +45,7 @@ STATUS=$(cat)
 
 # Extract values using jq - output as bash variable assignments for speed
 eval "$(echo "$STATUS" | jq -r '@sh "
-MODEL=\(.model.display_name // "Unknown")
+DISPLAY_NAME=\(.model.display_name // "Unknown")
 MODEL_ID=\(.model.id // "")
 CONTEXT_SIZE=\(.context_window.context_window_size // 0)
 REMAINING_PCT=\(.context_window.remaining_percentage // 0)
@@ -58,6 +58,34 @@ TOTAL_INPUT=\(.context_window.total_input_tokens // 0)
 TOTAL_OUTPUT=\(.context_window.total_output_tokens // 0)
 CWD=\(.workspace.current_dir // "")
 "')"
+
+# WORKAROUND: Claude Code sends inconsistent display_name values for Bedrock models
+# When you first open Claude Code, initial status events contain the full model ID
+# (e.g., "global.anthropic.claude-sonnet-4-5-20250929-v1:0"), but eventually
+# (even before the first prompt) it switches to the alias (e.g., "Sonnet 4.5").
+# To ensure consistent display, check if display_name looks like a full ID and parse
+# model_id ourselves to generate the alias, otherwise use display_name as-is.
+if [[ "$DISPLAY_NAME" == *"."* ]] || [[ "$DISPLAY_NAME" == *"anthropic"* ]] || [[ "$DISPLAY_NAME" == "Unknown" ]]; then
+    # Display name is the full ID, parse it to get alias
+    if [[ "$MODEL_ID" =~ opus-([0-9])-([0-9]) ]]; then
+        MODEL="Opus ${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+    elif [[ "$MODEL_ID" =~ opus ]]; then
+        MODEL="Opus"
+    elif [[ "$MODEL_ID" =~ sonnet-([0-9])-([0-9]) ]]; then
+        MODEL="Sonnet ${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+    elif [[ "$MODEL_ID" =~ sonnet ]]; then
+        MODEL="Sonnet"
+    elif [[ "$MODEL_ID" =~ haiku-([0-9])-([0-9]) ]]; then
+        MODEL="Haiku ${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+    elif [[ "$MODEL_ID" =~ haiku ]]; then
+        MODEL="Haiku"
+    else
+        MODEL="Unknown"
+    fi
+else
+    # Display name is already an alias, use it
+    MODEL="$DISPLAY_NAME"
+fi
 
 # Append "(Bedrock)" if model ID indicates Bedrock usage
 # Bedrock IDs contain "anthropic." (e.g., "global.anthropic.claude-..." or "anthropic.claude-...")
