@@ -9,5 +9,6 @@ irssi/irssi.symlink/scripts/autorun/*
 vim/.netrwhist
 bin/*
 !bin/*.md
+claude/settings.json.symlink
 .claude/settings.local.json
 bin/cache.json

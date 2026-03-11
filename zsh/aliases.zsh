@@ -31,54 +31,10 @@ alias ga='g a'                                                      \
       gs='g s'                                                      \
       gdf='g df'
 
+# Doormat - auto-restart credential server on auth failure
+alias doormat-serve='while true; do doormat login -f && doormat cred-server; echo "Restarting doormat..."; done'
+
 # Novelties
 alias wow='git status'                                              \
       such='git'                                                    \
       very='git'
-
-# Wrap claude with Bedrock config when USE_CLAUDE_BEDROCK=1.
-# Set USE_CLAUDE_BEDROCK=1 in ~/.private-zshrc on work machines.
-claude() {
-  if [[ "$USE_CLAUDE_BEDROCK" == "1" ]]; then
-    # Override model aliases in the model picker to use Bedrock models
-    export ANTHROPIC_DEFAULT_SONNET_MODEL="global.anthropic.claude-sonnet-4-6"
-    export ANTHROPIC_DEFAULT_HAIKU_MODEL="global.anthropic.claude-haiku-4-5-20251001-v1:0"
-    export ANTHROPIC_DEFAULT_OPUS_MODEL="anthropic.claude-opus-4-6-v1"
-
-    # Specify a faster model to use for quick operations. Default: claude-haiku-4-5.
-    export ANTHROPIC_SMALL_FAST_MODEL="global.anthropic.claude-haiku-4-5-20251001-v1:0"
-
-    # AWS region for Bedrock requests.
-    export ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION="us-east-1"
-
-    # AWS profile to use for Bedrock authentication.
-    export AWS_PROFILE=${AWS_PROFILE:-sandbox_bedrock}
-
-    # Required for AWS SDK to read ~/.aws/config file
-    export AWS_SDK_LOAD_CONFIG=1
-
-    # Enable AWS Bedrock as the model provider instead of the Anthropic API.
-    export CLAUDE_CODE_USE_BEDROCK=1
-
-    # Disable prompt caching. Set to 1 to disable. Default: 0 (enabled). Prompt caching reduces costs
-    # and latency by reusing previously processed prompts.
-    export DISABLE_PROMPT_CACHING=0
-
-    # Equivalent of setting DISABLE_AUTOUPDATER, DISABLE_BUG_COMMAND, DISABLE_ERROR_REPORTING, and
-    # DISABLE_TELEMETRY
-    export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
-
-    # Set the maximum number of output tokens for most requests. Default: 32,000. Maximum: 64,000.
-    # Increasing this value reduces the effective context window available before auto-compaction
-    # triggers.
-    export CLAUDE_CODE_MAX_OUTPUT_TOKENS=${CLAUDE_CODE_MAX_OUTPUT_TOKENS:-16000}
-
-    # Override the extended thinking token budget. Thinking is enabled at max budget (31,999 tokens) by
-    # default. Use this to limit the budget (for example, MAX_THINKING_TOKENS=10000) or disable thinking
-    # entirely (MAX_THINKING_TOKENS=0). Extended thinking improves performance on complex reasoning and
-    # coding tasks but impacts prompt caching efficiency.
-    export MAX_THINKING_TOKENS=${MAX_THINKING_TOKENS:-4000}
-  fi
-
-  command claude "${@}"
-}
