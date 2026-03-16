@@ -1,28 +1,37 @@
 #!/usr/bin/env bash
 #
-# git-aicm: AI-powered commit message generator using Claude Code
+# git-aicm: AI-powered commit message generator using OpenCode
 
-set -e
+set -euo pipefail
 
-# Help function
 show_help() {
     cat << 'EOF'
 git-aicm: AI-Powered Commit Messages
 
-Generate commit messages for staged changes using Claude Code.
+Generate commit message text for staged changes using OpenCode.
 
 USAGE:
     git aicm [OPTIONS]
 
 OPTIONS:
-    -b              Break up staged changes into multiple purposeful commits
+    -b              Break staged changes into purposeful commits
     -h, --help      Show this help message
 
 REQUIREMENTS:
-    Claude Code CLI: https://github.com/anthropics/claude-code
+    OpenCode CLI: https://opencode.ai
+
+WORKFLOW:
+    1. Stage exactly the changes you want this tool to consider.
+    2. Run `git aicm` for one commit message from the staged diff.
+    3. Run `git aicm -b` for a commit plan built from staged files.
+
+EXPECTATIONS:
+    - `git aicm` reads staged changes only. Unstaged tracked changes are ignored.
+    - `git aicm -b` requires tracked changes to be fully staged or stashed first.
+    - `git aicm -b` splits by whole staged files, not partial hunks.
 
 CUSTOMIZATION:
-    Edit the COMMIT_PROMPT variable in this script to customize message style.
+    Edit the COMMIT_PROMPT and BREAKUP_PROMPT variables in this script.
 
 EXAMPLES:
     git add <files>
@@ -37,7 +46,350 @@ EOF
     exit 0
 }
 
-# Parse command line options
+die() {
+    echo "$*" >&2
+    exit 1
+}
+
+note() {
+    echo "$*"
+}
+
+trim_blank_lines() {
+    python3 -c 'import sys; print(sys.stdin.read().strip("\n"), end="")'
+}
+
+extract_opencode_text() {
+    python3 - "$1" <<'PY2'
+import json
+import sys
+
+chunks = []
+with open(sys.argv[1], encoding="utf-8") as f:
+    for raw_line in f:
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") == "text":
+            text = event.get("part", {}).get("text")
+            if text:
+                chunks.append(text)
+
+print("".join(chunks), end="")
+PY2
+}
+
+show_spinner() {
+    local pid=$1
+    local message=$2
+    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+
+    while kill -0 "$pid" 2>/dev/null; do
+        i=$(((i + 1) % ${#spin}))
+        printf "\r%s %s" "${spin:$i:1}" "$message"
+        sleep 0.1
+    done
+    printf "\r"
+}
+
+require_git_repo() {
+    git rev-parse --git-dir >/dev/null 2>&1 || die "Error: git-aicm must be run inside a git repository."
+}
+
+require_opencode() {
+    command -v opencode >/dev/null 2>&1 || die "Error: OpenCode CLI not found. Install it from: https://opencode.ai"
+}
+
+require_staged_changes() {
+    if git diff --cached --quiet --ignore-submodules; then
+        die "No staged changes to commit.
+Use 'git add' to stage changes first."
+    fi
+}
+
+has_unstaged_tracked_changes() {
+    ! git diff --quiet --ignore-submodules
+}
+
+mk_git_temp_file() {
+    mktemp "$GIT_DIR/$1.XXXXXX"
+}
+
+mk_git_temp_dir() {
+    mktemp -d "$GIT_DIR/$1.XXXXXX"
+}
+
+cleanup() {
+    local path
+    for path in "${TEMP_PATHS[@]:-}"; do
+        [ -n "$path" ] || continue
+        rm -rf -- "$path"
+    done
+}
+
+generate_with_opencode() {
+    local prompt_text=$1
+    local progress_message=$2
+    local failure_label=$3
+    local request_file
+    local output_file
+    local error_file
+    local opencode_pid
+
+    request_file=$(mk_git_temp_file git-aicm-request)
+    output_file=$(mk_git_temp_file git-aicm-output)
+    error_file=$(mk_git_temp_file git-aicm-error)
+    TEMP_PATHS+=("$request_file" "$output_file" "$error_file")
+
+    {
+        printf '%s\n\n' "$prompt_text"
+        printf 'Staged files:\n'
+        printf '%s\n' "${STAGED_FILES[@]}"
+        printf '\nGit diff:\n\n%s\n' "$DIFF"
+    } > "$request_file"
+
+    (opencode run --format json --file "$request_file" -- "Read the attached file and follow it exactly. Output only the final answer." > "$output_file" 2> "$error_file") &
+    opencode_pid=$!
+
+    show_spinner "$opencode_pid" "$progress_message"
+
+    if ! wait "$opencode_pid"; then
+        echo ""
+        echo "Error: OpenCode failed to generate $failure_label."
+        if [ -s "$error_file" ]; then
+            cat "$error_file"
+        fi
+        exit 1
+    fi
+
+    OPENCODE_TEXT=$(extract_opencode_text "$output_file")
+    OPENCODE_TEXT=$(trim_blank_lines <<< "$OPENCODE_TEXT")
+
+    if [ -z "$OPENCODE_TEXT" ]; then
+        echo ""
+        echo "OpenCode returned no text for $failure_label."
+        if [ -s "$error_file" ]; then
+            cat "$error_file"
+        fi
+        exit 1
+    fi
+
+    echo ""
+}
+
+normalize_commit_plan() {
+    local plan_text_file
+    local staged_files_file
+
+    PLAN_DIR=$(mk_git_temp_dir git-aicm-plan)
+    TEMP_PATHS+=("$PLAN_DIR")
+
+    plan_text_file=$(mk_git_temp_file git-aicm-plan-text)
+    staged_files_file=$(mk_git_temp_file git-aicm-staged-files)
+    TEMP_PATHS+=("$plan_text_file" "$staged_files_file")
+
+    printf '%s\n' "$OPENCODE_TEXT" > "$plan_text_file"
+    printf '%s\n' "${STAGED_FILES[@]}" > "$staged_files_file"
+
+    python3 - "$plan_text_file" "$staged_files_file" "$PLAN_DIR" <<'PY2'
+from collections import Counter
+from pathlib import Path
+import re
+import sys
+
+plan_text = Path(sys.argv[1]).read_text(encoding="utf-8")
+staged_files = [line for line in Path(sys.argv[2]).read_text(encoding="utf-8").splitlines() if line]
+plan_dir = Path(sys.argv[3])
+staged_set = set(staged_files)
+
+
+def cleanup_entry(entry: str) -> str:
+    entry = entry.strip()
+    entry = re.sub(r"^\s*(?:[-*]|\d+\.)\s*", "", entry)
+    return entry.strip()
+
+
+def normalize_file_entry(entry: str) -> str | None:
+    entry = cleanup_entry(entry)
+    if entry in staged_set:
+        return entry
+
+    match = re.match(r"^(.*?)(?::1-EOF|:entire file|:whole file| \(entire file\)| \(whole file\))$", entry)
+    if match and match.group(1) in staged_set:
+        return match.group(1)
+
+    return None
+
+
+commits = []
+current = None
+section = None
+
+for raw_line in plan_text.splitlines():
+    line = raw_line.rstrip("\n")
+
+    if re.match(r"^===\s*COMMIT\s+\d+\s*===$", line):
+        if current is not None:
+            commits.append(current)
+        current = {"files": [], "message_lines": []}
+        section = None
+        continue
+
+    if current is None:
+        continue
+
+    marker = line.strip()
+    if marker in {"FILES:", "Files:"}:
+        section = "files"
+        continue
+    if marker in {"MESSAGE:", "Message:"}:
+        section = "message"
+        continue
+
+    if section == "files":
+        if line.strip():
+            current["files"].append(line)
+        continue
+
+    if section == "message":
+        current["message_lines"].append(line)
+
+if current is not None:
+    commits.append(current)
+
+if not commits:
+    raise SystemExit(
+        "OpenCode did not return a valid commit plan. "
+        "Expected one or more '=== COMMIT N ===' blocks."
+    )
+
+normalized_commits = []
+unknown_entries = []
+
+for index, commit in enumerate(commits, start=1):
+    files = []
+    for entry in commit["files"]:
+        normalized = normalize_file_entry(entry)
+        if normalized is None:
+            unknown_entries.append((index, cleanup_entry(entry)))
+        else:
+            files.append(normalized)
+
+    message = "\n".join(commit["message_lines"]).strip("\n")
+
+    if not files:
+        raise SystemExit(f"Commit {index} does not list any staged files.")
+    if not message.strip():
+        raise SystemExit(f"Commit {index} does not include a commit message.")
+
+    normalized_commits.append({"files": files, "message": message})
+
+if unknown_entries:
+    details = "\n".join(
+        f"- commit {index}: {entry}" for index, entry in unknown_entries
+    )
+    raise SystemExit(
+        "OpenCode returned file entries that do not match the staged file list.\n"
+        "git-aicm -b can only split whole staged files.\n"
+        f"{details}"
+    )
+
+all_files = [file for commit in normalized_commits for file in commit["files"]]
+counts = Counter(all_files)
+duplicates = [file for file in staged_files if counts[file] > 1]
+missing = [file for file in staged_files if counts[file] == 0]
+
+if duplicates:
+    duplicate_lines = "\n".join(f"- {file}" for file in duplicates)
+    raise SystemExit(
+        "OpenCode assigned the same staged file to multiple commits.\n"
+        f"{duplicate_lines}"
+    )
+
+if missing:
+    missing_lines = "\n".join(f"- {file}" for file in missing)
+    raise SystemExit(
+        "OpenCode omitted some staged files from the commit plan.\n"
+        f"{missing_lines}"
+    )
+
+(plan_dir / "count").write_text(str(len(normalized_commits)), encoding="utf-8")
+
+for index, commit in enumerate(normalized_commits, start=1):
+    (plan_dir / f"{index}.files").write_text("\n".join(commit["files"]) + "\n", encoding="utf-8")
+    (plan_dir / f"{index}.message").write_text(commit["message"] + "\n", encoding="utf-8")
+PY2
+
+    PLAN_COUNT=$(cat "$PLAN_DIR/count")
+}
+
+build_commit_patches() {
+    local commit_number
+    local files_file
+    local patch_file
+    local -a git_paths
+    local file_path
+
+    for commit_number in $(seq 1 "$PLAN_COUNT"); do
+        files_file="$PLAN_DIR/$commit_number.files"
+        patch_file="$PLAN_DIR/$commit_number.patch"
+        git_paths=()
+
+        while IFS= read -r file_path; do
+            [ -n "$file_path" ] || continue
+            git_paths+=("$file_path")
+        done < "$files_file"
+
+        if [ ${#git_paths[@]} -eq 0 ]; then
+            die "Commit $commit_number does not contain any files."
+        fi
+
+        git diff --cached --binary -M -- "${git_paths[@]}" > "$patch_file"
+
+        if [ ! -s "$patch_file" ]; then
+            die "Commit $commit_number produced an empty patch."
+        fi
+    done
+}
+
+create_commit_from_plan() {
+    local commit_number=$1
+    local files_file=$2
+    local message_file=$3
+    local patch_file=$4
+    local file_count
+
+    file_count=$(python3 - "$files_file" <<'PY2'
+from pathlib import Path
+import sys
+
+files = [line for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines() if line]
+print(len(files))
+PY2
+)
+
+    echo "Creating commit $commit_number/$PLAN_COUNT ($file_count file(s))..."
+
+    git reset --quiet
+
+    if ! git apply --cached --allow-binary-replacement --recount "$patch_file"; then
+        die "Failed to stage commit $commit_number from the planned snapshot."
+    fi
+
+    if git diff --cached --quiet --ignore-submodules; then
+        die "Commit $commit_number would be empty. Stopping before creating incorrect commits."
+    fi
+
+    if ! git commit -F "$message_file"; then
+        die "Commit $commit_number failed. Earlier commits, if any, were created. The current index still contains the files for the failed commit."
+    fi
+}
+
 BREAK_UP_COMMITS=false
 while getopts "bh-:" opt; do
     case $opt in
@@ -67,15 +419,10 @@ while getopts "bh-:" opt; do
     esac
 done
 
-# ============================================================================
-# CUSTOMIZE YOUR COMMIT MESSAGE PROMPT HERE
-# ============================================================================
-# This is the system prompt sent to Claude to generate your commit message.
-# Edit this to match your preferred commit message style and conventions.
-# ============================================================================
-
 read -r -d '' COMMIT_PROMPT <<'EOF' || true
 You are an expert at writing detailed, meaningful Git commit messages following conventional commit format.
+
+You are writing a commit message for the currently STAGED changes only.
 
 Analyze the git diff provided and generate a commit message with BOTH a subject line and a detailed body.
 
@@ -134,154 +481,104 @@ explanations or commentary outside the commit message. Do not wrap the output
 in markdown code blocks.
 EOF
 
-# ============================================================================
-# PROMPT FOR BREAKING UP COMMITS
-# ============================================================================
-
 read -r -d '' BREAKUP_PROMPT <<'EOF' || true
 You are an expert at organizing Git commits following the "purposeful commits" philosophy.
 
-Analyze the git diff provided and break it down into multiple logical, purposeful commits.
+You are planning commits for the currently STAGED changes only.
+
+Analyze the staged diff and break it down into one or more logical, purposeful commits.
 Each commit should represent a single logical step that builds toward the overall goal.
+
+Critical tool constraints:
+- This tool can split changes only by WHOLE STAGED FILES
+- Never use line ranges, hunks, or partial files
+- Use only file paths from the staged file list provided
+- Every staged file must appear exactly once across the full plan
+- If a file could fit more than one commit, keep the whole file in the best single commit
 
 Follow these principles:
 - "Make the change easy, then make the easy change" - Kent Beck
-- Refactoring/preparation work should be separate commits from feature additions
+- Refactoring or preparation work should be separate commits from feature additions
 - Configuration changes that have broader impact should be isolated
-- Each commit should have tests passing (if applicable)
-- Typically 2-4 commits for most changes, rarely more than 5
+- Each commit should be independently understandable
+- Prefer 2-4 commits when there is a natural split
+- If the changes belong together, return exactly 1 commit instead of forcing a split
 
 For each commit, provide:
-1. The files/hunks that belong in that commit
+1. The full staged files that belong in that commit
 2. A commit message following the same format as the single commit prompt
 
-Output format:
+Output this exact structure for every commit:
 === COMMIT 1 ===
-Files: path/to/file1.go (lines 10-50), path/to/file2.go (entire file)
+FILES:
+path/to/file1
+path/to/file2
 
+MESSAGE:
 <type>: <subject>
 
 <body explaining WHY>
 
 === COMMIT 2 ===
-Files: path/to/file3.go (lines 100-150)
+FILES:
+path/to/file3
 
+MESSAGE:
 <type>: <subject>
 
 <body explaining WHY>
 
-Guidelines:
-- Be strategic about commit boundaries - group related changes together
-- Think about the story you're telling through the commit sequence
-- Consider what would make code review easier
-- Each commit should be independently understandable
-- Use the same commit message guidelines as the single commit prompt
-
-Output each commit with clear delimiters so they can be parsed and applied automatically.
-
-Example output format:
-=== COMMIT 1 ===
-FILES:
-path/to/file1.go:10-50
-path/to/file2.go:1-EOF
-
-MESSAGE:
-refactor: extract authentication into pluggable interface
-
-The existing authentication logic was tightly coupled to password-based
-auth, making it difficult to add new authentication methods...
-
-=== COMMIT 2 ===
-FILES:
-path/to/file3.go:100-150
-
-MESSAGE:
-feat: add Google OAuth authentication backend
-
-With the pluggable interface in place, we can now easily add...
-
-Only respond with the commit breakdown in this exact format. No additional explanations.
+Only respond with the commit plan in this exact format. No code fences, no extra commentary,
+and no explanatory text before or after the commit blocks.
 EOF
 
-# ============================================================================
-# Main script - no need to edit below this line
-# ============================================================================
+TEMP_PATHS=()
+OPENCODE_TEXT=""
+PLAN_DIR=""
+PLAN_COUNT=0
 
-# Check if claude CLI is available
-if ! command -v claude &> /dev/null; then
-    echo "Error: Claude Code CLI not found."
-    echo "Install it from: https://github.com/anthropics/claude-code"
-    exit 1
-fi
+trap cleanup EXIT
 
-# Check if there are staged changes
-if git diff --cached --quiet; then
-    echo "No staged changes to commit."
-    echo "Use 'git add' to stage changes first."
-    exit 1
-fi
+require_git_repo
+require_opencode
+require_staged_changes
 
-# Function to show spinner animation
-show_spinner() {
-    local pid=$1
-    local message=$2
-    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-    local i=0
-
-    while kill -0 $pid 2>/dev/null; do
-        i=$(( (i+1) % ${#spin} ))
-        printf "\r${spin:$i:1} %s" "$message"
-        sleep 0.1
-    done
-    printf "\r"
-}
-
-# Get the staged diff
+GIT_DIR=$(git rev-parse --git-dir)
 DIFF=$(git diff --cached)
 
-# Select system prompt based on mode
-if [ "$BREAK_UP_COMMITS" = true ]; then
-    SYSTEM_PROMPT="$BREAKUP_PROMPT"
-else
-    SYSTEM_PROMPT="$COMMIT_PROMPT"
+STAGED_FILES=()
+while IFS= read -r file_path; do
+    [ -n "$file_path" ] || continue
+    STAGED_FILES+=("$file_path")
+done < <(git diff --cached --name-only --diff-filter=ACDMRT -M)
+
+if [ ${#STAGED_FILES[@]} -eq 0 ]; then
+    die "No staged files were found in the index."
 fi
 
-# Call Claude Code CLI with --print for non-interactive output
-# Uses haiku for speed and cost-effectiveness
-(claude --print --model haiku --system-prompt "$SYSTEM_PROMPT" --output-format text "Git diff:
+if has_unstaged_tracked_changes; then
+    if [ "$BREAK_UP_COMMITS" = true ]; then
+        die "Error: git aicm -b requires tracked changes to be fully staged.
+Stage or stash the remaining tracked changes first."
+    fi
 
-$DIFF" > /tmp/git-aicm-output.$$ 2>/dev/null) &
-CLAUDE_PID=$!
-
-show_spinner $CLAUDE_PID "Generating commit with Claude..."
-
-wait $CLAUDE_PID
-MSG=$(cat /tmp/git-aicm-output.$$)
-rm -f /tmp/git-aicm-output.$$
-
-echo ""
-
-# Trim leading/trailing blank lines
-MSG=$(echo "$MSG" | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}')
-
-# Check if we got a message
-if [ -z "$MSG" ]; then
-    echo "Failed to generate commit message."
-    echo "Please try again or write the commit message manually."
-    exit 1
+    note "Note: using staged changes only; unstaged tracked changes will be ignored."
+    echo ""
 fi
 
-# Handle break up commits mode differently
 if [ "$BREAK_UP_COMMITS" = true ]; then
-    echo "Generated commit breakdown:"
+    generate_with_opencode "$BREAKUP_PROMPT" "Generating commits with OpenCode..." "commits"
+    normalize_commit_plan
+    build_commit_patches
+
+    echo "Generated commit plan:"
     echo "═════════════════════════════════════════════════════════════════"
-    echo "$MSG"
+    echo "$OPENCODE_TEXT"
     echo "═════════════════════════════════════════════════════════════════"
     echo ""
 
-    # Ask for confirmation
-    printf "Create all these commits? [Y/n] "
-    read -r REPLY
+    printf "Create these commits? [Y/n] "
+    read -r REPLY || REPLY=""
 
     if [[ "$REPLY" =~ ^[Nn]$ ]]; then
         echo "Commits cancelled."
@@ -291,147 +588,51 @@ if [ "$BREAK_UP_COMMITS" = true ]; then
     echo ""
     echo "Creating commits..."
 
-    # Parse the output and create commits
-    COMMIT_COUNT=0
-    CURRENT_FILES=""
-    CURRENT_MESSAGE=""
-    IN_FILES=false
-    IN_MESSAGE=false
-
-    while IFS= read -r line; do
-        if [[ "$line" =~ ^===\ COMMIT\ [0-9]+\ ===$ ]]; then
-            # If we have a previous commit, apply it
-            if [ -n "$CURRENT_MESSAGE" ]; then
-                COMMIT_COUNT=$((COMMIT_COUNT + 1))
-                echo "Creating commit $COMMIT_COUNT..."
-
-                # Reset staging
-                git reset > /dev/null 2>&1
-
-                # Stage the files for this commit
-                while IFS= read -r file_spec; do
-                    if [ -n "$file_spec" ]; then
-                        # Parse file:line-range format
-                        FILE_PATH=$(echo "$file_spec" | cut -d: -f1)
-                        LINE_RANGE=$(echo "$file_spec" | cut -d: -f2-)
-
-                        if [[ "$LINE_RANGE" == "1-EOF" ]] || [[ "$LINE_RANGE" == "$FILE_PATH" ]]; then
-                            # Stage entire file
-                            git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
-                        else
-                            # For line ranges, we'll have to stage the whole file
-                            # (proper line-range staging would require git add -p automation)
-                            git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
-                        fi
-                    fi
-                done <<< "$CURRENT_FILES"
-
-                # Create the commit
-                TEMP_FILE=$(mktemp)
-                echo "$CURRENT_MESSAGE" > "$TEMP_FILE"
-                git commit -F "$TEMP_FILE" > /dev/null 2>&1
-                rm "$TEMP_FILE"
-
-                echo "  ✓ Committed"
-            fi
-
-            # Reset for next commit
-            CURRENT_FILES=""
-            CURRENT_MESSAGE=""
-            IN_FILES=false
-            IN_MESSAGE=false
-
-        elif [[ "$line" == "FILES:" ]]; then
-            IN_FILES=true
-            IN_MESSAGE=false
-
-        elif [[ "$line" == "MESSAGE:" ]]; then
-            IN_FILES=false
-            IN_MESSAGE=true
-
-        elif [ "$IN_FILES" = true ] && [ -n "$line" ]; then
-            CURRENT_FILES="$CURRENT_FILES$line"$'\n'
-
-        elif [ "$IN_MESSAGE" = true ]; then
-            if [ -z "$CURRENT_MESSAGE" ]; then
-                CURRENT_MESSAGE="$line"
-            else
-                CURRENT_MESSAGE="$CURRENT_MESSAGE"$'\n'"$line"
-            fi
-        fi
-    done <<< "$MSG"
-
-    # Don't forget the last commit
-    if [ -n "$CURRENT_MESSAGE" ]; then
-        COMMIT_COUNT=$((COMMIT_COUNT + 1))
-        echo "Creating commit $COMMIT_COUNT..."
-
-        # Reset staging
-        git reset > /dev/null 2>&1
-
-        # Stage the files for this commit
-        while IFS= read -r file_spec; do
-            if [ -n "$file_spec" ]; then
-                FILE_PATH=$(echo "$file_spec" | cut -d: -f1)
-                LINE_RANGE=$(echo "$file_spec" | cut -d: -f2-)
-
-                if [[ "$LINE_RANGE" == "1-EOF" ]] || [[ "$LINE_RANGE" == "$FILE_PATH" ]]; then
-                    git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
-                else
-                    git add "$FILE_PATH" 2>/dev/null || echo "  Warning: Could not add $FILE_PATH"
-                fi
-            fi
-        done <<< "$CURRENT_FILES"
-
-        # Create the commit
-        TEMP_FILE=$(mktemp)
-        echo "$CURRENT_MESSAGE" > "$TEMP_FILE"
-        git commit -F "$TEMP_FILE" > /dev/null 2>&1
-        rm "$TEMP_FILE"
-
-        echo "  ✓ Committed"
-    fi
+    for commit_number in $(seq 1 "$PLAN_COUNT"); do
+        create_commit_from_plan \
+            "$commit_number" \
+            "$PLAN_DIR/$commit_number.files" \
+            "$PLAN_DIR/$commit_number.message" \
+            "$PLAN_DIR/$commit_number.patch"
+    done
 
     echo ""
-    echo "✓ Created $COMMIT_COUNT commits successfully!"
+    echo "Created $PLAN_COUNT commit(s) successfully!"
     exit 0
 fi
 
-# Show the generated message (single commit mode)
+generate_with_opencode "$COMMIT_PROMPT" "Generating commit with OpenCode..." "a commit message"
+
 echo "Generated commit message:"
 echo "─────────────────────────────────────────────────────────────────"
-echo "$MSG"
+echo "$OPENCODE_TEXT"
 echo "─────────────────────────────────────────────────────────────────"
 echo ""
 
-# Ask for confirmation
 printf "Commit with this message? [Y/n/e] "
-read -r REPLY
+read -r REPLY || REPLY=""
 
 case "$REPLY" in
     [eE])
-        # Edit the message
-        TEMP_FILE=$(mktemp)
-        echo "$MSG" > "$TEMP_FILE"
+        TEMP_MESSAGE_FILE=$(mk_git_temp_file git-aicm-message)
+        TEMP_PATHS+=("$TEMP_MESSAGE_FILE")
+        echo "$OPENCODE_TEXT" > "$TEMP_MESSAGE_FILE"
 
-        # Use git's configured editor
         GIT_EDITOR=$(git config core.editor || echo "${EDITOR:-vim}")
-        $GIT_EDITOR "$TEMP_FILE"
+        $GIT_EDITOR "$TEMP_MESSAGE_FILE"
 
-        # Check if file has content after editing
-        if [ -s "$TEMP_FILE" ]; then
-            # Debug: Show what we're about to commit
+        if [ -s "$TEMP_MESSAGE_FILE" ]; then
             echo ""
             echo "Committing with edited message:"
             echo "─────────────────────────────────────────────────────────────────"
-            cat "$TEMP_FILE"
+            cat "$TEMP_MESSAGE_FILE"
             echo "─────────────────────────────────────────────────────────────────"
             echo ""
-            git commit -F "$TEMP_FILE"
-            rm "$TEMP_FILE"
+            if ! git commit -F "$TEMP_MESSAGE_FILE"; then
+                die "Commit failed. Your staged changes remain staged."
+            fi
             echo "Committed with edited message."
         else
-            rm "$TEMP_FILE"
             echo "Commit cancelled (empty message)."
             exit 1
         fi
@@ -441,12 +642,12 @@ case "$REPLY" in
         exit 1
         ;;
     *)
-        # Default: yes
-        # Write message to temp file to preserve multi-line formatting
-        TEMP_FILE=$(mktemp)
-        echo "$MSG" > "$TEMP_FILE"
-        git commit -F "$TEMP_FILE"
-        rm "$TEMP_FILE"
+        TEMP_MESSAGE_FILE=$(mk_git_temp_file git-aicm-message)
+        TEMP_PATHS+=("$TEMP_MESSAGE_FILE")
+        echo "$OPENCODE_TEXT" > "$TEMP_MESSAGE_FILE"
+        if ! git commit -F "$TEMP_MESSAGE_FILE"; then
+            die "Commit failed. Your staged changes remain staged."
+        fi
         echo "Committed successfully!"
         ;;
 esac

@@ -20,7 +20,7 @@ The `bin/` directory is in your `$PATH`, so anything here can be executed from a
 ## Script Categories
 
 ### Git Utilities
-- `git-aicm` - AI-powered commit message generator using GitHub Copilot (see git-aicm.md for documentation)
+- `git-aicm` - AI-powered commit message generator using OpenCode
 - `git-amend` - Quick commit amending
 - `git-autofixup` - Automatically create fixup commits
 - `git-autosquash` - Automatically squash fixup commits
