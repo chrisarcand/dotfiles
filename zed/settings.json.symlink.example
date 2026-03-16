@@ -31,37 +31,25 @@
   //==========================================
   "agent": {
     "favorite_models": [
-      // For most tasks I use Anthropic's Claude 4.5 model lineup.
-      // For current Bedrock pricing, see: https://aws.amazon.com/bedrock/pricing/
-      // (Look for "Anthropic" section, prices shown per 1M tokens)
-      // Note: Regional Inference Profiles (us./eu./jp./au. prefixes) have a 10% premium
       {
         "provider": "copilot_chat",
-        "model": "claude-opus-4.5",
-      },
-      {
-        "provider": "amazon-bedrock",
-        "model": "claude-sonnet-4-5",
-      },
-      {
-        "provider": "amazon-bedrock",
-        "model": "claude-opus-4-5",
-      },
-      {
-        "provider": "amazon-bedrock",
-        "model": "claude-haiku-4-5",
+        "model": "gpt-5-mini",
+        "enable_thinking": false,
       },
       {
         "provider": "copilot_chat",
-        "model": "claude-sonnet-4.5",
+        "model": "gpt-5.2",
+        "enable_thinking": false,
       },
       {
-        "provider": "amazon-bedrock",
-        "model": "claude-opus-4-5-thinking",
+        "provider": "copilot_chat",
+        "model": "gpt-5.2-codex",
+        "enable_thinking": false,
       },
       {
-        "provider": "amazon-bedrock",
-        "model": "claude-sonnet-4-5-thinking",
+        "provider": "copilot_chat",
+        "model": "gpt-5.3-codex",
+        "enable_thinking": false,
       },
     ],
     "message_editor_min_lines": 4,
@@ -70,8 +58,9 @@
     "default_profile": "write",
     "always_allow_tool_actions": true,
     "default_model": {
+      "enable_thinking": false,
       "provider": "copilot_chat",
-      "model": "claude-sonnet-4.5",
+      "model": "gpt-5.3-codex",
     },
   },
 
@@ -86,20 +75,7 @@
     },
   },
 
-  "context_servers": {
-    "mcp-server-github": {
-      "enabled": true,
-      "settings": {
-        "github_personal_access_token": "<SHHHHHH>",
-      },
-    },
-    "atlassian": {
-      "env": {},
-      "enabled": true,
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"],
-    },
-  },
+  "context_servers": {},
 
   //==========================================
   // APPEARANCE

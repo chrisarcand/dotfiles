@@ -1,0 +1,8 @@
+# OpenCode User-Level Guidance
+
+This file provides persistent, user-level operating context for OpenCode.
+
+If the user says: “Move this file to OneDrive” or "Check OneDrive", treat this as:
+  - Destination base directory: `~/onedrive/OneDrive\ -\ IBM/`
+  - You may move files there directly to enable OneDrive sync.
+  - Prefer preserving existing folder hierarchy unless the user asks for a new structure.
