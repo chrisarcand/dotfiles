@@ -26,7 +26,7 @@ The provided installer includes support for the following OS/distributions:
 **Shell:**
 - Zsh with oh-my-zsh framework
 - Custom aliases and functions
-- Claude Code CLI integration
+- OpenCode CLI integration (primary AI coding agent)
 
 **Custom Scripts:**
 - 20+ custom utilities in `bin/` (see `bin/README.md` for details)
@@ -72,7 +72,8 @@ Some tools with installers:
 - `ghostty/install.sh` - Ghostty terminal
 - `docker/install.sh` - Docker Desktop
 - `system/install.sh` - System packages via Homebrew
-- `claude/install.sh` - Claude Code directory setup
+- `opencode/install.sh` - OpenCode package installation; `opencode.jsonc` is symlinked by the main installer
+
 
 ### Security Notes
 
@@ -83,8 +84,8 @@ This repository follows security best practices:
 - Git hooks provide safety checks for pushes to non-personal repositories
 
 **Optional Environment Variables:**
-- `GITHUB_TOKEN` - Used by the GitHub MCP server configured in Claude Code settings
-- `USE_CLAUDE_BEDROCK` - Set to `1` in `~/.private-zshrc` to use AWS Bedrock as the Claude provider
+- `GITHUB_TOKEN` - Used by the GitHub MCP server configured in OpenCode settings
+- `AWS_PROFILE` / `AWS_REGION` - Used when configuring OpenCode with Amazon Bedrock
 - AWS credentials should be configured via `~/.aws/config` (not in dotfiles)
 
 Keep sensitive information out of tracked files. Use environment variables or the private config pattern.
@@ -122,6 +123,19 @@ The organization is as follows:
 - **\_plugins/**
   This directory houses git submodules to properly version important external dependencies. I don't
   do this for all plugins, but make an exception for some things like oh-my-zsh and tmux plugins.
+
+### OpenCode
+
+OpenCode is the primary AI coding agent integration in this repo.
+
+Global OpenCode config is managed through the dotfiles topic at `opencode/` and installed via symlinks:
+- `opencode/.symlink_base` targets `~/.config/opencode`
+- `opencode/opencode.jsonc.symlink` becomes `~/.config/opencode/opencode.jsonc`
+- `opencode/AGENTS.md.symlink` becomes `~/.config/opencode/AGENTS.md` and is loaded automatically as global rules
+- `opencode/agents.symlink/` and `opencode/commands.symlink/` provide reusable agents and slash commands
+- `opencode/install.sh` installs the OpenCode package
+
+This setup mirrors the existing topic-based installer and symlink conventions used throughout the repository.
 
 ### Zed
 
