@@ -176,8 +176,10 @@ class Spinner:
         self.message = message
         self.stop_event = threading.Event()
         self.thread: threading.Thread | None = None
-        self.frames = ["|", "/", "-", "\\"]
+        self.frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
         self.enabled = sys.stdout.isatty()
+        self.frame_prefix = "\033[96m"
+        self.frame_suffix = "\033[0m"
 
     def __enter__(self) -> "Spinner":
         if self.enabled:
@@ -198,7 +200,9 @@ class Spinner:
         index = 0
         while not self.stop_event.is_set():
             frame = self.frames[index % len(self.frames)]
-            sys.stdout.write(f"\r{frame} {self.message}")
+            sys.stdout.write(
+                f"\r{self.frame_prefix}{frame}{self.frame_suffix} {self.message}"
+            )
             sys.stdout.flush()
             index += 1
             time.sleep(0.1)
