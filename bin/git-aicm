@@ -1,12 +1,23 @@
-#!/usr/bin/env bash
-#
-# git-aicm: AI-powered commit message generator using OpenCode
+#!/usr/bin/env python3
+from __future__ import annotations
 
-set -euo pipefail
+import atexit
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+from typing import NoReturn
 
-show_help() {
-    cat << 'EOF'
-git-aicm: AI-Powered Commit Messages
+HELP_TEXT = """git-aicm: AI-Powered Commit Messages
 
 Generate commit message text for staged changes using OpenCode.
 
@@ -42,385 +53,9 @@ EXAMPLES:
 
 MORE INFO:
     Philosophy behind -b flag: https://chrisarcand.com/purposeful-commits/
-EOF
-    exit 0
-}
+"""
 
-die() {
-    echo "$*" >&2
-    exit 1
-}
-
-note() {
-    echo "$*"
-}
-
-trim_blank_lines() {
-    python3 -c 'import sys; print(sys.stdin.read().strip("\n"), end="")'
-}
-
-extract_opencode_text() {
-    python3 - "$1" <<'PY2'
-import json
-import sys
-
-chunks = []
-with open(sys.argv[1], encoding="utf-8") as f:
-    for raw_line in f:
-        line = raw_line.strip()
-        if not line:
-            continue
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if event.get("type") == "text":
-            text = event.get("part", {}).get("text")
-            if text:
-                chunks.append(text)
-
-print("".join(chunks), end="")
-PY2
-}
-
-show_spinner() {
-    local pid=$1
-    local message=$2
-    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-    local i=0
-
-    while kill -0 "$pid" 2>/dev/null; do
-        i=$(((i + 1) % ${#spin}))
-        printf "\r%s %s" "${spin:$i:1}" "$message"
-        sleep 0.1
-    done
-    printf "\r"
-}
-
-require_git_repo() {
-    git rev-parse --git-dir >/dev/null 2>&1 || die "Error: git-aicm must be run inside a git repository."
-}
-
-require_opencode() {
-    command -v opencode >/dev/null 2>&1 || die "Error: OpenCode CLI not found. Install it from: https://opencode.ai"
-}
-
-require_staged_changes() {
-    if git diff --cached --quiet --ignore-submodules; then
-        die "No staged changes to commit.
-Use 'git add' to stage changes first."
-    fi
-}
-
-has_unstaged_tracked_changes() {
-    ! git diff --quiet --ignore-submodules
-}
-
-mk_git_temp_file() {
-    mktemp "$GIT_DIR/$1.XXXXXX"
-}
-
-mk_git_temp_dir() {
-    mktemp -d "$GIT_DIR/$1.XXXXXX"
-}
-
-cleanup() {
-    local path
-    for path in "${TEMP_PATHS[@]:-}"; do
-        [ -n "$path" ] || continue
-        rm -rf -- "$path"
-    done
-}
-
-generate_with_opencode() {
-    local prompt_text=$1
-    local progress_message=$2
-    local failure_label=$3
-    local request_file
-    local output_file
-    local error_file
-    local opencode_pid
-
-    request_file=$(mk_git_temp_file git-aicm-request)
-    output_file=$(mk_git_temp_file git-aicm-output)
-    error_file=$(mk_git_temp_file git-aicm-error)
-    TEMP_PATHS+=("$request_file" "$output_file" "$error_file")
-
-    {
-        printf '%s\n\n' "$prompt_text"
-        printf 'Staged files:\n'
-        printf '%s\n' "${STAGED_FILES[@]}"
-        printf '\nGit diff:\n\n%s\n' "$DIFF"
-    } > "$request_file"
-
-    (opencode run --format json --file "$request_file" -- "Read the attached file and follow it exactly. Output only the final answer." > "$output_file" 2> "$error_file") &
-    opencode_pid=$!
-
-    show_spinner "$opencode_pid" "$progress_message"
-
-    if ! wait "$opencode_pid"; then
-        echo ""
-        echo "Error: OpenCode failed to generate $failure_label."
-        if [ -s "$error_file" ]; then
-            cat "$error_file"
-        fi
-        exit 1
-    fi
-
-    OPENCODE_TEXT=$(extract_opencode_text "$output_file")
-    OPENCODE_TEXT=$(trim_blank_lines <<< "$OPENCODE_TEXT")
-
-    if [ -z "$OPENCODE_TEXT" ]; then
-        echo ""
-        echo "OpenCode returned no text for $failure_label."
-        if [ -s "$error_file" ]; then
-            cat "$error_file"
-        fi
-        exit 1
-    fi
-
-    echo ""
-}
-
-normalize_commit_plan() {
-    local plan_text_file
-    local staged_files_file
-
-    PLAN_DIR=$(mk_git_temp_dir git-aicm-plan)
-    TEMP_PATHS+=("$PLAN_DIR")
-
-    plan_text_file=$(mk_git_temp_file git-aicm-plan-text)
-    staged_files_file=$(mk_git_temp_file git-aicm-staged-files)
-    TEMP_PATHS+=("$plan_text_file" "$staged_files_file")
-
-    printf '%s\n' "$OPENCODE_TEXT" > "$plan_text_file"
-    printf '%s\n' "${STAGED_FILES[@]}" > "$staged_files_file"
-
-    python3 - "$plan_text_file" "$staged_files_file" "$PLAN_DIR" <<'PY2'
-from collections import Counter
-from pathlib import Path
-import re
-import sys
-
-plan_text = Path(sys.argv[1]).read_text(encoding="utf-8")
-staged_files = [line for line in Path(sys.argv[2]).read_text(encoding="utf-8").splitlines() if line]
-plan_dir = Path(sys.argv[3])
-staged_set = set(staged_files)
-
-
-def cleanup_entry(entry: str) -> str:
-    entry = entry.strip()
-    entry = re.sub(r"^\s*(?:[-*]|\d+\.)\s*", "", entry)
-    return entry.strip()
-
-
-def normalize_file_entry(entry: str) -> str | None:
-    entry = cleanup_entry(entry)
-    if entry in staged_set:
-        return entry
-
-    match = re.match(r"^(.*?)(?::1-EOF|:entire file|:whole file| \(entire file\)| \(whole file\))$", entry)
-    if match and match.group(1) in staged_set:
-        return match.group(1)
-
-    return None
-
-
-commits = []
-current = None
-section = None
-
-for raw_line in plan_text.splitlines():
-    line = raw_line.rstrip("\n")
-
-    if re.match(r"^===\s*COMMIT\s+\d+\s*===$", line):
-        if current is not None:
-            commits.append(current)
-        current = {"files": [], "message_lines": []}
-        section = None
-        continue
-
-    if current is None:
-        continue
-
-    marker = line.strip()
-    if marker in {"FILES:", "Files:"}:
-        section = "files"
-        continue
-    if marker in {"MESSAGE:", "Message:"}:
-        section = "message"
-        continue
-
-    if section == "files":
-        if line.strip():
-            current["files"].append(line)
-        continue
-
-    if section == "message":
-        current["message_lines"].append(line)
-
-if current is not None:
-    commits.append(current)
-
-if not commits:
-    raise SystemExit(
-        "OpenCode did not return a valid commit plan. "
-        "Expected one or more '=== COMMIT N ===' blocks."
-    )
-
-normalized_commits = []
-unknown_entries = []
-
-for index, commit in enumerate(commits, start=1):
-    files = []
-    for entry in commit["files"]:
-        normalized = normalize_file_entry(entry)
-        if normalized is None:
-            unknown_entries.append((index, cleanup_entry(entry)))
-        else:
-            files.append(normalized)
-
-    message = "\n".join(commit["message_lines"]).strip("\n")
-
-    if not files:
-        raise SystemExit(f"Commit {index} does not list any staged files.")
-    if not message.strip():
-        raise SystemExit(f"Commit {index} does not include a commit message.")
-
-    normalized_commits.append({"files": files, "message": message})
-
-if unknown_entries:
-    details = "\n".join(
-        f"- commit {index}: {entry}" for index, entry in unknown_entries
-    )
-    raise SystemExit(
-        "OpenCode returned file entries that do not match the staged file list.\n"
-        "git-aicm -b can only split whole staged files.\n"
-        f"{details}"
-    )
-
-all_files = [file for commit in normalized_commits for file in commit["files"]]
-counts = Counter(all_files)
-duplicates = [file for file in staged_files if counts[file] > 1]
-missing = [file for file in staged_files if counts[file] == 0]
-
-if duplicates:
-    duplicate_lines = "\n".join(f"- {file}" for file in duplicates)
-    raise SystemExit(
-        "OpenCode assigned the same staged file to multiple commits.\n"
-        f"{duplicate_lines}"
-    )
-
-if missing:
-    missing_lines = "\n".join(f"- {file}" for file in missing)
-    raise SystemExit(
-        "OpenCode omitted some staged files from the commit plan.\n"
-        f"{missing_lines}"
-    )
-
-(plan_dir / "count").write_text(str(len(normalized_commits)), encoding="utf-8")
-
-for index, commit in enumerate(normalized_commits, start=1):
-    (plan_dir / f"{index}.files").write_text("\n".join(commit["files"]) + "\n", encoding="utf-8")
-    (plan_dir / f"{index}.message").write_text(commit["message"] + "\n", encoding="utf-8")
-PY2
-
-    PLAN_COUNT=$(cat "$PLAN_DIR/count")
-}
-
-build_commit_patches() {
-    local commit_number
-    local files_file
-    local patch_file
-    local -a git_paths
-    local file_path
-
-    for commit_number in $(seq 1 "$PLAN_COUNT"); do
-        files_file="$PLAN_DIR/$commit_number.files"
-        patch_file="$PLAN_DIR/$commit_number.patch"
-        git_paths=()
-
-        while IFS= read -r file_path; do
-            [ -n "$file_path" ] || continue
-            git_paths+=("$file_path")
-        done < "$files_file"
-
-        if [ ${#git_paths[@]} -eq 0 ]; then
-            die "Commit $commit_number does not contain any files."
-        fi
-
-        git diff --cached --binary -M -- "${git_paths[@]}" > "$patch_file"
-
-        if [ ! -s "$patch_file" ]; then
-            die "Commit $commit_number produced an empty patch."
-        fi
-    done
-}
-
-create_commit_from_plan() {
-    local commit_number=$1
-    local files_file=$2
-    local message_file=$3
-    local patch_file=$4
-    local file_count
-
-    file_count=$(python3 - "$files_file" <<'PY2'
-from pathlib import Path
-import sys
-
-files = [line for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines() if line]
-print(len(files))
-PY2
-)
-
-    echo "Creating commit $commit_number/$PLAN_COUNT ($file_count file(s))..."
-
-    git reset --quiet
-
-    if ! git apply --cached --allow-binary-replacement --recount "$patch_file"; then
-        die "Failed to stage commit $commit_number from the planned snapshot."
-    fi
-
-    if git diff --cached --quiet --ignore-submodules; then
-        die "Commit $commit_number would be empty. Stopping before creating incorrect commits."
-    fi
-
-    if ! git commit -F "$message_file"; then
-        die "Commit $commit_number failed. Earlier commits, if any, were created. The current index still contains the files for the failed commit."
-    fi
-}
-
-BREAK_UP_COMMITS=false
-while getopts "bh-:" opt; do
-    case $opt in
-        b)
-            BREAK_UP_COMMITS=true
-            ;;
-        h)
-            show_help
-            ;;
-        -)
-            case "${OPTARG}" in
-                help)
-                    show_help
-                    ;;
-                *)
-                    echo "Invalid option: --$OPTARG" >&2
-                    echo "Usage: git aicm [-b] [-h|--help]"
-                    exit 1
-                    ;;
-            esac
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            echo "Usage: git aicm [-b] [-h|--help]"
-            exit 1
-            ;;
-    esac
-done
-
-read -r -d '' COMMIT_PROMPT <<'EOF' || true
-You are an expert at writing detailed, meaningful Git commit messages following conventional commit format.
+COMMIT_PROMPT = """You are an expert at writing detailed, meaningful Git commit messages following conventional commit format.
 
 You are writing a commit message for the currently STAGED changes only.
 
@@ -456,38 +91,25 @@ REQUIRED Guidelines:
 - Write for your future self: What will you wish you had documented when you're looking at this commit six months from now?
 - Consider if this change is "making the change easy" (refactoring/prep work) or "making the easy change" (the actual feature), and explain accordingly
 - Body lines should wrap at 72 characters
-- Most changes should be no more than a paragraph or two. Don't be verbose just for the sake of
-  being verbose. Only the most complex situations should call for several paragraphs of explanation.
+- Most changes should be no more than a paragraph or two. Don't be verbose just for the sake of being verbose. Only the most complex situations should call for several paragraphs of explanation.
 
 Example of good commit with WHY (note the blank lines):
 feat: add caching layer to user API endpoints
-[← BLANK LINE HERE]
-This change introduces Redis caching with a 5-minute TTL for user profile
-data. We chose Redis because it's already part of our infrastructure and
-handles our expected load. The 5-minute TTL balances freshness with
-performance - user profiles don't change frequently enough to warrant
-more aggressive cache invalidation.
-[← BLANK LINE HERE]
-This should reduce average response time from 200ms to ~20ms for cached
-requests and significantly reduce database load during peak hours.
+[BLANK LINE HERE]
+This change introduces Redis caching with a 5-minute TTL for user profile data. We chose Redis because it's already part of our infrastructure and handles our expected load. The 5-minute TTL balances freshness with performance - user profiles don't change frequently enough to warrant more aggressive cache invalidation.
+[BLANK LINE HERE]
+This should reduce average response time from 200ms to ~20ms for cached requests and significantly reduce database load during peak hours.
 
-You may use markdown formatting like bulleted or numbered lists where appropriate
-to supplement the prose description, but the majority of the body should be
-written in paragraph form. Lists should only be used to clarify specific points,
-not replace explanatory prose entirely.
+You may use markdown formatting like bulleted or numbered lists where appropriate to supplement the prose description, but the majority of the body should be written in paragraph form. Lists should only be used to clarify specific points, not replace explanatory prose entirely.
 
-Only respond with the commit message itself, nothing else. No additional
-explanations or commentary outside the commit message. Do not wrap the output
-in markdown code blocks.
-EOF
+Only respond with the commit message itself, nothing else. No additional explanations or commentary outside the commit message. Do not wrap the output in markdown code blocks.
+"""
 
-read -r -d '' BREAKUP_PROMPT <<'EOF' || true
-You are an expert at organizing Git commits following the "purposeful commits" philosophy.
+BREAKUP_PROMPT = """You are an expert at organizing Git commits following the "purposeful commits" philosophy.
 
 You are planning commits for the currently STAGED changes only.
 
-Analyze the staged diff and break it down into one or more logical, purposeful commits.
-Each commit should represent a single logical step that builds toward the overall goal.
+Analyze the staged diff and break it down into one or more logical, purposeful commits. Each commit should represent a single logical step that builds toward the overall goal.
 
 Critical tool constraints:
 - This tool can split changes only by WHOLE STAGED FILES
@@ -528,126 +150,630 @@ MESSAGE:
 
 <body explaining WHY>
 
-Only respond with the commit plan in this exact format. No code fences, no extra commentary,
-and no explanatory text before or after the commit blocks.
-EOF
+Only respond with the commit plan in this exact format. No code fences, no extra commentary, and no explanatory text before or after the commit blocks.
+"""
 
-TEMP_PATHS=()
-OPENCODE_TEXT=""
-PLAN_DIR=""
-PLAN_COUNT=0
+TEMP_PATHS: list[Path] = []
+GIT_DIR: Path
+DIFF_TEXT = ""
+STAGED_FILES: list[str] = []
 
-trap cleanup EXIT
 
-require_git_repo
-require_opencode
-require_staged_changes
+@dataclass
+class PlannedCommit:
+    files: list[str]
+    message: str
+    patch_path: Path
+    message_path: Path
 
-GIT_DIR=$(git rev-parse --git-dir)
-DIFF=$(git diff --cached)
+    @property
+    def file_count(self) -> int:
+        return len(self.files)
 
-STAGED_FILES=()
-while IFS= read -r file_path; do
-    [ -n "$file_path" ] || continue
-    STAGED_FILES+=("$file_path")
-done < <(git diff --cached --name-only --diff-filter=ACDMRT -M)
 
-if [ ${#STAGED_FILES[@]} -eq 0 ]; then
-    die "No staged files were found in the index."
-fi
+class Spinner:
+    def __init__(self, message: str) -> None:
+        self.message = message
+        self.stop_event = threading.Event()
+        self.thread: threading.Thread | None = None
+        self.frames = ["|", "/", "-", "\\"]
+        self.enabled = sys.stdout.isatty()
 
-if has_unstaged_tracked_changes; then
-    if [ "$BREAK_UP_COMMITS" = true ]; then
-        die "Error: git aicm -b requires tracked changes to be fully staged.
-Stage or stash the remaining tracked changes first."
-    fi
+    def __enter__(self) -> "Spinner":
+        if self.enabled:
+            self.thread = threading.Thread(target=self._spin, daemon=True)
+            self.thread.start()
+        return self
 
-    note "Note: using staged changes only; unstaged tracked changes will be ignored."
-    echo ""
-fi
+    def __exit__(self, exc_type, exc, tb) -> None:
+        if not self.enabled:
+            return
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.join()
+        sys.stdout.write("\r" + " " * (len(self.message) + 4) + "\r")
+        sys.stdout.flush()
 
-if [ "$BREAK_UP_COMMITS" = true ]; then
-    generate_with_opencode "$BREAKUP_PROMPT" "Generating commits with OpenCode..." "commits"
-    normalize_commit_plan
-    build_commit_patches
+    def _spin(self) -> None:
+        index = 0
+        while not self.stop_event.is_set():
+            frame = self.frames[index % len(self.frames)]
+            sys.stdout.write(f"\r{frame} {self.message}")
+            sys.stdout.flush()
+            index += 1
+            time.sleep(0.1)
 
-    echo "Generated commit plan:"
-    echo "═════════════════════════════════════════════════════════════════"
-    echo "$OPENCODE_TEXT"
-    echo "═════════════════════════════════════════════════════════════════"
-    echo ""
 
-    printf "Create these commits? [Y/n] "
-    read -r REPLY || REPLY=""
+def die(message: str) -> NoReturn:
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
 
-    if [[ "$REPLY" =~ ^[Nn]$ ]]; then
-        echo "Commits cancelled."
-        exit 1
-    fi
 
-    echo ""
-    echo "Creating commits..."
+def note(message: str) -> None:
+    print(message)
 
-    for commit_number in $(seq 1 "$PLAN_COUNT"); do
-        create_commit_from_plan \
-            "$commit_number" \
-            "$PLAN_DIR/$commit_number.files" \
-            "$PLAN_DIR/$commit_number.message" \
-            "$PLAN_DIR/$commit_number.patch"
-    done
 
-    echo ""
-    echo "Created $PLAN_COUNT commit(s) successfully!"
-    exit 0
-fi
+def cleanup() -> None:
+    for path in reversed(TEMP_PATHS):
+        try:
+            if path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
-generate_with_opencode "$COMMIT_PROMPT" "Generating commit with OpenCode..." "a commit message"
 
-echo "Generated commit message:"
-echo "─────────────────────────────────────────────────────────────────"
-echo "$OPENCODE_TEXT"
-echo "─────────────────────────────────────────────────────────────────"
-echo ""
+def run_command(
+    command: list[str],
+    *,
+    check: bool = True,
+    capture_output: bool = True,
+) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            command,
+            check=check,
+            capture_output=capture_output,
+            text=True,
+        )
+    except FileNotFoundError:
+        die(f"Command not found: {command[0]}")
+    except subprocess.CalledProcessError as exc:
+        raise exc
 
-printf "Commit with this message? [Y/n/e] "
-read -r REPLY || REPLY=""
 
-case "$REPLY" in
-    [eE])
-        TEMP_MESSAGE_FILE=$(mk_git_temp_file git-aicm-message)
-        TEMP_PATHS+=("$TEMP_MESSAGE_FILE")
-        echo "$OPENCODE_TEXT" > "$TEMP_MESSAGE_FILE"
+def git_command(
+    *args: str,
+    check: bool = True,
+    capture_output: bool = True,
+) -> subprocess.CompletedProcess[str]:
+    return run_command(["git", *args], check=check, capture_output=capture_output)
 
-        GIT_EDITOR=$(git config core.editor || echo "${EDITOR:-vim}")
-        $GIT_EDITOR "$TEMP_MESSAGE_FILE"
 
-        if [ -s "$TEMP_MESSAGE_FILE" ]; then
-            echo ""
-            echo "Committing with edited message:"
-            echo "─────────────────────────────────────────────────────────────────"
-            cat "$TEMP_MESSAGE_FILE"
-            echo "─────────────────────────────────────────────────────────────────"
-            echo ""
-            if ! git commit -F "$TEMP_MESSAGE_FILE"; then
-                die "Commit failed. Your staged changes remain staged."
-            fi
-            echo "Committed with edited message."
-        else
-            echo "Commit cancelled (empty message)."
-            exit 1
-        fi
-        ;;
-    [nN])
-        echo "Commit cancelled."
-        exit 1
-        ;;
-    *)
-        TEMP_MESSAGE_FILE=$(mk_git_temp_file git-aicm-message)
-        TEMP_PATHS+=("$TEMP_MESSAGE_FILE")
-        echo "$OPENCODE_TEXT" > "$TEMP_MESSAGE_FILE"
-        if ! git commit -F "$TEMP_MESSAGE_FILE"; then
-            die "Commit failed. Your staged changes remain staged."
-        fi
-        echo "Committed successfully!"
-        ;;
-esac
+def git_output(*args: str, check: bool = True) -> str:
+    return git_command(*args, check=check).stdout.strip()
+
+
+def ensure_git_repo() -> None:
+    try:
+        git_command("rev-parse", "--git-dir")
+    except subprocess.CalledProcessError:
+        die("Error: git-aicm must be run inside a git repository.")
+
+
+def ensure_opencode() -> None:
+    if shutil.which("opencode") is None:
+        die("Error: OpenCode CLI not found. Install it from: https://opencode.ai")
+
+
+def has_staged_changes() -> bool:
+    result = git_command(
+        "diff",
+        "--cached",
+        "--quiet",
+        "--ignore-submodules",
+        check=False,
+    )
+    return result.returncode != 0
+
+
+def has_unstaged_tracked_changes() -> bool:
+    result = git_command(
+        "diff",
+        "--quiet",
+        "--ignore-submodules",
+        check=False,
+    )
+    return result.returncode != 0
+
+
+def make_temp_file(prefix: str, suffix: str = "") -> Path:
+    fd, path = tempfile.mkstemp(prefix=prefix, suffix=suffix, dir=GIT_DIR)
+    os.close(fd)
+    temp_path = Path(path)
+    TEMP_PATHS.append(temp_path)
+    return temp_path
+
+
+def make_temp_dir(prefix: str) -> Path:
+    temp_path = Path(tempfile.mkdtemp(prefix=prefix, dir=GIT_DIR))
+    TEMP_PATHS.append(temp_path)
+    return temp_path
+
+
+def trim_blank_lines(text: str) -> str:
+    return text.strip("\n")
+
+
+def extract_opencode_text(raw_output: str) -> str:
+    chunks: list[str] = []
+    for raw_line in raw_output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") != "text":
+            continue
+        part = event.get("part") or {}
+        text = part.get("text")
+        if text:
+            chunks.append(text)
+    return "".join(chunks)
+
+
+def build_request_text(prompt_text: str) -> str:
+    staged_listing = "\n".join(STAGED_FILES)
+    return (
+        f"{prompt_text}\n\n"
+        f"Staged files:\n{staged_listing}\n\n"
+        f"Git diff:\n\n{DIFF_TEXT}\n"
+    )
+
+
+def generate_with_opencode(
+    prompt_text: str,
+    progress_message: str,
+    failure_label: str,
+) -> str:
+    request_path = make_temp_file("git-aicm-request.", ".txt")
+    request_path.write_text(build_request_text(prompt_text), encoding="utf-8")
+
+    command = [
+        "opencode",
+        "run",
+        "--format",
+        "json",
+        "--file",
+        str(request_path),
+        "--",
+        "Read the attached file and follow it exactly. Output only the final answer.",
+    ]
+
+    with Spinner(progress_message):
+        result = subprocess.run(command, check=False, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        message = f"Error: OpenCode failed to generate {failure_label}."
+        if result.stderr.strip():
+            message = f"{message}\n{result.stderr.rstrip()}"
+        die(message)
+
+    text = trim_blank_lines(extract_opencode_text(result.stdout))
+    if not text:
+        message = f"OpenCode returned no text for {failure_label}."
+        if result.stderr.strip():
+            message = f"{message}\n{result.stderr.rstrip()}"
+        die(message)
+
+    return text
+
+
+def cleanup_entry(entry: str) -> str:
+    entry = entry.strip()
+    entry = re.sub(r"^\s*(?:[-*]|\d+\.)\s*", "", entry)
+    return entry.strip()
+
+
+def normalize_file_entry(entry: str, staged_set: set[str]) -> str | None:
+    cleaned = cleanup_entry(entry)
+    if cleaned in staged_set:
+        return cleaned
+
+    suffix_match = re.match(
+        r"^(.*?)(?::\s*(?:1-EOF|entire file|whole file)|\s+\((?:entire file|whole file)\))$",
+        cleaned,
+        re.IGNORECASE,
+    )
+    if suffix_match:
+        candidate = suffix_match.group(1).strip()
+        if candidate in staged_set:
+            return candidate
+
+    return None
+
+
+def split_inline_files(value: str) -> list[str]:
+    if not value.strip():
+        return []
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def parse_commit_plan(plan_text: str) -> list[tuple[list[str], str]]:
+    header_pattern = re.compile(r"^===\s*COMMIT\s+\d+\s*===$")
+    files_pattern = re.compile(r"^(FILES|Files):\s*(.*)$")
+    message_pattern = re.compile(r"^(MESSAGE|Message):\s*(.*)$")
+
+    raw_commits: list[dict[str, list[str]]] = []
+    current: dict[str, list[str]] | None = None
+    section: str | None = None
+
+    for raw_line in plan_text.splitlines():
+        line = raw_line.rstrip("\n")
+
+        if header_pattern.match(line.strip()):
+            if current is not None:
+                raw_commits.append(current)
+            current = {"files": [], "message_lines": []}
+            section = None
+            continue
+
+        if current is None:
+            continue
+
+        files_match = files_pattern.match(line.strip())
+        if files_match:
+            section = "files"
+            current["files"].extend(split_inline_files(files_match.group(2)))
+            continue
+
+        message_match = message_pattern.match(line.strip())
+        if message_match:
+            section = "message"
+            remainder = message_match.group(2).strip()
+            if remainder:
+                current["message_lines"].append(remainder)
+            continue
+
+        if section == "files":
+            if line.strip():
+                current["files"].append(line)
+            continue
+
+        if section == "message":
+            current["message_lines"].append(line)
+
+    if current is not None:
+        raw_commits.append(current)
+
+    if not raw_commits:
+        die(
+            "OpenCode did not return a valid commit plan. Expected one or more '=== COMMIT N ===' blocks."
+        )
+
+    staged_set = set(STAGED_FILES)
+    normalized: list[tuple[list[str], str]] = []
+    unknown_entries: list[tuple[int, str]] = []
+
+    for index, raw_commit in enumerate(raw_commits, start=1):
+        files: list[str] = []
+        for entry in raw_commit["files"]:
+            normalized_entry = normalize_file_entry(entry, staged_set)
+            if normalized_entry is None:
+                unknown_entries.append((index, cleanup_entry(entry)))
+            else:
+                files.append(normalized_entry)
+
+        message = "\n".join(raw_commit["message_lines"]).strip("\n")
+
+        if not files:
+            die(f"Commit {index} does not list any staged files.")
+        if not message.strip():
+            die(f"Commit {index} does not include a commit message.")
+
+        normalized.append((files, message))
+
+    if unknown_entries:
+        details = "\n".join(
+            f"- commit {index}: {entry}" for index, entry in unknown_entries
+        )
+        die(
+            "OpenCode returned file entries that do not match the staged file list.\n"
+            "git-aicm -b can only split whole staged files.\n"
+            f"{details}"
+        )
+
+    counts = Counter(file for files, _ in normalized for file in files)
+    duplicates = [file for file in STAGED_FILES if counts[file] > 1]
+    missing = [file for file in STAGED_FILES if counts[file] == 0]
+
+    if duplicates:
+        duplicate_lines = "\n".join(f"- {file}" for file in duplicates)
+        die(
+            "OpenCode assigned the same staged file to multiple commits.\n"
+            f"{duplicate_lines}"
+        )
+
+    if missing:
+        missing_lines = "\n".join(f"- {file}" for file in missing)
+        die(
+            "OpenCode omitted some staged files from the commit plan.\n"
+            f"{missing_lines}"
+        )
+
+    return normalized
+
+
+def prepare_commit_plan(plan_text: str) -> list[PlannedCommit]:
+    normalized = parse_commit_plan(plan_text)
+    plan_dir = make_temp_dir("git-aicm-plan.")
+    prepared: list[PlannedCommit] = []
+
+    for index, (files, message) in enumerate(normalized, start=1):
+        patch_result = git_command(
+            "diff",
+            "--cached",
+            "--binary",
+            "-M",
+            "--",
+            *files,
+        )
+        patch_text = patch_result.stdout
+        if not patch_text.strip():
+            die(f"Commit {index} produced an empty patch.")
+
+        patch_path = plan_dir / f"{index}.patch"
+        patch_path.write_text(patch_text, encoding="utf-8")
+
+        message_path = plan_dir / f"{index}.message"
+        message_path.write_text(message.rstrip("\n") + "\n", encoding="utf-8")
+
+        prepared.append(
+            PlannedCommit(
+                files=files,
+                message=message,
+                patch_path=patch_path,
+                message_path=message_path,
+            )
+        )
+
+    return prepared
+
+
+def prompt_input(prompt: str) -> str:
+    try:
+        return input(prompt)
+    except EOFError:
+        return ""
+
+
+def get_editor_command() -> str:
+    configured = git_command("config", "core.editor", check=False)
+    editor = configured.stdout.strip()
+    if editor:
+        return editor
+    return os.environ.get("EDITOR", "vim")
+
+
+def make_message_file(prefix: str, content: str) -> Path:
+    message_path = make_temp_file(prefix, ".txt")
+    message_path.write_text(content.rstrip("\n") + "\n", encoding="utf-8")
+    return message_path
+
+
+def commit_from_message_file(message_path: Path, failure_message: str) -> None:
+    result = git_command("commit", "-F", str(message_path), check=False, capture_output=False)
+    if result.returncode != 0:
+        die(failure_message)
+
+
+def edit_message(initial_message: str) -> Path | None:
+    message_path = make_message_file("git-aicm-message.", initial_message)
+    editor = get_editor_command()
+    command = f"{editor} {shlex.quote(str(message_path))}"
+    result = subprocess.run(command, shell=True, check=False)
+    if result.returncode != 0:
+        die("Editor exited with a non-zero status.")
+
+    edited = message_path.read_text(encoding="utf-8")
+    if not edited.strip():
+        print("Commit cancelled (empty message).")
+        return None
+
+    print("")
+    print("Committing with edited message:")
+    print("-----------------------------------------------------------------")
+    print(edited.rstrip("\n"))
+    print("-----------------------------------------------------------------")
+    print("")
+    return message_path
+
+
+def create_commits(plan: list[PlannedCommit]) -> None:
+    total = len(plan)
+    print("")
+    print("Creating commits...")
+
+    for index, planned_commit in enumerate(plan, start=1):
+        print(f"Creating commit {index}/{total} ({planned_commit.file_count} file(s))...")
+        git_command("reset", "--quiet", capture_output=False)
+
+        apply_result = git_command(
+            "apply",
+            "--cached",
+            "--allow-binary-replacement",
+            "--recount",
+            str(planned_commit.patch_path),
+            check=False,
+            capture_output=True,
+        )
+        if apply_result.returncode != 0:
+            details = apply_result.stderr.strip()
+            if details:
+                die(
+                    f"Failed to stage commit {index} from the planned snapshot.\n{details}"
+                )
+            die(f"Failed to stage commit {index} from the planned snapshot.")
+
+        if not has_staged_changes():
+            die(
+                f"Commit {index} would be empty. Stopping before creating incorrect commits."
+            )
+
+        commit_from_message_file(
+            planned_commit.message_path,
+            (
+                f"Commit {index} failed. Earlier commits, if any, were created. "
+                "The current index still contains the files for the failed commit."
+            ),
+        )
+
+    print("")
+    print(f"Created {total} commit(s) successfully!")
+
+
+def parse_args(argv: list[str]) -> bool:
+    break_up_commits = False
+
+    for arg in argv:
+        if arg == "--help":
+            print(HELP_TEXT)
+            raise SystemExit(0)
+
+        if arg.startswith("--"):
+            die(f"Invalid option: {arg}\nUsage: git aicm [-b] [-h|--help]")
+
+        if not arg.startswith("-") or arg == "-":
+            die(f"Invalid option: {arg}\nUsage: git aicm [-b] [-h|--help]")
+
+        for flag in arg[1:]:
+            if flag == "b":
+                break_up_commits = True
+            elif flag == "h":
+                print(HELP_TEXT)
+                raise SystemExit(0)
+            else:
+                die(f"Invalid option: -{flag}\nUsage: git aicm [-b] [-h|--help]")
+
+    return break_up_commits
+
+
+def initialize_state() -> None:
+    global GIT_DIR
+    global DIFF_TEXT
+    global STAGED_FILES
+
+    ensure_git_repo()
+    ensure_opencode()
+
+    git_dir_output = git_output("rev-parse", "--git-dir")
+    git_dir = Path(git_dir_output)
+    if not git_dir.is_absolute():
+        git_dir = (Path.cwd() / git_dir).resolve()
+    GIT_DIR = git_dir
+
+    if not has_staged_changes():
+        die("No staged changes to commit.\nUse 'git add' to stage changes first.")
+
+    DIFF_TEXT = git_output("diff", "--cached")
+    STAGED_FILES = [
+        line
+        for line in git_output(
+            "diff",
+            "--cached",
+            "--name-only",
+            "--diff-filter=ACDMRT",
+            "-M",
+        ).splitlines()
+        if line
+    ]
+
+    if not STAGED_FILES:
+        die("No staged files were found in the index.")
+
+
+def run_single_mode() -> None:
+    if has_unstaged_tracked_changes():
+        note("Note: using staged changes only; unstaged tracked changes will be ignored.")
+        print("")
+
+    message = generate_with_opencode(
+        COMMIT_PROMPT,
+        "Generating commit with OpenCode...",
+        "a commit message",
+    )
+
+    print("Generated commit message:")
+    print("-----------------------------------------------------------------")
+    print(message)
+    print("-----------------------------------------------------------------")
+    print("")
+
+    reply = prompt_input("Commit with this message? [Y/n/e] ").strip()
+
+    if reply.lower() == "e":
+        edited_path = edit_message(message)
+        if edited_path is None:
+            raise SystemExit(1)
+        commit_from_message_file(
+            edited_path,
+            "Commit failed. Your staged changes remain staged.",
+        )
+        print("Committed with edited message.")
+        return
+
+    if reply.lower() == "n":
+        print("Commit cancelled.")
+        raise SystemExit(1)
+
+    message_path = make_message_file("git-aicm-message.", message)
+    commit_from_message_file(
+        message_path,
+        "Commit failed. Your staged changes remain staged.",
+    )
+    print("Committed successfully!")
+
+
+def run_breakup_mode() -> None:
+    if has_unstaged_tracked_changes():
+        die(
+            "Error: git aicm -b requires tracked changes to be fully staged.\n"
+            "Stage or stash the remaining tracked changes first."
+        )
+
+    plan_text = generate_with_opencode(
+        BREAKUP_PROMPT,
+        "Generating commits with OpenCode...",
+        "commits",
+    )
+    prepared_plan = prepare_commit_plan(plan_text)
+
+    print("Generated commit plan:")
+    print("=================================================================")
+    print(plan_text)
+    print("=================================================================")
+    print("")
+
+    reply = prompt_input("Create these commits? [Y/n] ").strip()
+    if reply.lower() == "n":
+        print("Commits cancelled.")
+        raise SystemExit(1)
+
+    create_commits(prepared_plan)
+
+
+def main(argv: list[str]) -> None:
+    break_up_commits = parse_args(argv)
+    initialize_state()
+    if break_up_commits:
+        run_breakup_mode()
+    else:
+        run_single_mode()
+
+
+if __name__ == "__main__":
+    atexit.register(cleanup)
+    main(sys.argv[1:])
