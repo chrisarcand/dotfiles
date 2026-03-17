@@ -25,7 +25,8 @@ USAGE:
     git aicm [OPTIONS]
 
 OPTIONS:
-    -b              Break staged changes into purposeful commits
+    -b, --break-up      Break staged changes into purposeful commits
+    -n, --no-animation  Disable spinner animation for automation
     -h, --help      Show this help message
 
 REQUIREMENTS:
@@ -50,6 +51,9 @@ EXAMPLES:
 
     git add <files>
     git aicm -b
+
+    git add <files>
+    git aicm --break-up --no-animation
 
 MORE INFO:
     Philosophy behind -b flag: https://chrisarcand.com/purposeful-commits/
@@ -172,16 +176,21 @@ class PlannedCommit:
 
 
 class Spinner:
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, animate: bool = True) -> None:
         self.message = message
         self.stop_event = threading.Event()
         self.thread: threading.Thread | None = None
         self.frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-        self.enabled = sys.stdout.isatty()
+        self.is_tty = sys.stdout.isatty()
+        self.animate = animate
+        self.enabled = self.is_tty and self.animate
         self.frame_prefix = "\033[96m"
         self.frame_suffix = "\033[0m"
 
     def __enter__(self) -> "Spinner":
+        if self.is_tty and not self.animate:
+            print(self.message, flush=True)
+            return self
         if self.enabled:
             self.thread = threading.Thread(target=self._spin, daemon=True)
             self.thread.start()
@@ -343,6 +352,8 @@ def generate_with_opencode(
     prompt_text: str,
     progress_message: str,
     failure_label: str,
+    *,
+    animate: bool,
 ) -> str:
     request_path = make_temp_file("git-aicm-request.", ".txt")
     request_path.write_text(build_request_text(prompt_text), encoding="utf-8")
@@ -358,7 +369,7 @@ def generate_with_opencode(
         "Read the attached file and follow it exactly. Output only the final answer.",
     ]
 
-    with Spinner(progress_message):
+    with Spinner(progress_message, animate=animate):
         result = subprocess.run(
             command,
             check=False,
@@ -646,30 +657,42 @@ def create_commits(plan: list[PlannedCommit]) -> None:
     print(f"Created {total} commit(s) successfully!")
 
 
-def parse_args(argv: list[str]) -> bool:
+def parse_args(argv: list[str]) -> tuple[bool, bool]:
     break_up_commits = False
+    animate = True
+    usage = "Usage: git aicm [-b|--break-up] [-n|--no-animation] [-h|--help]"
 
     for arg in argv:
         if arg == "--help":
             print(HELP_TEXT)
             raise SystemExit(0)
 
+        if arg in {"--break-up", "--breakup"}:
+            break_up_commits = True
+            continue
+
+        if arg == "--no-animation":
+            animate = False
+            continue
+
         if arg.startswith("--"):
-            die(f"Invalid option: {arg}\nUsage: git aicm [-b] [-h|--help]")
+            die(f"Invalid option: {arg}\n{usage}")
 
         if not arg.startswith("-") or arg == "-":
-            die(f"Invalid option: {arg}\nUsage: git aicm [-b] [-h|--help]")
+            die(f"Invalid option: {arg}\n{usage}")
 
         for flag in arg[1:]:
             if flag == "b":
                 break_up_commits = True
+            elif flag == "n":
+                animate = False
             elif flag == "h":
                 print(HELP_TEXT)
                 raise SystemExit(0)
             else:
-                die(f"Invalid option: -{flag}\nUsage: git aicm [-b] [-h|--help]")
+                die(f"Invalid option: -{flag}\n{usage}")
 
-    return break_up_commits
+    return break_up_commits, animate
 
 
 def initialize_state() -> None:
@@ -706,7 +729,7 @@ def initialize_state() -> None:
         die("No staged files were found in the index.")
 
 
-def run_single_mode() -> None:
+def run_single_mode(*, animate: bool) -> None:
     if has_unstaged_tracked_changes():
         note("Note: using staged changes only; unstaged tracked changes will be ignored.")
         print("")
@@ -715,6 +738,7 @@ def run_single_mode() -> None:
         COMMIT_PROMPT,
         "Generating commit with OpenCode...",
         "a commit message",
+        animate=animate,
     )
 
     print("Generated commit message:")
@@ -748,7 +772,7 @@ def run_single_mode() -> None:
     print("Committed successfully!")
 
 
-def run_breakup_mode() -> None:
+def run_breakup_mode(*, animate: bool) -> None:
     if has_unstaged_tracked_changes():
         die(
             "Error: git aicm -b requires tracked changes to be fully staged.\n"
@@ -759,6 +783,7 @@ def run_breakup_mode() -> None:
         BREAKUP_PROMPT,
         "Generating commits with OpenCode...",
         "commits",
+        animate=animate,
     )
     prepared_plan = prepare_commit_plan(plan_text)
 
@@ -777,12 +802,12 @@ def run_breakup_mode() -> None:
 
 
 def main(argv: list[str]) -> None:
-    break_up_commits = parse_args(argv)
+    break_up_commits, animate = parse_args(argv)
     initialize_state()
     if break_up_commits:
-        run_breakup_mode()
+        run_breakup_mode(animate=animate)
     else:
-        run_single_mode()
+        run_single_mode(animate=animate)
 
 
 if __name__ == "__main__":
