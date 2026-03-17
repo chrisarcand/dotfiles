@@ -68,7 +68,7 @@ COMMIT_PROMPT = """You are an expert at writing detailed, meaningful Git commit 
 
 You are writing a commit message for the currently STAGED changes only.
 
-Analyze the git diff provided and generate a commit message with BOTH a subject line and a detailed body.
+Analyze the git diff provided and generate a commit message with BOTH a subject line and a concise, useful body.
 
 Format:
 <type>: <subject>
@@ -94,18 +94,22 @@ REQUIRED Guidelines:
 - CRITICAL: You MUST include a completely blank line between each paragraph in the body
 - ALWAYS include a detailed body section after the blank line
 - Body should be written in prose format (full sentences and paragraphs)
-- Body should explain WHY the changes are being made, not just WHAT was changed
+- Prioritize WHY over WHAT; assume the diff already captures most of the implementation detail
+- If you mention WHAT changed, keep it to a single brief orienting sentence in the first paragraph
+- The second paragraph should usually carry the most weight and explain motivation, tradeoffs, broader impact, or future-facing context
+- Do not enumerate implementation details, helper function signatures, flag parsing behavior, or file-by-file edits unless they are essential to understand the reason for the change
 - Body should provide context: What problem does this solve? Why this approach? What are the implications?
 - If this change has broader impacts beyond the immediate feature (e.g., changes to shared config, performance implications, breaking changes), call those out explicitly
 - Write for your future self: What will you wish you had documented when you're looking at this commit six months from now?
 - Consider if this change is "making the change easy" (refactoring/prep work) or "making the easy change" (the actual feature), and explain accordingly
 - Body lines should wrap at 72 characters
-- Most changes should be no more than a paragraph or two. Don't be verbose just for the sake of being verbose. Only the most complex situations should call for several paragraphs of explanation.
+- Most changes should be exactly two short paragraphs: one sentence of orientation, then one paragraph focused on why the change matters
+- Don't be verbose just for the sake of being verbose. Only the most complex situations should call for several paragraphs of explanation.
 
 Example of good commit with WHY (note the blank lines):
 feat: add caching layer to user API endpoints
 [BLANK LINE HERE]
-This change introduces Redis caching with a 5-minute TTL for user profile data. We chose Redis because it's already part of our infrastructure and handles our expected load. The 5-minute TTL balances freshness with performance - user profiles don't change frequently enough to warrant more aggressive cache invalidation.
+This adds a Redis caching layer in front of user profile reads.
 [BLANK LINE HERE]
 This should reduce average response time from 200ms to ~20ms for cached requests and significantly reduce database load during peak hours.
 
