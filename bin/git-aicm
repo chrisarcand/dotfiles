@@ -236,6 +236,7 @@ def run_command(
             check=check,
             capture_output=capture_output,
             text=True,
+            stdin=subprocess.DEVNULL,
         )
     except FileNotFoundError:
         die(f"Command not found: {command[0]}")
@@ -354,7 +355,13 @@ def generate_with_opencode(
     ]
 
     with Spinner(progress_message):
-        result = subprocess.run(command, check=False, capture_output=True, text=True)
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            stdin=subprocess.DEVNULL,
+        )
 
     if result.returncode != 0:
         message = f"Error: OpenCode failed to generate {failure_label}."
