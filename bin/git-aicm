@@ -26,6 +26,7 @@ USAGE:
 
 OPTIONS:
     -b, --break-up      Break staged changes into purposeful commits
+    -m, --model MODEL   OpenCode model to use
     -n, --no-animation  Disable spinner animation for automation
     -h, --help      Show this help message
 
@@ -41,9 +42,10 @@ EXPECTATIONS:
     - `git aicm` reads staged changes only. Unstaged tracked changes are ignored.
     - `git aicm -b` requires tracked changes to be fully staged or stashed first.
     - `git aicm -b` splits by whole staged files, not partial hunks.
+    - Default model: `github-copilot/gpt-5-mini`
 
 CUSTOMIZATION:
-    Edit the COMMIT_PROMPT and BREAKUP_PROMPT variables in this script.
+    Edit the prompt variables below, or override model with `-m` / `--model`.
 
 EXAMPLES:
     git add <files>
@@ -54,6 +56,9 @@ EXAMPLES:
 
     git add <files>
     git aicm --break-up --no-animation
+
+    git add <files>
+    git aicm --model github-copilot/gpt-5-mini
 
 MORE INFO:
     Philosophy behind -b flag: https://chrisarcand.com/purposeful-commits/
@@ -161,6 +166,7 @@ TEMP_PATHS: list[Path] = []
 GIT_DIR: Path
 DIFF_TEXT = ""
 STAGED_FILES: list[str] = []
+DEFAULT_MODEL = "github-copilot/gpt-5-mini"
 
 
 @dataclass
@@ -354,6 +360,7 @@ def generate_with_opencode(
     failure_label: str,
     *,
     animate: bool,
+    model: str,
 ) -> str:
     request_path = make_temp_file("git-aicm-request.", ".txt")
     request_path.write_text(build_request_text(prompt_text), encoding="utf-8")
@@ -361,6 +368,8 @@ def generate_with_opencode(
     command = [
         "opencode",
         "run",
+        "--model",
+        model,
         "--format",
         "json",
         "--file",
@@ -657,22 +666,38 @@ def create_commits(plan: list[PlannedCommit]) -> None:
     print(f"Created {total} commit(s) successfully!")
 
 
-def parse_args(argv: list[str]) -> tuple[bool, bool]:
+def parse_args(argv: list[str]) -> tuple[bool, bool, str]:
     break_up_commits = False
     animate = True
-    usage = "Usage: git aicm [-b|--break-up] [-n|--no-animation] [-h|--help]"
+    model = DEFAULT_MODEL
+    usage = (
+        "Usage: git aicm [-b|--break-up] [-m|--model MODEL] "
+        "[-n|--no-animation] [-h|--help]"
+    )
 
-    for arg in argv:
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+
         if arg == "--help":
             print(HELP_TEXT)
             raise SystemExit(0)
 
         if arg in {"--break-up", "--breakup"}:
             break_up_commits = True
+            index += 1
+            continue
+
+        if arg == "--model":
+            if index + 1 >= len(argv):
+                die(f"Missing value for {arg}\n{usage}")
+            model = argv[index + 1]
+            index += 2
             continue
 
         if arg == "--no-animation":
             animate = False
+            index += 1
             continue
 
         if arg.startswith("--"):
@@ -681,9 +706,22 @@ def parse_args(argv: list[str]) -> tuple[bool, bool]:
         if not arg.startswith("-") or arg == "-":
             die(f"Invalid option: {arg}\n{usage}")
 
-        for flag in arg[1:]:
+        short_flags = arg[1:]
+        flag_index = 0
+        while flag_index < len(short_flags):
+            flag = short_flags[flag_index]
             if flag == "b":
                 break_up_commits = True
+            elif flag == "m":
+                remaining = short_flags[flag_index + 1 :]
+                if remaining:
+                    model = remaining
+                else:
+                    if index + 1 >= len(argv):
+                        die(f"Missing value for -m\n{usage}")
+                    model = argv[index + 1]
+                    index += 1
+                break
             elif flag == "n":
                 animate = False
             elif flag == "h":
@@ -692,7 +730,14 @@ def parse_args(argv: list[str]) -> tuple[bool, bool]:
             else:
                 die(f"Invalid option: -{flag}\n{usage}")
 
-    return break_up_commits, animate
+            flag_index += 1
+
+        index += 1
+
+    if not model.strip():
+        die(f"Model cannot be empty\n{usage}")
+
+    return break_up_commits, animate, model.strip()
 
 
 def initialize_state() -> None:
@@ -729,7 +774,7 @@ def initialize_state() -> None:
         die("No staged files were found in the index.")
 
 
-def run_single_mode(*, animate: bool) -> None:
+def run_single_mode(*, animate: bool, model: str) -> None:
     if has_unstaged_tracked_changes():
         note("Note: using staged changes only; unstaged tracked changes will be ignored.")
         print("")
@@ -739,6 +784,7 @@ def run_single_mode(*, animate: bool) -> None:
         "Generating commit with OpenCode...",
         "a commit message",
         animate=animate,
+        model=model,
     )
 
     print("Generated commit message:")
@@ -772,7 +818,7 @@ def run_single_mode(*, animate: bool) -> None:
     print("Committed successfully!")
 
 
-def run_breakup_mode(*, animate: bool) -> None:
+def run_breakup_mode(*, animate: bool, model: str) -> None:
     if has_unstaged_tracked_changes():
         die(
             "Error: git aicm -b requires tracked changes to be fully staged.\n"
@@ -784,6 +830,7 @@ def run_breakup_mode(*, animate: bool) -> None:
         "Generating commits with OpenCode...",
         "commits",
         animate=animate,
+        model=model,
     )
     prepared_plan = prepare_commit_plan(plan_text)
 
@@ -802,12 +849,12 @@ def run_breakup_mode(*, animate: bool) -> None:
 
 
 def main(argv: list[str]) -> None:
-    break_up_commits, animate = parse_args(argv)
+    break_up_commits, animate, model = parse_args(argv)
     initialize_state()
     if break_up_commits:
-        run_breakup_mode(animate=animate)
+        run_breakup_mode(animate=animate, model=model)
     else:
-        run_single_mode(animate=animate)
+        run_single_mode(animate=animate, model=model)
 
 
 if __name__ == "__main__":
