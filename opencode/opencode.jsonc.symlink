@@ -10,25 +10,82 @@
     }
   },
   "permission": {
-    "edit": "ask",
-    "bash": {
-      "*": "ask",
-      "curl *": "allow",
-      "grep *": "allow",
-      "ls *": "allow",
-      "find *": "allow",
-      "readlink *": "allow",
-      "chmod *": "allow",
-      "git add *": "allow",
-      "git log *": "allow",
-      "git checkout *": "allow",
-      "git pull *": "allow",
-      "gh *": "allow",
-      "acli *": "allow",
-      "opencode mcp --help*": "allow",
-      "opencode config *": "allow"
+    // Favor no-prompt local work. Ask only for actions that leave the current
+    // workspace, talk to remote systems, or mutate GitHub / remote git state.
+    "*": "allow",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
     },
-    "webfetch": "ask"
+    "edit": "allow",
+    "bash": {
+      "*": "allow",
+
+      // Local git is fine; remote writes still require approval.
+      "git push": "ask",
+      "git push *": "ask",
+
+      // GitHub CLI defaults to ask; allow obviously read-only subcommands.
+      "gh *": "ask",
+      "gh auth status*": "allow",
+      "gh issue list*": "allow",
+      "gh issue view*": "allow",
+      "gh pr checks*": "allow",
+      "gh pr diff*": "allow",
+      "gh pr list*": "allow",
+      "gh pr status*": "allow",
+      "gh pr view*": "allow",
+      "gh repo view*": "allow",
+      "gh run list*": "allow",
+      "gh run view*": "allow",
+      "gh search *": "allow",
+      "gh workflow list*": "allow",
+      "gh workflow view*": "allow",
+
+      // Explicitly allow common language runtimes and local package tooling.
+      "python *": "allow",
+      "python3 *": "allow",
+      "uv *": "allow",
+      "ruby *": "allow",
+      "bundle *": "allow",
+      "go *": "allow",
+      "node *": "allow",
+      "bun *": "allow",
+      "npm *": "allow",
+      "pnpm *": "allow",
+      "yarn *": "allow",
+
+      // Allow basic curl GETs, but keep common mutating forms gated.
+      "curl *": "allow",
+      "curl * -X POST *": "ask",
+      "curl * -X PUT *": "ask",
+      "curl * -X PATCH *": "ask",
+      "curl * -X DELETE *": "ask",
+      "curl * --request POST *": "ask",
+      "curl * --request PUT *": "ask",
+      "curl * --request PATCH *": "ask",
+      "curl * --request DELETE *": "ask",
+      "curl * -d *": "ask",
+      "curl * --data *": "ask",
+      "curl * --data-*": "ask",
+      "curl * -F *": "ask",
+      "curl * --form *": "ask",
+      "curl * -T *": "ask",
+      "curl * --upload-file *": "ask",
+      "ssh *": "ask",
+      "scp *": "ask",
+      "sftp *": "ask",
+      "rsync *": "ask",
+      "chmod *": "allow",
+      "opencode mcp --help*": "allow",
+      "opencode config *": "allow",
+      "acli *": "allow"
+    },
+    "webfetch": "allow",
+    "external_directory": "ask",
+    "doom_loop": "ask"
   },
   "mcp": {
   },
