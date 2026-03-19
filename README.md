@@ -132,7 +132,7 @@ Global OpenCode config is managed through the dotfiles topic at `opencode/` and 
 - `opencode/.symlink_base` targets `~/.config/opencode`
 - `opencode/opencode.jsonc.symlink` becomes `~/.config/opencode/opencode.jsonc`
 - `opencode/AGENTS.md.symlink` becomes `~/.config/opencode/AGENTS.md` and is loaded automatically as global rules
-- `opencode/agents.symlink/` and `opencode/commands.symlink/` provide reusable agents and slash commands
+- `opencode/agents.symlink/` and `opencode/skills.symlink/` provide reusable agents and skills
 - `opencode/install.sh` installs the OpenCode package
 
 This setup mirrors the existing topic-based installer and symlink conventions used throughout the repository.
