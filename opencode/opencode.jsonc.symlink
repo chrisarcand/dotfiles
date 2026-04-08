@@ -88,6 +88,15 @@
     "doom_loop": "ask"
   },
   "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest",
+        "--extension"
+      ],
+      "enabled": true
+    }
   },
   "default_agent": "build",
   "agent": {

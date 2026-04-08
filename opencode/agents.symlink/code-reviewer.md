@@ -1,7 +1,6 @@
 ---
 description: Reviews recently changed code for correctness, security, maintainability, and consistency with existing codebase conventions.
 mode: subagent
-model: anthropic/claude-sonnet-4-5
 color: success
 tools:
   write: false
