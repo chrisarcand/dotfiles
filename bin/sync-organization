@@ -1,0 +1,632 @@
+#!/usr/bin/env bash
+#
+# sync-organization - clone (or update) every repository in a GitHub
+# organization into a target directory, using the `gh` CLI.
+#
+# Works with github.com and GitHub Enterprise hosts.
+# Compatible with macOS's stock bash 3.2.
+
+set -euo pipefail
+
+PROG="$(basename "$0")"
+SELF="$(cd "$(dirname "$0")" && pwd)/$PROG"
+
+usage() {
+  cat <<EOF
+$PROG - clone or update every repository in a GitHub organization
+
+USAGE
+  $PROG [options] <org> <target-dir>
+
+DESCRIPTION
+  Lists all repositories in <org> using 'gh' and syncs each one into
+  <target-dir>/<repo>. <target-dir> is created if it does not exist.
+
+  New repositories are cloned with 'gh repo clone', so the clone protocol
+  (ssh or https) follows your gh config for that host:
+      gh config get git_protocol --host <host>
+
+  Existing repositories are never modified destructively:
+    1. 'git fetch --all --prune' is always run.
+    2. The default branch is fast-forwarded ONLY if it is currently checked
+       out, the working tree has no uncommitted changes to tracked files,
+       it has an upstream, and the update is a pure fast-forward.
+    Otherwise the repo is left as-is after fetching, and the reason is shown.
+
+  Works with github.com and GitHub Enterprise hosts. You must already be
+  authenticated to the host with 'gh auth login --hostname <host>'; this
+  script only checks and will not log in for you.
+
+ARGUMENTS
+  <org>         Organization (or user) to sync. Accepted forms:
+                  my-org                             bare name (see --hostname)
+                  github.example.com/my-org
+                  https://github.example.com/my-org
+                  https://github.example.com/orgs/my-org/repositories
+                  git@github.example.com:my-org
+                For a bare name, the host is taken from --hostname, then
+                \$GH_HOST, then defaults to github.com.
+  <target-dir>  Directory to place repositories in (one subdirectory per repo).
+
+OPTIONS
+  -j, --jobs N             Parallel clone/update jobs (default: 4)
+      --hostname HOST      GitHub host to use when <org> is a bare name
+      --no-archived        Skip archived repositories
+      --no-forks           Skip forked repositories
+      --depth N            Shallow-clone NEW repositories with history depth N
+                           (existing clones are unaffected)
+      --stall-timeout SEC  Abort a clone/fetch whose connection stalls for
+                           SEC seconds (default: 300; 0 disables). See STALLS.
+      --progress-interval SEC
+                           Print a progress report for in-flight repos every
+                           SEC seconds (default: 10; 0 disables)
+  -n, --dry-run            List what would be cloned/updated; change nothing.
+                           Shows each new repo's size and an estimated total
+                           download (GitHub's reported repo size; excludes Git
+                           LFS, and --depth will download less)
+  -h, --help               Show this help and exit
+
+PROGRESS
+  Each repo prints a 'started' line when work begins and a
+  '[done/total] <status>' line with its elapsed time when it finishes.
+
+  While jobs are running, a report is printed every --progress-interval
+  seconds listing each in-flight repo, how long it has been running, and
+  git's latest progress message, e.g.:
+
+    ... 12/73 done, 2 active, 3m04s elapsed
+        big-repo    2m10s  Receiving objects:  38% (4102/10794), 262.00 MiB | 3.10 MiB/s
+        other-repo  0m41s  Resolving deltas:  91% (2210/2428)
+
+  If git has printed nothing for a repo in 30s or more, the report adds
+  '(no output for ...)' so a stuck transfer is easy to spot.
+
+STALLS
+  With --stall-timeout, a transfer that stalls fails instead of hanging
+  forever, and is reported as 'failed' (with its log) in the summary:
+    ssh:   ServerAliveInterval/ServerAliveCountMax keepalives drop the
+           connection if the server stops responding for ~SEC seconds.
+    https: git's http.lowSpeedLimit/lowSpeedTime abort if the transfer
+           averages under 1 byte/s for SEC seconds.
+  Interactive password/passphrase prompts are always disabled so parallel
+  jobs cannot block on input (use ssh-agent for passphrase-protected keys).
+  If you set GIT_SSH_COMMAND or git's core.sshCommand yourself, it is used
+  as-is and the ssh keepalive/batch options are NOT added.
+
+RESULT STATUSES
+  cloned        Newly cloned
+  updated       Default branch fast-forwarded to upstream
+  up-to-date    Fetched; default branch already current
+  fetched       Fetched only; branch not updated (reason shown, e.g.
+                different branch checked out, uncommitted changes, diverged)
+  failed        Clone/fetch failed or stalled, or path exists but is not a
+                git repo
+  would-clone   (dry run) Would be cloned; estimated size shown
+  would-update  (dry run) Already present; would be fetched/updated
+
+  On failure, per-repo git logs are kept and their location is printed.
+
+EXAMPLES
+  # Sync an org from a GitHub Enterprise host into ~/code/my-org
+  $PROG https://github.example.com/my-org ~/code/my-org
+
+  # Preview first, including estimated download size
+  $PROG --dry-run github.example.com/my-org ~/code/my-org
+
+  # Only active, non-fork repos from github.com, 8 at a time, shallow clones
+  $PROG --no-archived --no-forks -j 8 --depth 1 my-org ~/code/my-org
+
+  # Bare org name on an enterprise host, give up on stalls after 10 minutes
+  $PROG --hostname github.example.com --stall-timeout 600 my-org ~/code/my-org
+
+REQUIREMENTS
+  gh (https://cli.github.com), git (2.31+ for the https stall timeout)
+
+EXIT STATUS
+  0  All repositories synced (or nothing to do)
+  1  Usage error, not authenticated, listing failed, or any repo failed
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# Output helpers
+# ---------------------------------------------------------------------------
+if [ -t 1 ]; then
+  C_RED=$'\033[31m'; C_GRN=$'\033[32m'; C_YLW=$'\033[33m'
+  C_BLU=$'\033[34m'; C_DIM=$'\033[2m'; C_BLD=$'\033[1m'; C_RST=$'\033[0m'
+else
+  C_RED=; C_GRN=; C_YLW=; C_BLU=; C_DIM=; C_BLD=; C_RST=
+fi
+
+die()  { printf '%s%s:%s %s\n' "$C_RED" "$PROG" "$C_RST" "$*" >&2; exit 1; }
+info() { printf '%s==>%s %s\n' "$C_BLU" "$C_RST" "$*"; }
+
+# human_kb <kilobytes>  ->  e.g. "512 KB", "12.3 MB", "1.5 GB" (binary units)
+human_kb() {
+  awk -v kb="${1:-0}" 'BEGIN {
+    split("KB MB GB TB", u, " "); i = 1; v = kb + 0
+    while (v >= 1024 && i < 4) { v /= 1024; i++ }
+    if (i == 1) printf "%d %s", v, u[i]; else printf "%.1f %s", v, u[i]
+  }'
+}
+
+# fmt_dur <seconds>  ->  "42s", "3m04s", "1h02m"
+fmt_dur() {
+  local s="${1:-0}"
+  if   [ "$s" -lt 60 ];   then printf '%ds' "$s"
+  elif [ "$s" -lt 3600 ]; then printf '%dm%02ds' $((s / 60)) $((s % 60))
+  else                         printf '%dh%02dm' $((s / 3600)) $((s % 3600 / 60))
+  fi
+}
+
+# file_mtime <path>  ->  epoch seconds (BSD/macOS and GNU stat)
+if stat -c %Y / >/dev/null 2>&1; then
+  file_mtime() { stat -c %Y "$1" 2>/dev/null || echo 0; }
+else
+  file_mtime() { stat -f %m "$1" 2>/dev/null || echo 0; }
+fi
+
+# Serialize terminal output and result bookkeeping across parallel jobs.
+# The lock is broken after ~5s so a killed holder can never wedge the run.
+lock() {
+  local tries=0
+  while ! mkdir "$SO_LOCK" 2>/dev/null; do
+    tries=$((tries + 1))
+    if [ "$tries" -ge 100 ]; then rmdir "$SO_LOCK" 2>/dev/null || true; tries=0; fi
+    sleep 0.05
+  done
+}
+unlock() { rmdir "$SO_LOCK" 2>/dev/null || true; }
+
+# last_progress <logfile>  ->  git's most recent progress message
+last_progress() {
+  [ -s "$1" ] || return 0
+  tail -c 4096 "$1" | tr '\r' '\n' | sed -e '/^[[:space:]]*$/d' -e 's/^remote: *//' \
+    | tail -n 1 | cut -c1-110
+}
+
+# ---------------------------------------------------------------------------
+# Worker: invoked (in parallel) via xargs as
+#   `$SELF __worker <repo> <branch> <size_kb>`.
+# Configuration is passed through SO_* environment variables.
+# ---------------------------------------------------------------------------
+W_START=0
+
+record() {
+  # record <status> <repo> [detail] [size_kb]
+  local status="$1" repo="$2" detail="${3:-}" size_kb="${4:-0}" color dur="" n_done
+  case "$status" in
+    cloned|updated)            color="$C_GRN" ;;
+    up-to-date)                color="$C_DIM" ;;
+    fetched)                   color="$C_YLW" ;;
+    would-clone|would-update)  color="$C_BLU" ;;
+    *)                         color="$C_RED" ;;
+  esac
+  [ "$SO_DRY_RUN" = 1 ] || dur="$(fmt_dur $(( $(date +%s) - W_START )))"
+
+  lock
+  printf '%s\t%s\t%s\t%s\n' "$status" "$repo" "$detail" "$size_kb" >> "$SO_RESULTS"
+  n_done="$(wc -l <"$SO_RESULTS" | tr -d ' ')"
+  printf '  [%*d/%d] %s%-12s%s %s' "${#SO_TOTAL}" "$n_done" "$SO_TOTAL" "$color" "$status" "$C_RST" "$repo"
+  [ -n "$detail" ] && printf ' %s(%s)%s' "$C_DIM" "$detail" "$C_RST"
+  [ -n "$dur" ]    && printf ' %s%s%s' "$C_DIM" "$dur" "$C_RST"
+  printf '\n'
+  unlock
+}
+
+# Explain a failed git transfer, recognising stall timeouts.
+failure_detail() {
+  local what="$1" log="$2"
+  if grep -qiE 'Timeout, server .* not responding|Operation too slow|Connection timed out' "$log" 2>/dev/null; then
+    printf '%s stalled (no progress for %s); see %s' "$what" "$(fmt_dur "$SO_STALL_TIMEOUT")" "$log"
+  else
+    printf '%s failed; see %s' "$what" "$log"
+  fi
+}
+
+worker() {
+  local repo="$1" branch="${2:--}" size_kb="${3:-0}"
+  [ "$branch" = "-" ] && branch=""
+
+  local dest="$SO_TARGET/$repo"
+  local log="$SO_LOGDIR/$repo.log"
+
+  if [ -e "$dest" ]; then
+    if [ ! -e "$dest/.git" ]; then
+      record failed "$repo" "$dest exists but is not a git repository"
+      return 0
+    fi
+
+    if [ "$SO_DRY_RUN" = 1 ]; then
+      record would-update "$repo"
+      return 0
+    fi
+
+    if ! git -C "$dest" fetch --all --prune --progress >>"$log" 2>&1; then
+      record failed "$repo" "$(failure_detail fetch "$log")"
+      return 0
+    fi
+
+    if [ -z "$branch" ]; then
+      record fetched "$repo" "empty repository"
+      return 0
+    fi
+
+    local current
+    current="$(git -C "$dest" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    if [ "$current" != "$branch" ]; then
+      record fetched "$repo" "on '${current:-detached HEAD}', not '$branch'"
+      return 0
+    fi
+
+    if [ -n "$(git -C "$dest" status --porcelain --untracked-files=no 2>/dev/null)" ]; then
+      record fetched "$repo" "uncommitted changes"
+      return 0
+    fi
+
+    if ! git -C "$dest" rev-parse --verify --quiet '@{u}' >/dev/null 2>&1; then
+      record fetched "$repo" "'$branch' has no upstream"
+      return 0
+    fi
+
+    local before after
+    before="$(git -C "$dest" rev-parse HEAD)"
+    if ! git -C "$dest" merge --ff-only --quiet '@{u}' >>"$log" 2>&1; then
+      record fetched "$repo" "cannot fast-forward '$branch' (diverged)"
+      return 0
+    fi
+    after="$(git -C "$dest" rev-parse HEAD)"
+
+    if [ "$before" = "$after" ]; then
+      record up-to-date "$repo"
+    else
+      record updated "$repo"
+    fi
+  else
+    if [ "$SO_DRY_RUN" = 1 ]; then
+      record would-clone "$repo" "~$(human_kb "$size_kb")" "$size_kb"
+      return 0
+    fi
+
+    local -a git_args=(--progress)
+    [ -n "$SO_DEPTH" ] && git_args+=(--depth "$SO_DEPTH")
+
+    if gh repo clone "$SO_ORG/$repo" "$dest" -- "${git_args[@]}" >>"$log" 2>&1; then
+      record cloned "$repo" "$(human_kb "$size_kb")"
+    else
+      record failed "$repo" "$(failure_detail clone "$log")"
+    fi
+  fi
+}
+
+worker_main() {
+  local repo="$1" marker="$SO_ACTIVE/$1"
+  W_START="$(date +%s)"
+  if [ "$SO_DRY_RUN" = 0 ]; then
+    : >"$SO_LOGDIR/$repo.log"
+    echo "$W_START" >"$marker"
+    lock
+    printf '  %*s %sstarted%s      %s\n' $(( ${#SO_TOTAL} * 2 + 3 )) "" "$C_DIM" "$C_RST" "$repo"
+    unlock
+  fi
+  worker "$@" || true
+  rm -f "$marker"
+}
+
+if [ "${1:-}" = "__worker" ]; then
+  shift
+  worker_main "$@"
+  exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Progress reporter: runs in the background during a real (non-dry) sync.
+# ---------------------------------------------------------------------------
+progress_reporter() {
+  local interval="$1" run_start="$2"
+  local f repo started now log idle msg n_done n width lines
+  while sleep "$interval"; do
+    now="$(date +%s)"
+    n=0; width=0; lines=""
+    for f in "$SO_ACTIVE"/*; do
+      [ -e "$f" ] || continue
+      repo="$(basename "$f")"
+      n=$((n + 1))
+      [ "${#repo}" -gt "$width" ] && width="${#repo}"
+    done
+    [ "$n" -eq 0 ] && continue
+
+    n_done="$(wc -l <"$SO_RESULTS" | tr -d ' ')"
+    lines="$(printf '  %s... %s/%s done, %s active, %s elapsed%s' \
+      "$C_BLU" "$n_done" "$SO_TOTAL" "$n" "$(fmt_dur $((now - run_start)))" "$C_RST")"
+
+    for f in "$SO_ACTIVE"/*; do
+      [ -e "$f" ] || continue
+      repo="$(basename "$f")"
+      started="$(cat "$f" 2>/dev/null || echo "$now")"
+      log="$SO_LOGDIR/$repo.log"
+      msg="$(last_progress "$log")"
+      [ -n "$msg" ] || msg="waiting for server..."
+      idle=$((now - $(file_mtime "$log")))
+      if [ "$idle" -ge 30 ]; then
+        msg="$msg ${C_YLW}(no output for $(fmt_dur "$idle"))${C_RST}"
+      fi
+      lines="$lines$(printf '\n      %-*s  %6s  %s%s%s' \
+        "$width" "$repo" "$(fmt_dur $((now - started)))" "$C_DIM" "$msg" "$C_RST")"
+    done
+
+    lock
+    printf '%s\n' "$lines"
+    unlock
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+JOBS=4
+HOSTNAME_OPT=""
+NO_ARCHIVED=0
+NO_FORKS=0
+DEPTH=""
+DRY_RUN=0
+STALL_TIMEOUT=300
+PROGRESS_INTERVAL=10
+POSITIONAL=()
+
+is_pos_int() { case "$1" in ''|*[!0-9]*|0) return 1 ;; *) return 0 ;; esac; }
+is_nonneg_int() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -j|--jobs)            [ $# -ge 2 ] || die "$1 requires an argument"; JOBS="$2"; shift 2 ;;
+    --jobs=*)             JOBS="${1#*=}"; shift ;;
+    --hostname)           [ $# -ge 2 ] || die "$1 requires an argument"; HOSTNAME_OPT="$2"; shift 2 ;;
+    --hostname=*)         HOSTNAME_OPT="${1#*=}"; shift ;;
+    --no-archived)        NO_ARCHIVED=1; shift ;;
+    --no-forks)           NO_FORKS=1; shift ;;
+    --depth)              [ $# -ge 2 ] || die "$1 requires an argument"; DEPTH="$2"; shift 2 ;;
+    --depth=*)            DEPTH="${1#*=}"; shift ;;
+    --stall-timeout)      [ $# -ge 2 ] || die "$1 requires an argument"; STALL_TIMEOUT="$2"; shift 2 ;;
+    --stall-timeout=*)    STALL_TIMEOUT="${1#*=}"; shift ;;
+    --progress-interval)  [ $# -ge 2 ] || die "$1 requires an argument"; PROGRESS_INTERVAL="$2"; shift 2 ;;
+    --progress-interval=*) PROGRESS_INTERVAL="${1#*=}"; shift ;;
+    -n|--dry-run)         DRY_RUN=1; shift ;;
+    -h|--help)            usage; exit 0 ;;
+    --)                   shift; while [ $# -gt 0 ]; do POSITIONAL+=("$1"); shift; done ;;
+    -*)                   die "unknown option: $1 (see --help)" ;;
+    *)                    POSITIONAL+=("$1"); shift ;;
+  esac
+done
+
+if [ "${#POSITIONAL[@]}" -ne 2 ]; then
+  {
+    printf 'Usage: %s [options] <org> <target-dir>\n' "$PROG"
+    printf 'Try '\''%s --help'\'' for more information.\n' "$PROG"
+  } >&2
+  exit 1
+fi
+
+is_pos_int "$JOBS" || die "--jobs must be a positive integer (got '$JOBS')"
+[ -z "$DEPTH" ] || is_pos_int "$DEPTH" || die "--depth must be a positive integer (got '$DEPTH')"
+is_nonneg_int "$STALL_TIMEOUT" || die "--stall-timeout must be a non-negative integer (got '$STALL_TIMEOUT')"
+is_nonneg_int "$PROGRESS_INTERVAL" || die "--progress-interval must be a non-negative integer (got '$PROGRESS_INTERVAL')"
+
+ORG_INPUT="${POSITIONAL[0]}"
+TARGET_INPUT="${POSITIONAL[1]}"
+
+# ---------------------------------------------------------------------------
+# Resolve host + org from the org argument
+# ---------------------------------------------------------------------------
+parse_org() {
+  local s="$1"
+  s="${s#http://}"; s="${s#https://}"; s="${s#ssh://}"
+  s="${s#git@}"
+  # git@host:org  ->  host/org
+  case "$s" in
+    */*) ;;
+    *:*) s="${s%%:*}/${s#*:}" ;;
+  esac
+  s="${s%/}"; s="${s%.git}"
+
+  case "$s" in
+    */*)
+      HOST="${s%%/*}"
+      local rest="${s#*/}"
+      # Support https://host/orgs/ORG/...
+      if [ "${rest%%/*}" = "orgs" ]; then rest="${rest#orgs/}"; fi
+      ORG="${rest%%/*}"
+      if [ -n "$HOSTNAME_OPT" ] && [ "$HOSTNAME_OPT" != "$HOST" ]; then
+        die "--hostname '$HOSTNAME_OPT' conflicts with host '$HOST' in '$1'"
+      fi
+      ;;
+    *)
+      HOST="${HOSTNAME_OPT:-${GH_HOST:-github.com}}"
+      ORG="$s"
+      ;;
+  esac
+
+  [ -n "$HOST" ] || die "could not determine host from '$1'"
+  [ -n "$ORG" ]  || die "could not determine organization from '$1'"
+}
+
+HOST=""; ORG=""
+parse_org "$ORG_INPUT"
+
+# ---------------------------------------------------------------------------
+# Preflight checks
+# ---------------------------------------------------------------------------
+command -v gh  >/dev/null 2>&1 || die "'gh' not found in PATH. Install it: https://cli.github.com"
+command -v git >/dev/null 2>&1 || die "'git' not found in PATH."
+
+if ! gh auth status --hostname "$HOST" >/dev/null 2>&1; then
+  {
+    printf '%s%s:%s not authenticated to %s%s%s.\n' "$C_RED" "$PROG" "$C_RST" "$C_BLD" "$HOST" "$C_RST"
+    printf '\nAuthenticate with:\n\n  gh auth login --hostname %s\n\n' "$HOST"
+    printf 'Then re-run this command.\n'
+  } >&2
+  exit 1
+fi
+
+# Resolve target to an absolute path.
+case "$TARGET_INPUT" in
+  "~")   TARGET_INPUT="$HOME" ;;
+  "~/"*) TARGET_INPUT="$HOME/${TARGET_INPUT#~/}" ;;
+esac
+if [ "$DRY_RUN" = 0 ]; then
+  mkdir -p "$TARGET_INPUT" || die "cannot create target directory '$TARGET_INPUT'"
+fi
+if [ -d "$TARGET_INPUT" ]; then
+  TARGET="$(cd "$TARGET_INPUT" && pwd)"
+else
+  [ -e "$TARGET_INPUT" ] && die "'$TARGET_INPUT' exists and is not a directory"
+  case "$TARGET_INPUT" in
+    /*) TARGET="$TARGET_INPUT" ;;
+    *)  TARGET="$PWD/$TARGET_INPUT" ;;
+  esac
+fi
+
+export GH_HOST="$HOST"
+
+# ---------------------------------------------------------------------------
+# Git transport settings: no interactive prompts, and stall timeouts.
+# ---------------------------------------------------------------------------
+export GIT_TERMINAL_PROMPT=0
+
+if [ -z "${GIT_SSH_COMMAND:-}" ] && [ -z "$(git config --get core.sshCommand 2>/dev/null || true)" ]; then
+  SSH_CMD="ssh -o BatchMode=yes"
+  if [ "$STALL_TIMEOUT" -gt 0 ]; then
+    if [ "$STALL_TIMEOUT" -ge 15 ]; then
+      ALIVE_INTERVAL=15
+      ALIVE_COUNT=$(( (STALL_TIMEOUT + 14) / 15 ))
+    else
+      ALIVE_INTERVAL="$STALL_TIMEOUT"
+      ALIVE_COUNT=1
+    fi
+    SSH_CMD="$SSH_CMD -o ServerAliveInterval=$ALIVE_INTERVAL -o ServerAliveCountMax=$ALIVE_COUNT"
+  fi
+  export GIT_SSH_COMMAND="$SSH_CMD"
+fi
+
+# Inject http.lowSpeed* via GIT_CONFIG_{COUNT,KEY_n,VALUE_n} (git 2.31+),
+# appending to any entries the caller already set.
+add_git_config() {
+  local n="${GIT_CONFIG_COUNT:-0}"
+  export "GIT_CONFIG_KEY_$n=$1" "GIT_CONFIG_VALUE_$n=$2"
+  export GIT_CONFIG_COUNT=$((n + 1))
+}
+if [ "$STALL_TIMEOUT" -gt 0 ]; then
+  add_git_config http.lowSpeedLimit 1
+  add_git_config http.lowSpeedTime "$STALL_TIMEOUT"
+fi
+
+# ---------------------------------------------------------------------------
+# List repositories
+# ---------------------------------------------------------------------------
+JQ_FILTER='sort_by(.name) | .[]'
+[ "$NO_ARCHIVED" = 1 ] && JQ_FILTER="$JQ_FILTER | select(.isArchived | not)"
+[ "$NO_FORKS" = 1 ]    && JQ_FILTER="$JQ_FILTER | select(.isFork | not)"
+JQ_FILTER="$JQ_FILTER"' | "\(.name) \(if (.defaultBranchRef.name // "") == "" then "-" else .defaultBranchRef.name end) \(.diskUsage // 0)"'
+
+info "Listing repositories in $C_BLD$HOST/$ORG$C_RST ..."
+
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/$PROG.XXXXXX")"
+KEEP_WORKDIR=0
+REPORTER_PID=""
+cleanup() {
+  if [ -n "$REPORTER_PID" ]; then kill "$REPORTER_PID" 2>/dev/null || true; fi
+  [ "$KEEP_WORKDIR" = 1 ] || rm -rf "$WORKDIR"
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
+
+REPO_LIST="$WORKDIR/repos.txt"
+if ! gh repo list "$ORG" --limit 100000 \
+      --json name,isArchived,isFork,defaultBranchRef,diskUsage \
+      --jq "$JQ_FILTER" >"$REPO_LIST" 2>"$WORKDIR/list.err"; then
+  printf '%s%s:%s failed to list repositories for %s/%s:\n' "$C_RED" "$PROG" "$C_RST" "$HOST" "$ORG" >&2
+  sed 's/^/  /' "$WORKDIR/list.err" >&2
+  exit 1
+fi
+
+TOTAL="$(wc -l <"$REPO_LIST" | tr -d ' ')"
+if [ "$TOTAL" -eq 0 ]; then
+  info "No repositories found in $HOST/$ORG (after filters). Nothing to do."
+  exit 0
+fi
+
+MODE="Syncing"; [ "$DRY_RUN" = 1 ] && MODE="Dry run:"
+DETAILS="jobs: $JOBS${DEPTH:+, depth: $DEPTH}"
+if [ "$DRY_RUN" = 0 ]; then
+  if [ "$STALL_TIMEOUT" -gt 0 ]; then
+    DETAILS="$DETAILS, stall timeout: $(fmt_dur "$STALL_TIMEOUT")"
+  else
+    DETAILS="$DETAILS, stall timeout: off"
+  fi
+fi
+info "$MODE $TOTAL repositories into $C_BLD$TARGET$C_RST ($DETAILS)"
+
+# ---------------------------------------------------------------------------
+# Run workers
+# ---------------------------------------------------------------------------
+export SO_ORG="$ORG"
+export SO_TARGET="$TARGET"
+export SO_DEPTH="$DEPTH"
+export SO_DRY_RUN="$DRY_RUN"
+export SO_TOTAL="$TOTAL"
+export SO_STALL_TIMEOUT="$STALL_TIMEOUT"
+export SO_RESULTS="$WORKDIR/results.tsv"
+export SO_LOGDIR="$WORKDIR/logs"
+export SO_ACTIVE="$WORKDIR/active"
+export SO_LOCK="$WORKDIR/lock"
+mkdir -p "$SO_LOGDIR" "$SO_ACTIVE"
+: >"$SO_RESULTS"
+
+if [ "$DRY_RUN" = 0 ] && [ "$PROGRESS_INTERVAL" -gt 0 ]; then
+  progress_reporter "$PROGRESS_INTERVAL" "$(date +%s)" &
+  REPORTER_PID=$!
+fi
+
+xargs -P "$JOBS" -n 3 "$SELF" __worker <"$REPO_LIST" || true
+
+if [ -n "$REPORTER_PID" ]; then
+  kill "$REPORTER_PID" 2>/dev/null || true
+  wait "$REPORTER_PID" 2>/dev/null || true
+  REPORTER_PID=""
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+count() { awk -F'\t' -v s="$1" '$1 == s { n++ } END { print n + 0 }' "$SO_RESULTS"; }
+
+echo
+info "Summary for $HOST/$ORG"
+if [ "$DRY_RUN" = 1 ]; then
+  CLONE_KB="$(awk -F'\t' '$1 == "would-clone" { t += $4 } END { print t + 0 }' "$SO_RESULTS")"
+  printf '  would clone:  %s (~%s estimated download)\n' "$(count would-clone)" "$(human_kb "$CLONE_KB")"
+  printf '  would update: %s (incremental fetch; size not estimated)\n' "$(count would-update)"
+  if [ "$(count would-clone)" -gt 0 ]; then
+    printf '  %snote: sizes are GitHub'\''s reported repo size; excludes Git LFS and checkout%s\n' "$C_DIM" "$C_RST"
+    printf '  %s      overhead, and may be slightly stale.%s\n' "$C_DIM" "$C_RST"
+    [ -n "$DEPTH" ] && printf '  %s      --depth %s is set, so the actual download will be smaller.%s\n' "$C_DIM" "$DEPTH" "$C_RST"
+  fi
+else
+  printf '  cloned:       %s\n' "$(count cloned)"
+  printf '  updated:      %s\n' "$(count updated)"
+  printf '  up-to-date:   %s\n' "$(count up-to-date)"
+  printf '  fetched only: %s\n' "$(count fetched)"
+fi
+
+FAILED="$(count failed)"
+DONE="$(wc -l <"$SO_RESULTS" | tr -d ' ')"
+MISSING=$((TOTAL - DONE))
+
+if [ "$FAILED" -gt 0 ] || [ "$MISSING" -gt 0 ]; then
+  printf '  %sfailed:       %s%s\n' "$C_RED" "$((FAILED + MISSING))" "$C_RST"
+  awk -F'\t' '$1 == "failed" { printf "    - %s: %s\n", $2, $3 }' "$SO_RESULTS"
+  [ "$MISSING" -gt 0 ] && printf '    - %s repositories did not report a result (interrupted?)\n' "$MISSING"
+  KEEP_WORKDIR=1
+  printf '  logs kept in: %s\n' "$SO_LOGDIR"
+  exit 1
+fi
