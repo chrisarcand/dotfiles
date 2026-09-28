@@ -25,6 +25,9 @@ DESCRIPTION
   New repositories are cloned with 'gh repo clone', so the clone protocol
   (ssh or https) follows your gh config for that host:
       gh config get git_protocol --host <host>
+  Clones are made in <target-dir>/.$PROG.partial/ and moved into place
+  only once they fully succeed, so a failed or interrupted clone never
+  leaves a half-populated repo behind (it is retried from scratch next run).
 
   Existing repositories are never modified destructively:
     1. 'git fetch --all --prune' is always run.
@@ -60,6 +63,19 @@ OPTIONS
       --progress-interval SEC
                            Print a progress report for in-flight repos every
                            SEC seconds (default: 10; 0 disables)
+      --min-free GB        Don't start a new clone when less than GB gigabytes
+                           are free on the target's disk; report it as failed
+                           instead (default: 2; 0 disables). Checked-out files
+                           can be many times larger than the download.
+      --skip REPO          Don't clone or update REPO. Repeatable, and accepts a
+                           comma-separated list. Shell globs are allowed; quote
+                           them (e.g. --skip 'sandbox-*').
+      --max-size GB        Ask for confirmation before cloning a NEW repo whose
+                           GitHub-reported size exceeds GB gigabytes (default:
+                           50; 0 disables). Existing clones are always updated.
+                           If there is no terminal to ask on, such repos are
+                           skipped unless --yes is given. See LARGE REPOS.
+  -y, --yes                Clone repos over --max-size without asking
   -n, --dry-run            List what would be cloned/updated; change nothing.
                            Shows each new repo's size and an estimated total
                            download (GitHub's reported repo size; excludes Git
@@ -93,16 +109,31 @@ STALLS
   If you set GIT_SSH_COMMAND or git's core.sshCommand yourself, it is used
   as-is and the ssh keepalive/batch options are NOT added.
 
+LARGE REPOS
+  Before any work starts, each repo that would be newly cloned and is over
+  --max-size is listed with its size and the free disk space, and you are
+  asked whether to clone it:
+
+    !! big-repo is 74.1 GB (over --max-size 50 GB; 812.4 GB free). Clone it? [y/N]
+
+  Anything but 'y'/'yes' skips it. The question is read from the terminal
+  (/dev/tty), so it works even when output is piped. A dry run never asks;
+  it lists the repos it would ask about.
+
 RESULT STATUSES
   cloned        Newly cloned
   updated       Default branch fast-forwarded to upstream
   up-to-date    Fetched; default branch already current
   fetched       Fetched only; branch not updated (reason shown, e.g.
                 different branch checked out, uncommitted changes, diverged)
-  failed        Clone/fetch failed or stalled, or path exists but is not a
-                git repo
+  failed        Clone/fetch failed or stalled, disk full (or below
+                --min-free), or path exists but is not a git repo
   would-clone   (dry run) Would be cloned; estimated size shown
   would-update  (dry run) Already present; would be fetched/updated
+
+  Repos excluded by --skip, or declined at the --max-size prompt, are not
+  synced; they are listed as 'skipped' in the summary and do not count as
+  failures.
 
   On failure, per-repo git logs are kept and their location is printed.
 
@@ -118,6 +149,10 @@ EXAMPLES
 
   # Bare org name on an enterprise host, give up on stalls after 10 minutes
   $PROG --hostname github.example.com --stall-timeout 600 my-org ~/code/my-org
+
+  # Never sync two specific repos, and ask before cloning anything over 20 GB
+  $PROG --skip build-artifacts,old-monorepo --skip 'scratch-*' \\
+      --max-size 20 github.example.com/my-org ~/code/my-org
 
 REQUIREMENTS
   gh (https://cli.github.com), git (2.31+ for the https stall timeout)
@@ -167,16 +202,31 @@ else
 fi
 
 # Serialize terminal output and result bookkeeping across parallel jobs.
-# The lock is broken after ~5s so a killed holder can never wedge the run.
+# The lock is broken after ~5s so a killed holder can never wedge the run,
+# and after ~15s of failing to take it (e.g. mkdir fails because the disk is
+# full) we proceed unlocked rather than spin forever.
 lock() {
-  local tries=0
+  local tries=0 total=0
   while ! mkdir "$SO_LOCK" 2>/dev/null; do
-    tries=$((tries + 1))
+    tries=$((tries + 1)); total=$((total + 1))
+    [ "$total" -ge 300 ] && return 0
     if [ "$tries" -ge 100 ]; then rmdir "$SO_LOCK" 2>/dev/null || true; tries=0; fi
     sleep 0.05
   done
 }
 unlock() { rmdir "$SO_LOCK" 2>/dev/null || true; }
+
+# free_kb <path>  ->  kilobytes available on the filesystem holding <path>
+free_kb() { df -Pk "$1" 2>/dev/null | awk 'NR == 2 { print $4 }'; }
+
+# disk_full_hint  ->  " (disk full: N free on <target>)" when space is low
+disk_full_hint() {
+  local f
+  f="$(free_kb "$SO_TARGET")"
+  if [ -n "$f" ] && [ "$f" -lt 1048576 ]; then
+    printf ' (disk full? %s free on %s)' "$(human_kb "$f")" "$SO_TARGET"
+  fi
+}
 
 # last_progress <logfile>  ->  git's most recent progress message
 last_progress() {
@@ -205,7 +255,9 @@ record() {
   [ "$SO_DRY_RUN" = 1 ] || dur="$(fmt_dur $(( $(date +%s) - W_START )))"
 
   lock
-  printf '%s\t%s\t%s\t%s\n' "$status" "$repo" "$detail" "$size_kb" >> "$SO_RESULTS"
+  # If this append fails (disk full) the terminal line below still shows the
+  # result, and the summary names the repo as having no recorded result.
+  { printf '%s\t%s\t%s\t%s\n' "$status" "$repo" "$detail" "$size_kb" >> "$SO_RESULTS"; } 2>/dev/null || true
   n_done="$(wc -l <"$SO_RESULTS" | tr -d ' ')"
   printf '  [%*d/%d] %s%-12s%s %s' "${#SO_TOTAL}" "$n_done" "$SO_TOTAL" "$color" "$status" "$C_RST" "$repo"
   [ -n "$detail" ] && printf ' %s(%s)%s' "$C_DIM" "$detail" "$C_RST"
@@ -214,10 +266,14 @@ record() {
   unlock
 }
 
-# Explain a failed git transfer, recognising stall timeouts.
+# Explain a failed git transfer, recognising stall timeouts and full disks.
 failure_detail() {
   local what="$1" log="$2"
-  if grep -qiE 'Timeout, server .* not responding|Operation too slow|Connection timed out' "$log" 2>/dev/null; then
+  if [ "$log" = /dev/null ]; then
+    printf '%s failed; no log (could not write log file)%s' "$what" "$(disk_full_hint)"
+  elif grep -q 'No space left on device' "$log" 2>/dev/null; then
+    printf '%s failed: ran out of disk space (%s free now); see %s' "$what" "$(human_kb "$(free_kb "$SO_TARGET")")" "$log"
+  elif grep -qiE 'Timeout, server .* not responding|Operation too slow|Connection timed out' "$log" 2>/dev/null; then
     printf '%s stalled (no progress for %s); see %s' "$what" "$(fmt_dur "$SO_STALL_TIMEOUT")" "$log"
   else
     printf '%s failed; see %s' "$what" "$log"
@@ -229,7 +285,7 @@ worker() {
   [ "$branch" = "-" ] && branch=""
 
   local dest="$SO_TARGET/$repo"
-  local log="$SO_LOGDIR/$repo.log"
+  local log="${W_LOG:-/dev/null}"
 
   if [ -e "$dest" ]; then
     if [ ! -e "$dest/.git" ]; then
@@ -288,12 +344,43 @@ worker() {
       return 0
     fi
 
+    # Refuse to start a new clone when the disk is nearly full; it would
+    # only fail part-way and churn the disk.
+    if [ "$SO_MIN_FREE_KB" -gt 0 ]; then
+      local free_kb
+      free_kb="$(free_kb "$SO_TARGET")"
+      if [ -n "$free_kb" ] && [ "$free_kb" -lt "$SO_MIN_FREE_KB" ]; then
+        record failed "$repo" "skipped: only $(human_kb "$free_kb") free on disk (--min-free $(human_kb "$SO_MIN_FREE_KB"))"
+        return 0
+      fi
+    fi
+
     local -a git_args=(--progress)
     [ -n "$SO_DEPTH" ] && git_args+=(--depth "$SO_DEPTH")
 
-    if gh repo clone "$SO_ORG/$repo" "$dest" -- "${git_args[@]}" >>"$log" 2>&1; then
-      record cloned "$repo" "$(human_kb "$size_kb")"
+    # Clone into a staging directory and move it into place only once the
+    # clone (including checkout) has fully succeeded, so a failed or
+    # interrupted clone never leaves a half-populated repo at $dest that a
+    # later run would mistake for an existing clone.
+    local stage="$SO_STAGING/$repo"
+    rm -rf "$stage" 2>/dev/null || true   # leftover from an interrupted run
+    if ! mkdir -p "$SO_STAGING" 2>/dev/null; then
+      record failed "$repo" "cannot create staging directory $SO_STAGING$(disk_full_hint)"
+      return 0
+    fi
+
+    if gh repo clone "$SO_ORG/$repo" "$stage" -- "${git_args[@]}" >>"$log" 2>&1; then
+      if [ -e "$dest" ]; then
+        rm -rf "$stage"
+        record failed "$repo" "$dest appeared during clone; left untouched"
+      elif mv "$stage" "$dest" 2>>"$log"; then
+        record cloned "$repo" "$(human_kb "$size_kb")"
+      else
+        rm -rf "$stage"
+        record failed "$repo" "could not move clone into $dest$(disk_full_hint)"
+      fi
     else
+      rm -rf "$stage" 2>/dev/null || true
       record failed "$repo" "$(failure_detail clone "$log")"
     fi
   fi
@@ -302,15 +389,20 @@ worker() {
 worker_main() {
   local repo="$1" marker="$SO_ACTIVE/$1"
   W_START="$(date +%s)"
+  W_LOG=/dev/null
   if [ "$SO_DRY_RUN" = 0 ]; then
-    : >"$SO_LOGDIR/$repo.log"
-    echo "$W_START" >"$marker"
+    # None of these writes may abort the worker (set -e): if the disk is
+    # full the repo must still be attempted and must still report a result.
+    if ( : >"$SO_LOGDIR/$repo.log" ) 2>/dev/null; then
+      W_LOG="$SO_LOGDIR/$repo.log"
+    fi
+    ( echo "$W_START" >"$marker" ) 2>/dev/null || true
     lock
     printf '  %*s %sstarted%s      %s\n' $(( ${#SO_TOTAL} * 2 + 3 )) "" "$C_DIM" "$C_RST" "$repo"
     unlock
   fi
   worker "$@" || true
-  rm -f "$marker"
+  rm -f "$marker" 2>/dev/null || true
 }
 
 if [ "${1:-}" = "__worker" ]; then
@@ -345,11 +437,15 @@ progress_reporter() {
       repo="$(basename "$f")"
       started="$(cat "$f" 2>/dev/null || echo "$now")"
       log="$SO_LOGDIR/$repo.log"
-      msg="$(last_progress "$log")"
-      [ -n "$msg" ] || msg="waiting for server..."
-      idle=$((now - $(file_mtime "$log")))
-      if [ "$idle" -ge 30 ]; then
-        msg="$msg ${C_YLW}(no output for $(fmt_dur "$idle"))${C_RST}"
+      if [ -e "$log" ]; then
+        msg="$(last_progress "$log")"
+        [ -n "$msg" ] || msg="waiting for server..."
+        idle=$((now - $(file_mtime "$log")))
+        if [ "$idle" -ge 30 ]; then
+          msg="$msg ${C_YLW}(no output for $(fmt_dur "$idle"))${C_RST}"
+        fi
+      else
+        msg="${C_YLW}(no log: could not write log file)${C_RST}"
       fi
       lines="$lines$(printf '\n      %-*s  %6s  %s%s%s' \
         "$width" "$repo" "$(fmt_dur $((now - started)))" "$C_DIM" "$msg" "$C_RST")"
@@ -372,10 +468,28 @@ DEPTH=""
 DRY_RUN=0
 STALL_TIMEOUT=300
 PROGRESS_INTERVAL=10
+MIN_FREE_GB=2
+MAX_SIZE_GB=50
+ASSUME_YES=0
+SKIP_PATTERNS=()
 POSITIONAL=()
 
 is_pos_int() { case "$1" in ''|*[!0-9]*|0) return 1 ;; *) return 0 ;; esac; }
 is_nonneg_int() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
+
+# add_skip "a,b,c*"  ->  append each non-empty entry to SKIP_PATTERNS
+# (globbing is disabled while splitting so patterns aren't expanded
+# against files in the current directory)
+add_skip() {
+  local p IFS=,
+  [ -n "$1" ] || die "--skip requires a non-empty repository name"
+  set -f
+  for p in $1; do
+    p="${p#"${p%%[![:space:]]*}"}"; p="${p%"${p##*[![:space:]]}"}"   # trim
+    [ -n "$p" ] && SKIP_PATTERNS+=("$p")
+  done
+  set +f
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -391,6 +505,13 @@ while [ $# -gt 0 ]; do
     --stall-timeout=*)    STALL_TIMEOUT="${1#*=}"; shift ;;
     --progress-interval)  [ $# -ge 2 ] || die "$1 requires an argument"; PROGRESS_INTERVAL="$2"; shift 2 ;;
     --progress-interval=*) PROGRESS_INTERVAL="${1#*=}"; shift ;;
+    --min-free)           [ $# -ge 2 ] || die "$1 requires an argument"; MIN_FREE_GB="$2"; shift 2 ;;
+    --min-free=*)         MIN_FREE_GB="${1#*=}"; shift ;;
+    --skip)               [ $# -ge 2 ] || die "$1 requires an argument"; add_skip "$2"; shift 2 ;;
+    --skip=*)             add_skip "${1#*=}"; shift ;;
+    --max-size)           [ $# -ge 2 ] || die "$1 requires an argument"; MAX_SIZE_GB="$2"; shift 2 ;;
+    --max-size=*)         MAX_SIZE_GB="${1#*=}"; shift ;;
+    -y|--yes)             ASSUME_YES=1; shift ;;
     -n|--dry-run)         DRY_RUN=1; shift ;;
     -h|--help)            usage; exit 0 ;;
     --)                   shift; while [ $# -gt 0 ]; do POSITIONAL+=("$1"); shift; done ;;
@@ -411,6 +532,8 @@ is_pos_int "$JOBS" || die "--jobs must be a positive integer (got '$JOBS')"
 [ -z "$DEPTH" ] || is_pos_int "$DEPTH" || die "--depth must be a positive integer (got '$DEPTH')"
 is_nonneg_int "$STALL_TIMEOUT" || die "--stall-timeout must be a non-negative integer (got '$STALL_TIMEOUT')"
 is_nonneg_int "$PROGRESS_INTERVAL" || die "--progress-interval must be a non-negative integer (got '$PROGRESS_INTERVAL')"
+is_nonneg_int "$MIN_FREE_GB" || die "--min-free must be a non-negative integer number of GB (got '$MIN_FREE_GB')"
+is_nonneg_int "$MAX_SIZE_GB" || die "--max-size must be a non-negative integer number of GB (got '$MAX_SIZE_GB')"
 
 ORG_INPUT="${POSITIONAL[0]}"
 TARGET_INPUT="${POSITIONAL[1]}"
@@ -555,8 +678,96 @@ if [ "$TOTAL" -eq 0 ]; then
   exit 0
 fi
 
+# ---------------------------------------------------------------------------
+# Apply --skip, and confirm new clones over --max-size
+# ---------------------------------------------------------------------------
+SKIPPED="$WORKDIR/skipped.tsv"      # <repo> TAB <reason>
+LARGE_LIST="$WORKDIR/large.tsv"     # (dry run) <repo> TAB <size_kb>
+: >"$SKIPPED"; : >"$LARGE_LIST"
+MAX_SIZE_KB=$((MAX_SIZE_GB * 1048576))
+
+matches_skip() {
+  local name="$1" p
+  for p in ${SKIP_PATTERNS[@]+"${SKIP_PATTERNS[@]}"}; do
+    # Unquoted $p so that globs in --skip patterns are honoured.
+    # shellcheck disable=SC2254
+    case "$name" in $p) return 0 ;; esac
+  done
+  return 1
+}
+
+# Warn about --skip patterns that match nothing (likely a typo).
+for p in ${SKIP_PATTERNS[@]+"${SKIP_PATTERNS[@]}"}; do
+  hit=0
+  while read -r name _; do
+    # shellcheck disable=SC2254
+    case "$name" in $p) hit=1; break ;; esac
+  done <"$REPO_LIST"
+  [ "$hit" = 1 ] || printf '%s!!%s --skip %s matched no repositories in %s/%s\n' \
+    "$C_YLW" "$C_RST" "'$p'" "$HOST" "$ORG" >&2
+done
+
+# Can we ask questions? xargs owns stdin later, and stdout may be piped, so
+# talk to the controlling terminal directly.
+CAN_PROMPT=0
+if ( : </dev/tty >/dev/tty ) 2>/dev/null; then CAN_PROMPT=1; fi
+
+confirm_large() {
+  local name="$1" size_kb="$2" ans free free_txt=""
+  free="$(free_kb "$TARGET")"
+  [ -n "$free" ] && free_txt="; $(human_kb "$free") free"
+  printf '%s!!%s %s%s%s is %s%s%s (over --max-size %s GB%s). Clone it? [y/N] ' \
+    "$C_YLW" "$C_RST" "$C_BLD" "$name" "$C_RST" "$C_YLW" "$(human_kb "$size_kb")" "$C_RST" \
+    "$MAX_SIZE_GB" "$free_txt" >/dev/tty
+  IFS= read -r ans </dev/tty || { echo >/dev/tty; ans=""; }
+  case "$ans" in [yY]|[yY][eE][sS]) return 0 ;; *) return 1 ;; esac
+}
+
+FILTERED="$WORKDIR/repos.filtered.txt"
+: >"$FILTERED"
+while read -r name branch size_kb; do
+  if matches_skip "$name"; then
+    printf '%s\t%s\n' "$name" "excluded by --skip" >>"$SKIPPED"
+    continue
+  fi
+
+  # Only NEW clones are gated on size; fetching an existing clone is incremental.
+  if [ "$MAX_SIZE_KB" -gt 0 ] && [ "${size_kb:-0}" -gt "$MAX_SIZE_KB" ] && [ ! -e "$TARGET/$name" ]; then
+    if [ "$DRY_RUN" = 1 ]; then
+      printf '%s\t%s\n' "$name" "$size_kb" >>"$LARGE_LIST"
+    elif [ "$ASSUME_YES" = 1 ]; then
+      info "$name is $(human_kb "$size_kb") (over --max-size $MAX_SIZE_GB GB); cloning because of --yes"
+    elif [ "$CAN_PROMPT" = 0 ]; then
+      printf '%s\t%s\n' "$name" "$(human_kb "$size_kb"), over --max-size $MAX_SIZE_GB GB; no terminal to confirm (use --yes)" >>"$SKIPPED"
+      continue
+    elif ! confirm_large "$name" "$size_kb"; then
+      printf '%s\t%s\n' "$name" "$(human_kb "$size_kb"), over --max-size $MAX_SIZE_GB GB; declined" >>"$SKIPPED"
+      continue
+    fi
+  fi
+
+  printf '%s %s %s\n' "$name" "$branch" "$size_kb" >>"$FILTERED"
+done <"$REPO_LIST"
+mv "$FILTERED" "$REPO_LIST"
+
+N_SKIPPED="$(wc -l <"$SKIPPED" | tr -d ' ')"
+
+print_skipped() {
+  [ "$N_SKIPPED" -gt 0 ] || return 0
+  printf '  %sskipped:      %s%s\n' "$C_YLW" "$N_SKIPPED" "$C_RST"
+  awk -F'\t' '{ printf "    - %s: %s\n", $1, $2 }' "$SKIPPED"
+}
+
+TOTAL="$(wc -l <"$REPO_LIST" | tr -d ' ')"
+if [ "$TOTAL" -eq 0 ]; then
+  info "All repositories in $HOST/$ORG were skipped. Nothing to do."
+  print_skipped
+  exit 0
+fi
+
 MODE="Syncing"; [ "$DRY_RUN" = 1 ] && MODE="Dry run:"
 DETAILS="jobs: $JOBS${DEPTH:+, depth: $DEPTH}"
+[ "$N_SKIPPED" -gt 0 ] && DETAILS="$DETAILS, skipping: $N_SKIPPED"
 if [ "$DRY_RUN" = 0 ]; then
   if [ "$STALL_TIMEOUT" -gt 0 ]; then
     DETAILS="$DETAILS, stall timeout: $(fmt_dur "$STALL_TIMEOUT")"
@@ -575,12 +786,20 @@ export SO_DEPTH="$DEPTH"
 export SO_DRY_RUN="$DRY_RUN"
 export SO_TOTAL="$TOTAL"
 export SO_STALL_TIMEOUT="$STALL_TIMEOUT"
+export SO_MIN_FREE_KB=$((MIN_FREE_GB * 1048576))
+export SO_STAGING="$TARGET/.$PROG.partial"
 export SO_RESULTS="$WORKDIR/results.tsv"
 export SO_LOGDIR="$WORKDIR/logs"
 export SO_ACTIVE="$WORKDIR/active"
 export SO_LOCK="$WORKDIR/lock"
 mkdir -p "$SO_LOGDIR" "$SO_ACTIVE"
 : >"$SO_RESULTS"
+
+# Discard incomplete clones left in staging by an interrupted earlier run.
+if [ "$DRY_RUN" = 0 ] && [ -d "$SO_STAGING" ]; then
+  info "Removing incomplete clones from a previous run in $SO_STAGING"
+  rm -rf "$SO_STAGING"
+fi
 
 if [ "$DRY_RUN" = 0 ] && [ "$PROGRESS_INTERVAL" -gt 0 ]; then
   progress_reporter "$PROGRESS_INTERVAL" "$(date +%s)" &
@@ -595,6 +814,9 @@ if [ -n "$REPORTER_PID" ]; then
   REPORTER_PID=""
 fi
 
+# Remove the staging directory if nothing is left in it.
+[ "$DRY_RUN" = 1 ] || rmdir "$SO_STAGING" 2>/dev/null || true
+
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
@@ -606,10 +828,26 @@ if [ "$DRY_RUN" = 1 ]; then
   CLONE_KB="$(awk -F'\t' '$1 == "would-clone" { t += $4 } END { print t + 0 }' "$SO_RESULTS")"
   printf '  would clone:  %s (~%s estimated download)\n' "$(count would-clone)" "$(human_kb "$CLONE_KB")"
   printf '  would update: %s (incremental fetch; size not estimated)\n' "$(count would-update)"
+  if [ -s "$LARGE_LIST" ]; then
+    printf '  %swould ask before cloning (over --max-size %s GB):%s\n' "$C_YLW" "$MAX_SIZE_GB" "$C_RST"
+    while IFS="$(printf '\t')" read -r name size_kb; do
+      printf '    - %s: %s\n' "$name" "$(human_kb "$size_kb")"
+    done <"$LARGE_LIST"
+  fi
   if [ "$(count would-clone)" -gt 0 ]; then
     printf '  %snote: sizes are GitHub'\''s reported repo size; excludes Git LFS and checkout%s\n' "$C_DIM" "$C_RST"
     printf '  %s      overhead, and may be slightly stale.%s\n' "$C_DIM" "$C_RST"
     [ -n "$DEPTH" ] && printf '  %s      --depth %s is set, so the actual download will be smaller.%s\n' "$C_DIM" "$DEPTH" "$C_RST"
+    FS_PATH="$TARGET"
+    while [ ! -d "$FS_PATH" ]; do FS_PATH="$(dirname "$FS_PATH")"; done
+    FREE_KB="$(free_kb "$FS_PATH")"
+    if [ -n "$FREE_KB" ]; then
+      printf '  free space:   %s\n' "$(human_kb "$FREE_KB")"
+      if [ "$CLONE_KB" -gt "$FREE_KB" ]; then
+        printf '  %swarning: estimated download exceeds free space.%s\n' "$C_YLW" "$C_RST"
+      fi
+      printf '  %snote: checked-out files often take several times the download size.%s\n' "$C_DIM" "$C_RST"
+    fi
   fi
 else
   printf '  cloned:       %s\n' "$(count cloned)"
@@ -617,6 +855,7 @@ else
   printf '  up-to-date:   %s\n' "$(count up-to-date)"
   printf '  fetched only: %s\n' "$(count fetched)"
 fi
+print_skipped
 
 FAILED="$(count failed)"
 DONE="$(wc -l <"$SO_RESULTS" | tr -d ' ')"
@@ -625,8 +864,19 @@ MISSING=$((TOTAL - DONE))
 if [ "$FAILED" -gt 0 ] || [ "$MISSING" -gt 0 ]; then
   printf '  %sfailed:       %s%s\n' "$C_RED" "$((FAILED + MISSING))" "$C_RST"
   awk -F'\t' '$1 == "failed" { printf "    - %s: %s\n", $2, $3 }' "$SO_RESULTS"
-  [ "$MISSING" -gt 0 ] && printf '    - %s repositories did not report a result (interrupted?)\n' "$MISSING"
+  if [ "$MISSING" -gt 0 ]; then
+    # Name the repos that never recorded a result (interrupted, or the
+    # results file could not be written, e.g. because the disk was full).
+    awk -F'\t' 'NR == FNR { seen[$2] = 1; next }
+                { split($0, f, " "); if (!(f[1] in seen)) print f[1] }' \
+      "$SO_RESULTS" "$REPO_LIST" \
+      | while IFS= read -r r; do printf '    - %s: no result recorded (interrupted, or disk full?)\n' "$r"; done
+  fi
   KEEP_WORKDIR=1
   printf '  logs kept in: %s\n' "$SO_LOGDIR"
+  FREE_KB="$(free_kb "$TARGET")"
+  if [ -n "$FREE_KB" ] && [ "$FREE_KB" -lt $((SO_MIN_FREE_KB > 1048576 ? SO_MIN_FREE_KB : 1048576)) ]; then
+    printf '  %slow disk space: %s free on %s%s\n' "$C_RED" "$(human_kb "$FREE_KB")" "$TARGET" "$C_RST"
+  fi
   exit 1
 fi
