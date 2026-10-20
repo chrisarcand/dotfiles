@@ -42,7 +42,7 @@ EXPECTATIONS:
     - `git aicm` reads staged changes only. Unstaged tracked changes are ignored.
     - `git aicm -b` requires tracked changes to be fully staged or stashed first.
     - `git aicm -b` splits by whole staged files, not partial hunks.
-    - Default model: `github-copilot/gpt-5-mini`
+    - Default model: `github-copilot/claude-haiku-5.5`
 
 CUSTOMIZATION:
     Edit the prompt variables below, or override model with `-m` / `--model`.
@@ -58,7 +58,7 @@ EXAMPLES:
     git aicm --break-up --no-animation
 
     git add <files>
-    git aicm --model github-copilot/gpt-5-mini
+    git aicm --model github-copilot/claude-haiku-5.5
 
 MORE INFO:
     Philosophy behind -b flag: https://chrisarcand.com/purposeful-commits/
@@ -170,7 +170,7 @@ TEMP_PATHS: list[Path] = []
 GIT_DIR: Path
 DIFF_TEXT = ""
 STAGED_FILES: list[str] = []
-DEFAULT_MODEL = "github-copilot/gpt-5-mini"
+DEFAULT_MODEL = "github-copilot/claude-haiku-5.5"
 
 
 @dataclass
@@ -349,6 +349,36 @@ def extract_opencode_text(raw_output: str) -> str:
     return "".join(chunks)
 
 
+def extract_opencode_errors(raw_output: str) -> list[str]:
+    # With --format json, OpenCode reports errors (e.g. an unknown model) as
+    # JSON events on stdout rather than on stderr.
+    errors: list[str] = []
+    for raw_line in raw_output.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") != "error":
+            continue
+        error = event.get("error") or {}
+        message = (error.get("data") or {}).get("message") or error.get("name")
+        if message and message not in errors:
+            errors.append(message)
+    return errors
+
+
+def describe_opencode_failure(
+    summary: str, result: subprocess.CompletedProcess[str]
+) -> str:
+    details = extract_opencode_errors(result.stdout)
+    if result.stderr.strip():
+        details.append(result.stderr.rstrip())
+    return "\n".join([summary, *details])
+
+
 def build_request_text(prompt_text: str) -> str:
     staged_listing = "\n".join(STAGED_FILES)
     return (
@@ -392,17 +422,19 @@ def generate_with_opencode(
         )
 
     if result.returncode != 0:
-        message = f"Error: OpenCode failed to generate {failure_label}."
-        if result.stderr.strip():
-            message = f"{message}\n{result.stderr.rstrip()}"
-        die(message)
+        die(
+            describe_opencode_failure(
+                f"Error: OpenCode failed to generate {failure_label}.", result
+            )
+        )
 
     text = trim_blank_lines(extract_opencode_text(result.stdout))
     if not text:
-        message = f"OpenCode returned no text for {failure_label}."
-        if result.stderr.strip():
-            message = f"{message}\n{result.stderr.rstrip()}"
-        die(message)
+        die(
+            describe_opencode_failure(
+                f"OpenCode returned no text for {failure_label}.", result
+            )
+        )
 
     return text
 
