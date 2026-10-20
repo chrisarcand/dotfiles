@@ -1,49 +1,74 @@
-#!/bin/sh
+#!/bin/bash
+#
+# Installs these dotfiles. Safe to re-run at any time: every step checks
+# whether it's already done and skips it if so.
 
-DOTFILES_ROOT=~/.dotfiles
-
-set -e
+DOTFILES_ROOT="$HOME/.dotfiles"
 
 if [[ "$OSTYPE" != "darwin"* ]]; then
   echo "These dotfiles only support macOS."
   exit 1
 fi
 
+# shellcheck source=lib/install_helpers.sh
+. "$DOTFILES_ROOT/lib/install_helpers.sh"
+
 echo ''
 
-info () {
-  printf "\r  [ \033[00;34m..\033[0m ] $1\n"
-}
+# Ask for a value until a non-empty one is given. Exits if stdin is closed.
+# Runs inside $(...), so all messages go to stderr; only the answer is captured.
+prompt_required () {
+  local question=$1 answer=
 
-user () {
-  printf "\r  [ \033[0;33m??\033[0m ] $1\n"
-}
+  while [ -z "$answer" ]; do
+    user "$question" >&2
+    if ! read -r -e answer; then
+      echo '' >&2
+      fail "no input received; aborting" >&2
+      exit 1
+    fi
+  done
 
-success () {
-  printf "\r\033[2K  [ \033[00;32mOK\033[0m ] $1\n"
-}
-
-fail () {
-  printf "\r\033[2K  [\033[0;31mFAIL\033[0m] $1\n"
-  echo ''
-  exit
+  printf '%s' "$answer"
 }
 
 setup_gitconfig () {
-  if ! [ -f $DOTFILES_ROOT/git/gitconfig.symlink ]
+  local gitconfig="$DOTFILES_ROOT/git/gitconfig.symlink"
+
+  if [ -f "$gitconfig" ]; then
+    success 'gitconfig already set up'
+    return
+  fi
+
+  info 'setup gitconfig'
+
+  local git_credential='osxkeychain'
+  local git_authorname git_authoremail
+
+  git_authorname="$(prompt_required ' - What is your GitHub author name?')" || exit 1
+  git_authoremail="$(prompt_required ' - What is your GitHub author email?')" || exit 1
+
+  # Escape characters that are special in a sed replacement (\ & and the | delimiter).
+  git_authorname="$(printf '%s' "$git_authorname" | sed -e 's/[\\&|]/\\&/g')"
+  git_authoremail="$(printf '%s' "$git_authoremail" | sed -e 's/[\\&|]/\\&/g')"
+
+  # Write to a temp file first so an interrupted run never leaves a partial
+  # gitconfig behind (which would cause the next run to skip this step). The
+  # temp file lives outside the repo so personal info can't be committed.
+  local tmp
+  tmp="$(mktemp "${TMPDIR:-/tmp}/gitconfig.XXXXXX")" || { fail 'could not create temp file'; exit 1; }
+
+  if sed -e "s|AUTHORNAME|$git_authorname|g" \
+         -e "s|AUTHOREMAIL|$git_authoremail|g" \
+         -e "s|GIT_CREDENTIAL_HELPER|$git_credential|g" \
+         "$gitconfig.example" > "$tmp" \
+     && mv "$tmp" "$gitconfig"
   then
-    info 'setup gitconfig'
-
-    git_credential='osxkeychain'
-
-    user ' - What is your GitHub author name?'
-    read -e git_authorname
-    user ' - What is your GitHub author email?'
-    read -e git_authoremail
-
-    sed -e "s/AUTHORNAME/$git_authorname/g" -e "s/AUTHOREMAIL/$git_authoremail/g" -e "s/GIT_CREDENTIAL_HELPER/$git_credential/g" $DOTFILES_ROOT/git/gitconfig.symlink.example > $DOTFILES_ROOT/git/gitconfig.symlink
-
     success 'gitconfig'
+  else
+    rm -f "$tmp"
+    fail 'could not write gitconfig'
+    exit 1
   fi
 }
 
@@ -56,40 +81,35 @@ link_file () {
   if [ -f "$dst" -o -d "$dst" -o -L "$dst" ]
   then
 
+    if [ "$(readlink "$dst")" == "$src" ]
+    then
+      success "already linked $dst"
+      return
+    fi
+
     if [ "$overwrite_all" == "false" ] && [ "$backup_all" == "false" ] && [ "$skip_all" == "false" ]
     then
 
-      local currentSrc="$(readlink $dst)"
+      user "File already exists: $dst ($(basename "$src")), what do you want to do?\n\
+      [s]kip, [S]kip all, [o]verwrite, [O]verwrite all, [b]ackup, [B]ackup all?"
+      read -n 1 action
 
-      if [ "$currentSrc" == "$src" ]
-      then
-
-        skip=true;
-
-      else
-
-        user "File already exists: $dst ($(basename "$src")), what do you want to do?\n\
-        [s]kip, [S]kip all, [o]verwrite, [O]verwrite all, [b]ackup, [B]ackup all?"
-        read -n 1 action
-
-        case "$action" in
-          o )
-            overwrite=true;;
-          O )
-            overwrite_all=true;;
-          b )
-            backup=true;;
-          B )
-            backup_all=true;;
-          s )
-            skip=true;;
-          S )
-            skip_all=true;;
-          * )
-            ;;
-        esac
-
-      fi
+      case "$action" in
+        o )
+          overwrite=true;;
+        O )
+          overwrite_all=true;;
+        b )
+          backup=true;;
+        B )
+          backup_all=true;;
+        s )
+          skip=true;;
+        S )
+          skip_all=true;;
+        * )
+          ;;
+      esac
 
     fi
 
@@ -117,8 +137,11 @@ link_file () {
 
   if [ "$skip" != "true" ]  # "false" or empty
   then
-    ln -s "$1" "$2"
-    success "linked $1 to $2"
+    if ln -s "$1" "$2"; then
+      success "linked $1 to $2"
+    else
+      fail "could not link $1 to $2"
+    fi
   fi
 }
 
@@ -159,22 +182,90 @@ symlink_dotfiles () {
   link_file "$DOTFILES_ROOT/bin" "$HOME/bin"
 }
 
+init_submodules () {
+  info 'initializing submodules'
+  if git -C "$DOTFILES_ROOT" submodule update --init --recursive; then
+    success 'submodules'
+  else
+    fail 'could not initialize submodules'
+  fi
+}
+
+install_homebrew () {
+  if ensure_brew_on_path; then
+    success 'Homebrew already installed'
+  else
+    info 'installing Homebrew'
+
+    # The Homebrew installer needs sudo. In NONINTERACTIVE mode it can't prompt
+    # for a password itself, so cache sudo credentials up front.
+    sudo -v || { fail 'sudo is required to install Homebrew'; exit 1; }
+
+    if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+       && ensure_brew_on_path
+    then
+      success 'Homebrew installed'
+    else
+      # Every topic installer depends on Homebrew; nothing else can proceed.
+      fail 'Homebrew installation failed'
+      exit 1
+    fi
+  fi
+
+  # Remove taps that are obsolete or untrusted. An untrusted tap makes every
+  # later brew command print a long warning, so do this before any installer.
+  # - thoughtbot/formulae: pick now lives in homebrew/core
+  # - homebrew/services: deprecated; `brew services` is built in
+  brew_untap thoughtbot/formulae
+  brew_untap homebrew/services
+}
+
+run_topic_installers () {
+  local installer topic installers
+
+  # Collect the list first so installers don't read from find's output on stdin.
+  installers="$(find "$DOTFILES_ROOT" -mindepth 2 -maxdepth 2 -name install.sh -not -path "$DOTFILES_ROOT/_plugins/*" | sort)"
+
+  for installer in $installers; do
+    topic="$(basename "$(dirname "$installer")")"
+
+    # Run through bash explicitly so a missing executable bit or shebang
+    # can't silently skip a topic.
+    if ! bash "$installer"; then
+      failed_topics="$failed_topics $topic"
+    fi
+  done
+}
+
+check_command_line_tools () {
+  info 'checking for Command Line Tools updates'
+  # Use Homebrew's check: `softwareupdate` often doesn't list newer CLT releases.
+  if brew doctor check_clt_up_to_date >/dev/null 2>&1; then
+    success 'Command Line Tools are up to date'
+  else
+    warn 'A newer Command Line Tools release is available. Run `brew doctor check_clt_up_to_date` for update instructions.'
+  fi
+}
+
+failed_topics=
+
 setup_gitconfig
 symlink_dotfiles
-
-# Initialize git submodules (plugins)
-info 'initializing submodules'
-cd "$DOTFILES_ROOT"
-git submodule update --init --recursive 2>/dev/null
-success 'submodules'
-
-# Install Homebrew
-if [[ ! $(which brew) ]]; then
-  ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-fi
-
-# find the installers and run them iteratively
-find $DOTFILES_ROOT -mindepth 2 -not -path "$DOTFILES_ROOT/_plugins/*" -name install.sh -exec "{}" \;
+init_submodules
+install_homebrew
+run_topic_installers
+echo ''
+check_command_line_tools
 
 echo ''
-echo 'Installation complete!'
+if [ -n "$failed_topics" ] || [ "$_install_failures" -gt 0 ]; then
+  if [ -n "$failed_topics" ]; then
+    fail "Installation finished with errors in:$failed_topics"
+  else
+    fail 'Installation finished with errors (see above)'
+  fi
+  echo '         Fix the errors above and re-run ~/.dotfiles/install.sh; completed steps are skipped.'
+  exit 1
+fi
+
+success 'Installation complete!'

@@ -42,6 +42,27 @@ The install script:
 3. Initializes git submodules in `_plugins/`
 4. Installs Homebrew if not present
 5. Runs topic-specific `install.sh` scripts
+6. Warns if a Command Line Tools update is available
+
+**The install script MUST always be idempotent.** Re-running it must skip
+anything already installed/configured and move on, never prompt for
+already-answered questions, and never fail because something already exists.
+It must also be non-interactive apart from first-time setup (gitconfig
+name/email, symlink conflicts, sudo for Homebrew).
+
+### Writing topic `install.sh` scripts
+
+All installers source `lib/install_helpers.sh`, which provides idempotent helpers:
+
+- `require_brew` - put `brew` on PATH or skip the topic with a failure
+- `brew_install FORMULA...` - skip if installed, else `brew install --yes`
+- `brew_install_cask CASK [/Applications/App.app]` - skip if the cask or app already exists
+- `brew_untap TAP`, `brew_service_start SERVICE...`, `git_clone_once URL DIR`
+- `info`, `success`, `warn`, `fail` - output; `fail` records an error without exiting
+- `finish` - must be the last line; exits non-zero if anything failed so the main installer reports it
+
+`HOMEBREW_NO_ASK=1` is exported by the helpers so Homebrew never stops at a `[y/n]` prompt.
+Never call bare `brew install`/`git clone` in an installer; use the helpers.
 
 ## Topic-Based Organization
 

@@ -39,10 +39,14 @@ The provided installer includes support for the following OS/distributions:
 There is an install script to automatically symlink all the configuration files
 to your home directory and install packages for supported operating systems.
 
-```plaintext
-$ git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
-$ ~/.dotfiles/install.sh
+```sh
+git clone --recursive git@github.com:chrisarcand/dotfiles.git ~/.dotfiles
+~/.dotfiles/install.sh
 ```
+
+The install script is idempotent: re-run it any time. Anything already
+installed or configured is reported as `OK` and skipped. If any step fails, the
+script says which topics failed and exits non-zero; fix the issue and re-run.
 
 Note: Although the install script is quite good and will back up your own
 existing dotfiles with nice prompts, I take no responsibility for your system.
@@ -59,9 +63,10 @@ The install script will:
 3. Initialize git submodules (oh-my-zsh, tmux plugins)
 4. Install Homebrew (on macOS, if not already installed)
 5. Run topic-specific install scripts found in each directory
+6. Warn if a Command Line Tools update is available
 
 Some tools with installers:
-- `git/install.sh` - Git and GitHub CLI
+- `git/install.sh` - Git, GitHub CLI, and delta (git pager)
 - `zsh/install.sh` - Zsh shell
 - `ruby/install.sh` - rbenv and ruby-build
 - `node/install.sh` - nvm (Node version manager)
