@@ -1,6 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting rbenv/ruby-build installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-brew install rbenv ruby-build
+echo ''
+info 'starting rbenv/ruby-build installation'
+require_brew
+
+brew_install rbenv ruby-build
+
+finish

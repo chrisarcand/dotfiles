@@ -1,22 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Docker
 #
-# This installs Docker Desktop
+# Installs Docker Desktop.
 
-# Check if Homebrew is installed
-if ! command -v brew >/dev/null 2>&1; then
-  echo "  Homebrew not found. Please install Homebrew first."
-  exit 1
-fi
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-# Install Docker Desktop if not already installed
-if ! command -v docker >/dev/null 2>&1; then
-  echo "  Installing Docker Desktop..."
-  brew install --cask docker
-  echo "  Note: You may need to start Docker Desktop from Applications after installation"
-else
-  echo "  Docker already installed"
-fi
+echo ''
+info 'starting docker installation'
+require_brew
 
-exit 0
+brew_install_cask docker-desktop /Applications/Docker.app
+
+finish

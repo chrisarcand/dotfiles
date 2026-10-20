@@ -1,21 +1,19 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Zed
 #
-# This installs Zed editor
+# Installs the Zed editor.
 
-# Check if Homebrew is installed
-if ! command -v brew >/dev/null 2>&1; then
-  echo "  Homebrew not found. Please install Homebrew first."
-  exit 1
-fi
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-# Install Zed if not already installed
-if ! command -v zed >/dev/null 2>&1; then
-  echo "  Installing Zed editor..."
-  brew install zed
-else
-  echo "  Zed already installed"
-fi
+echo ''
+info 'starting zed installation'
+require_brew
 
-exit 0
+# Homebrew generates PowerShell completions for Zed's CLI on install and fails
+# with "Operation not permitted" if it has to create this directory itself.
+mkdir -p "$(brew --prefix)/share/pwsh"
+
+brew_install_cask zed /Applications/Zed.app
+
+finish

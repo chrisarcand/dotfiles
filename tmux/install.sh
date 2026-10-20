@@ -1,21 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 #
 # tmux
 #
-# This installs tmux terminal multiplexer
+# Installs the tmux terminal multiplexer.
 
-# Check if Homebrew is installed
-if ! command -v brew >/dev/null 2>&1; then
-  echo "  Homebrew not found. Please install Homebrew first."
-  exit 1
-fi
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-# Install tmux if not already installed
-if ! command -v tmux >/dev/null 2>&1; then
-  echo "  Installing tmux..."
-  brew install tmux
-else
-  echo "  tmux already installed"
-fi
+echo ''
+info 'starting tmux installation'
+require_brew
 
-exit 0
+brew_install tmux
+
+finish

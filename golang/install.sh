@@ -1,6 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting golang installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-git clone https://github.com/syndbg/goenv.git ~/.goenv
+echo ''
+info 'starting golang installation'
+
+git_clone_once https://github.com/syndbg/goenv.git "$HOME/.goenv"
+
+finish

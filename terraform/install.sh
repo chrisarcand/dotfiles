@@ -1,6 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting tfenv installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+echo ''
+info 'starting tfenv installation'
+
+git_clone_once https://github.com/tfutils/tfenv.git "$HOME/.tfenv"
+
+finish

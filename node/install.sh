@@ -1,6 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting node installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-brew install nvm
+echo ''
+info 'starting node installation'
+require_brew
+
+brew_install nvm
+
+# nvm keeps installed Node versions here (see node/environment.zsh).
+mkdir -p "$HOME/.nvm"
+
+finish

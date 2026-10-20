@@ -1,25 +1,28 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] installing misc system packages\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
+
+echo ''
+info 'installing misc system packages'
+require_brew
 
 # A code-searching tool similar to ack, but faster.
-# brew install the_silver_searcher
+# brew_install the_silver_searcher
 
 # Convenient for webhook/VCS work
-brew cask install ngrok
+brew_install_cask ngrok
 
-# Thoughtbot's awesome CLI tool for fuzzy searching basically anything
-brew tap thoughtbot/formulae
-brew install pick
+# Thoughtbot's pick (fuzzy-select anything); now in homebrew/core. The old
+# thoughtbot/formulae tap is removed by the main install.sh.
+brew_install pick
 
-# Because launchctl sucks
-# brew install reattach-to-user-namespace # Required to run services and working pasteboards in tmux
-brew tap homebrew/services # Now maintained at https://github.com/Homebrew/homebrew-services
+# Pin the postgres major version so postgres/path.zsh points at the right place.
+brew_install memcached postgresql@18
+brew_service_start memcached postgresql@18
 
-brew install memcached
-brew install postgresql
-brew install openssl
-brew install wget
-brew install readline # See https://github.com/guard/guard/wiki/Add-Readline-support-to-Ruby-on-Mac-OS-X
-brew install cmake
+brew_install openssl
+brew_install wget
+brew_install readline # See https://github.com/guard/guard/wiki/Add-Readline-support-to-Ruby-on-Mac-OS-X
+brew_install cmake
+
+finish

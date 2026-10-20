@@ -1,6 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting zsh installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-brew install zsh
+echo ''
+info 'starting zsh installation'
+require_brew
+
+brew_install zsh
+
+finish

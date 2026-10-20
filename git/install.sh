@@ -1,6 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
-echo ""
-printf "\r  [ \033[00;34m..\033[0m ] starting git installation\n"
+. "$(dirname "$0")/../lib/install_helpers.sh"
 
-brew install git gh
+echo ''
+info 'starting git installation'
+require_brew
+
+brew_install git gh
+brew_install git-delta # core.pager in gitconfig; git can't show diffs/logs without it
+
+finish
